@@ -1,18 +1,59 @@
-// app/api/sync-user/route.ts
-import { auth } from '@clerk/nextjs/server'
-import { supabase } from '@/lib/supabaseClient'
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { auth } from "@clerk/nextjs/server"; // or your auth
+import { randomUUID } from "crypto";
 
-export async function POST() {
-  const { userId } = auth()
+// Request body: { coupleId, filename, mime, iv, key_encrypted_by_client, size }
+export async function POST(req: Request) {
+  const { userId } = auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!userId) {
-    return new Response('Unauthorized', { status: 401 })
+  const body = await req.json();
+  const { coupleId, filename } = body;
+  if (!coupleId || !filename) return NextResponse.json({ error: "Missing" }, { status: 400 });
+
+  // verify that userId is member of coupleId
+  const { data: users, error: uerr } = await supabaseAdmin
+    .from("users")
+    .select("id")
+    .eq("clerk_id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (uerr || !users) return NextResponse.json({ error: "User not found" }, { status: 403 });
+
+  const userDbId = users.id;
+
+  const { data: membership } = await supabaseAdmin
+    .from("memberships")
+    .select("*")
+    .eq("couple_id", coupleId)
+    .eq("user_id", userDbId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!membership) return NextResponse.json({ error: "Not a member" }, { status: 403 });
+
+  // generate storage path
+  const fileExt = filename.split('.').pop();
+  const objectPath = `${coupleId}/${Date.now()}_${randomUUID()}.${fileExt}`;
+
+  // create signed upload url/token (Supabase admin; tokens valid ~2 hours)
+  const bucket = "couples-media"; // your private bucket
+  const { data: signed, error } = await supabaseAdmin.storage
+    .from(bucket)
+    .createSignedUploadUrl(objectPath);
+
+  if (error) {
+    console.error("createSignedUploadUrl error", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Create if not exists
-  await supabase.from('users').upsert({
-    clerk_id: userId
-  }, { onConflict: 'clerk_id' })
+  // optionally pre-insert media row with key_encrypted_by_client pending state
+  // but we'll let the client call /api/media/register after upload
 
-  return new Response('OK')
+  return NextResponse.json({
+    token: signed?.token,
+    path: objectPath,
+    bucket,
+  });
 }

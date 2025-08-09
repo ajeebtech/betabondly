@@ -1,81 +1,170 @@
-// src/app/page.tsx
-import Link from "next/link";
+'use client';
 
-export default function LandingPage() {
+import { motion } from 'framer-motion';
+import { ChakraProvider, Button, Box, Container, Text, VStack, HStack } from '@chakra-ui/react';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import theme from '@/theme';
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+function RandomDottedBackground({ opacity = 0.08, dotColor = '#d6336c', dotSize = 2 }) {
   return (
-    <main className="min-h-screen bg-white flex flex-col">
-      {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center flex-1 text-center px-4 py-16 bg-gradient-to-b from-pink-100 to-white">
-        <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
-          Welcome to <span className="text-pink-500">Bondly</span>
-        </h1>
-        <p className="text-lg text-gray-600 mb-8 max-w-xl">
-          The modern way for couples to stay connected, share moments, and
-          create memories together.
-        </p>
-        <Link
-          href="/dashboard"
-          className="px-6 py-3 bg-pink-500 text-white rounded-lg text-lg hover:bg-pink-600 transition"
-        >
-          Get Started
-        </Link>
-      </section>
+    <Box
+      position="fixed"
+      top={0}
+      left={0}
+      right={0}
+      bottom={0}
+      zIndex={0}
+      style={{
+        backgroundImage: `radial-gradient(${dotColor} ${dotSize}px, transparent ${dotSize}px)`,
+        backgroundSize: '30px 30px',
+        opacity: opacity,
+        pointerEvents: 'none'
+      }}
+    />
+  );
+}
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            Why You’ll Love It
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
-              <h3 className="text-xl font-semibold mb-2 text-pink-500">
-                Share Moments
-              </h3>
-              <p className="text-gray-600">
-                Post your favorite memories and milestones with your partner in
-                one private space.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
-              <h3 className="text-xl font-semibold mb-2 text-pink-500">
-                Stay Connected
-              </h3>
-              <p className="text-gray-600">
-                Real-time updates so you’re always in sync no matter where you
-                are.
-              </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md text-center">
-              <h3 className="text-xl font-semibold mb-2 text-pink-500">
-                Build Memories
-              </h3>
-              <p className="text-gray-600">
-                A timeline of your shared life, beautifully organized and easy
-                to revisit.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+export default function Home() {
+  return (
+    <ChakraProvider theme={theme}>
+      <NextThemesProvider attribute="class" defaultTheme="light" enableSystem>
+        <Box position="relative" minH="100vh" bgGradient="linear(to-br, #f8f4e8, #f0ece0)" overflow="hidden">
+          {/* Paper texture overlay */}
+          <Box
+            position="absolute"
+            inset={0}
+            bgImage="url('/textures/old-paper.png')"
+            bgSize="cover"
+            bgRepeat="repeat"
+            opacity={0.2}
+            pointerEvents="none"
+            zIndex={1}
+          />
 
-      {/* CTA Section */}
-      <section className="py-16 bg-pink-500 text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">
-          Ready to Start Your Journey?
-        </h2>
-        <Link
-          href="/dashboard"
-          className="px-6 py-3 bg-white text-pink-500 rounded-lg text-lg hover:bg-gray-100 transition"
-        >
-          Join Now
-        </Link>
-      </section>
+          {/* Dotted overlay */}
+          <RandomDottedBackground />
 
-      {/* Footer */}
-      <footer className="py-6 text-center text-gray-500 text-sm bg-gray-50">
-        © {new Date().getFullYear()} Bondly. All rights reserved.
-      </footer>
-    </main>
+          {/* Main content */}
+          <Box position="relative" zIndex={10} minH="100vh" display="flex" flexDir="column">
+            <Box flex={1} display="flex" flexDir="column" alignItems="center" justifyContent="center" p={{ base: 6, md: 8 }}>
+              <motion.div 
+                initial="hidden"
+                animate="visible"
+                variants={staggerContainer}
+                style={{ width: '100%', maxWidth: '64rem', margin: '0 auto' }}
+              >
+                <VStack spacing={6} textAlign="center">
+                  <motion.div variants={fadeInUp}>
+                    <Text 
+                      fontSize={{ base: '4rem', sm: '5rem', lg: '6rem' }}
+                      fontWeight="normal"
+                      color="pink.600"
+                      fontFamily="var(--font-homemade-apple), cursive"
+                      lineHeight={0.9}
+                      letterSpacing="normal"
+                      textTransform="none"
+                    >
+                      Bondly
+                    </Text>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp}>
+                    <Text 
+                      fontSize={{ base: '1.5rem', md: '1.75rem' }}
+                      color="gray.700"
+                      fontFamily="'Indie Flower', cursive"
+                      maxW="2xl"
+                      lineHeight={1.6}
+                    >
+                      Your private corner of the internet, just for two. Share moments, 
+                      memories, and everything in between.
+                    </Text>
+                  </motion.div>
+
+                  <motion.div variants={fadeInUp}>
+                    <HStack spacing={4} mt={8} justifyContent="center" flexWrap="wrap">
+                      <Button
+                        as={motion.button}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        size="lg"
+                        colorScheme="pink"
+                        px={8}
+                        py={6}
+                        fontSize="lg"
+                        fontWeight="semibold"
+                        borderRadius="full"
+                        boxShadow="lg"
+                        _hover={{
+                          transform: 'translateY(-2px)',
+                          boxShadow: 'xl'
+                        }}
+                        _active={{
+                          transform: 'translateY(0)',
+                          boxShadow: 'md'
+                        }}
+                      >
+                        get cozy with us
+                      </Button>
+                      
+                      <Button
+                        as={motion.button}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        size="lg"
+                        variant="outline"
+                        colorScheme="pink"
+                        px={8}
+                        py={6}
+                        fontSize="lg"
+                        fontWeight="semibold"
+                        borderRadius="full"
+                        _hover={{
+                          bg: 'rgba(236, 64, 122, 0.1)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: 'xl'
+                        }}
+                        _active={{
+                          transform: 'translateY(0)',
+                          boxShadow: 'md'
+                        }}
+                      >
+                        How It Works
+                      </Button>
+                    </HStack>
+                  </motion.div>
+
+                  {/* Decorative elements */}
+
+                </VStack>
+              </motion.div>
+            </Box>
+
+            <Box py={6} borderTopWidth={1} borderColor="gray.200" _dark={{ borderColor: 'gray.700' }}>
+              <Container maxW="container.xl" textAlign="center">
+                <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }}>
+                  © {new Date().getFullYear()} ajeebtech.
+                </Text>
+              </Container>
+            </Box>
+          </Box>
+        </Box>
+      </NextThemesProvider>
+    </ChakraProvider>
   );
 }

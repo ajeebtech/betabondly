@@ -1,24 +1,11 @@
-import { fontFamily } from "tailwindcss/defaultTheme"
-
 module.exports = {
-  content: [
-    "./app/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-  ],
+  purge: [],
+  darkMode: false, // or 'media' or 'class'
   theme: {
-    extend: {
-      colors: {
-        lovePink: "#ff6f91",
-        postcardBg: "#fdf6e3",
-        postcardAccent: "#d4a373",
-      },
-      fontFamily: {
-        script: ["'Great Vibes'", ...fontFamily.sans],
-      },
-      backgroundImage: {
-        postcard: "url('/postcard-texture.jpg')",
-      },
-    },
+    extend: {},
+  },
+  variants: {
+    extend: {},
   },
   plugins: [],
 }
