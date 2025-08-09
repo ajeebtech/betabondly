@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: system-ui, sans-serif;
+}
+
+.bg-postcard {
+  background-image: url('/postcard-texture.jpg');
+  background-size: cover;
+}
