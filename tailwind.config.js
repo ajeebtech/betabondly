@@ -1,11 +1,22 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  purge: [],
-  darkMode: false, // or 'media' or 'class'
+  content: [
+    "./src/app/**/*.{js,ts,jsx,tsx}",        // App Router pages/layouts
+    "./src/pages/**/*.{js,ts,jsx,tsx}",      // Pages Router
+    "./src/components/**/*.{js,ts,jsx,tsx}", // Components
+  ],
   theme: {
-    extend: {},
-  },
-  variants: {
-    extend: {},
+    extend: {
+      colors: {
+        pink: {
+          300: "#f472b6",
+          400: "#ec4899",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
-}
+};
