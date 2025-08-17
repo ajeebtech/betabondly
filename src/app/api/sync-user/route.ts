@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase.Admin";
 import { auth } from "@clerk/nextjs/server"; // or your auth
 import { randomUUID } from "crypto";
 
