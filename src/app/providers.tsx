@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
+import theme from '../theme';
 
 const AppContext = createContext<any>(null);
 
@@ -12,7 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
 
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <AppContext.Provider
         value={{
           isConnected,

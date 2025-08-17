@@ -1,7 +1,11 @@
 'use client'
 
-import { Button, Box, Container, Text, VStack, HStack } from '@chakra-ui/react'
-import { motion } from 'framer-motion'
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button, Box, Container, Text, VStack, HStack, Icon } from '@chakra-ui/react'
+import { useRouter } from 'next/navigation'
+import { WavyBackground } from "@/components/ui/wavy-background";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Animation variants
 const fadeUp = {
@@ -22,64 +26,57 @@ const scrollToSection = (id: string) => {
 };
 
 export default function Home() {
-  return (
-    <Box minH="100vh" bg="gray.50" display="flex" flexDirection="column">
-      {/* Navbar */}
-      <Box 
-        as="nav" 
-        w="100%" 
-        py={{ base: 3, md: 4 }} 
-        px={{ base: 4, md: 8 }} 
-        bg="white" 
-        boxShadow="sm" 
-        position="fixed" 
-        top={0}
-        left={0}
-        right={0}
-        zIndex="sticky"
-      >
-        <Container 
-          maxW="container.xl" 
-          display="flex" 
-          justifyContent={{ base: 'center', md: 'flex-end' }}
-          alignItems="center"
-        >
-          <Button 
-            as={motion.button}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => scrollToSection('get-started')}
-            colorScheme="pink" 
-            size={{ base: 'md', md: 'lg' }}
-            bg="pink.400" 
-            _hover={{ 
-              bg: 'pink.500',
-              transform: 'translateY(-2px)',
-              boxShadow: 'lg'
-            }}
-            color="white"
-            px={6}
-            py={2}
-            borderRadius="full"
-            fontWeight="semibold"
-            boxShadow="md"
-          >
-            your page
-          </Button>
-        </Container>
-      </Box>
+  const router = useRouter();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-      {/* Hero Section - Full Viewport Height */}
+  return (
+    <Box minH="100vh" position="relative" overflow="hidden" className="hero-section" bg="var(--background)">
+
+      {/* Hero Section */}
       <Box 
         as="main" 
         minH="100vh" 
         display="flex" 
         alignItems="center" 
         justifyContent="center"
+        position="relative"
+        zIndex={1}
         pt={16} // Account for fixed navbar
         pb={20}
       >
-        <Container maxW="container.xl">
+        {/* Waves ONLY in hero */}
+        <Box 
+          position="absolute" 
+          top={0} 
+          left={0} 
+          right={0} 
+          bottom={0} 
+          zIndex={0}
+        >
+          <WavyBackground
+            colors={[
+              "#d9266d",
+              "#e93b88",
+              "#f67cb1",
+              "#fbb8d9",
+              "#fff0f7"
+            ]}
+            waveWidth={50}
+            backgroundFill="hsl(54.5, 91.7%, 95.3%)"
+            blur={10}
+            speed="fast"
+            waveOpacity={0.5}
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+            }}
+          />
+        </Box>
+
+        <Container maxW="container.xl" position="relative" zIndex={1}>
           <VStack
             as={motion.div}
             initial="hidden"
@@ -91,17 +88,24 @@ export default function Home() {
             justifyContent="center"
             minH={{ base: 'calc(100vh - 80px)', md: 'calc(100vh - 100px)' }}
           >
-            <Text
-              as={motion.p}
-              variants={fadeUp}
-              fontSize={{ base: '4.5rem', sm: '6rem', md: '8rem' }}
-              fontWeight="bold"
-              color="pink.300"
-              lineHeight={1}
-              letterSpacing="tighter"
-            >
-              bondly.
-            </Text>
+            <Box position="relative" zIndex={10}>
+              <Text
+                as={motion.p}
+                variants={fadeUp}
+                fontSize={{ base: '4.5rem', sm: '6rem', md: '8rem' }}
+                fontWeight="bold"
+                color="pink.300"
+                lineHeight={1}
+                letterSpacing="tighter"
+                textShadow={[
+                  '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                  '0 0 10px rgba(0, 0, 0, 0.15)',
+                  '0 0 20px rgba(0, 0, 0, 0.1)'
+                ].join(', ')}                
+              >
+                bondly.
+              </Text>
+            </Box>
             
             <Text 
               as={motion.p} 
@@ -124,74 +128,163 @@ export default function Home() {
               justifyContent="center"
             >
               <Button 
+                as="a"
+                href="#waitlist"
                 colorScheme="pink" 
                 size="lg" 
                 bg="pink.400" 
-                _hover={{ bg: 'pink.500' }} 
+                _hover={{ bg: 'pink.500', textDecoration: 'none' }} 
                 color="white"
-                onClick={() => scrollToSection('get-started')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('waitlist');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
                 px={8}
                 py={6}
                 fontSize="lg"
               >
-                get started
+                coming soon!
               </Button>
-              <Button variant="outline" size="lg">
+              <Button 
+                variant="outline" 
+                size="lg"
+                colorScheme="pink"
+                color="gray.700"
+                _hover={{ bg: 'pink.50' }}
+                borderColor="pink.500"
+              >
                 learn more
               </Button>
             </HStack>
           </VStack>
         </Container>
       </Box>
+      
+      {/* Gradient transition with subtle shadow */}
+      <Box 
+        h="100px" 
+        w="100%" 
+        position="relative" 
+        zIndex={1}
+        style={{
+          background: 'linear-gradient(0deg, var(--main-bg) 0%, var(--background) 100%)',
+          marginTop: '-40px',
+          marginBottom: '40px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
+        }}
+      />
+      
+      {/* Features Section */}
+      <Box id="features" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" position="relative" zIndex={2}>
+        {/* Grid */}
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="lg:col-span-1">
+            <h2 className="font-bold text-2xl md:text-3xl text-gray-800 dark:text-neutral-200">
+              Making long-distance love feel closer than ever
+            </h2>
+            <p className="mt-2 md:mt-4 text-gray-500 dark:text-neutral-500">
+              A small private space for you on the internet to write posts, plan dates, document everything you do, and most importantly, communicate.
+            </p>
+          </div>
+          {/* End Col */}
 
-      {/* Additional sections for scrolling */}
-      <Box id="features" py={20} bg="white">
-        <Container maxW="container.lg">
-          <VStack spacing={12} textAlign="center">
-            <motion.div variants={fadeUp}>
-              <Text fontSize="4xl" fontWeight="bold" color="gray.800" mb={4}>
-                we're bringing back chalant long-distance dating to this generation.
-              </Text>
-              <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto">
-                A beautiful, private corner of the internet designed just for you and your special someone to share memories, thoughts, and moments.
-              </Text>
-            </motion.div>
+          <div className="lg:col-span-2">
+            <div className="grid sm:grid-cols-2 gap-8 md:gap-12">
+              {/* Icon Block */}
+              <div className="flex gap-x-5">
+                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" x2="8" y1="16" y2="16"/><line x1="16" x2="16" y1="16" y2="16"/></svg>
+                <div className="grow">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    private & secure
+                  </h3>
+                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                    Your space is just for the two of you, with end-to-end encryption and no distractions.
+                  </p>
+                </div>
+              </div>
+              {/* End Icon Block */}
 
-            <Box display="grid" gridTemplateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={8} w="100%">
-              {[
-                { title: 'Private', desc: 'Your space is just for the two of you, no distractions.' },
-                { title: 'Beautiful', desc: 'Clean, modern design that puts your content first.' },
-                { title: 'Easy to Use', desc: 'Simple and intuitive interface that just works.' }
-              ].map((feature, index) => (
-                <motion.div key={feature.title} variants={fadeUp} custom={index}>
-                  <Box p={6} bg="gray.50" borderRadius="lg" height="100%">
-                    <Text fontSize="xl" fontWeight="bold" mb={3} color="pink.400">{feature.title}</Text>
-                    <Text color="gray.600">{feature.desc}</Text>
-                  </Box>
-                </motion.div>
-              ))}
-            </Box>
-          </VStack>
-        </Container>
+              {/* Icon Block */}
+              <div className="flex gap-x-5">
+                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                <div className="grow">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    silly and simple
+                  </h3>
+                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                    Clean, modern design that puts your relationship first, making every interaction special.
+                  </p>
+                </div>
+              </div>
+              {/* End Icon Block */}
+
+              {/* Icon Block */}
+              <div className="flex gap-x-5">
+                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <div className="grow">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    document everything
+                  </h3>
+                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                    From sweet messages to important dates, keep all your memories organized in one place.
+                  </p>
+                </div>
+              </div>
+              {/* End Icon Block */}
+
+              {/* Icon Block */}
+              <div className="flex gap-x-5">
+                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <div className="grow">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    built for just you two.
+                  </h3>
+                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                    Every feature is designed with your relationship in mind, making it easy to stay connected.
+                  </p>
+                </div>
+              </div>
+              {/* End Icon Block */}
+            </div>
+          </div>
+          {/* End Col */}
+        </div>
+        {/* End Grid */}
       </Box>
 
-      <Box py={20} bg="gray.50">
+      {/* How It Works Section */}
+      <Box id="how-it-works" py={20} position="relative" zIndex={2}>
+        <Box 
+          position="absolute" 
+          top={0} 
+          left={0} 
+          right={0} 
+          bottom={0} 
+          style={{
+            background: 'linear-gradient(0deg, var(--main-bg) 0%, rgba(255, 250, 230, 0.98) 100%)',
+            zIndex: -1,
+            borderTop: '1px solid rgba(0, 0, 0, 0.05)'
+          }} 
+        />
         <Container maxW="container.lg">
           <VStack spacing={8} textAlign="center">
             <motion.div variants={fadeUp}>
               <Text fontSize="4xl" fontWeight="bold" color="gray.800" mb={4}>
-                How It Works
+                how it works
               </Text>
               <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto">
-                Getting started is simple and takes just a few minutes.
+                getting started is very simple and takes just a few minutes.
               </Text>
             </motion.div>
 
             <VStack spacing={12} align="stretch" w="100%" maxW="3xl" mx="auto">
               {[
-                { number: '1', title: 'Sign Up', desc: 'Create your account in seconds.' },
-                { number: '2', title: 'Invite Your Partner', desc: 'Send an invite to your special someone.' },
-                { number: '3', title: 'Start Sharing', desc: 'Begin your private journey together.' }
+                { number: '1', title: 'register for a bondly bond.', desc: 'register your account with a phone number.' },
+                { number: '2', title: 'invite your partner with a one time password', desc: 'send an invite to your special someone.' },
+                { number: '3', title: 'you are all good to go!', desc: 'plan dates, shitpost, have fun documenting everything everything in private, no one else needs to see it, except you, and your partner' }
               ].map((step, index) => (
                 <motion.div key={step.number} variants={fadeUp} custom={index}>
                   <HStack spacing={6} align="start" bg="white" p={6} borderRadius="lg" boxShadow="sm">
@@ -222,33 +315,140 @@ export default function Home() {
         </Container>
       </Box>
 
-      <Box py={20} bg="white" id="contact">
-        <Container maxW="container.md" textAlign="center">
-          <motion.div variants={fadeUp}>
-            <Text fontSize="4xl" fontWeight="bold" color="gray.800" mb={6}>
-              Ready to Get Started?
-            </Text>
-            <Text fontSize="lg" color="gray.600" mb={10} maxW="xl" mx="auto">
-              Join thousands of couples who are already creating their private corner of the internet.
-            </Text>
-            <Button 
-              colorScheme="pink" 
-              size="lg" 
-              bg="pink.400" 
-              _hover={{ bg: 'pink.500' }} 
-              color="white"
-              px={8}
-              py={6}
-              fontSize="lg"
-              onClick={() => scrollToSection('get-started')}
+      {/* Subscribe Section */}
+      <Box id="waitlist" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" bg="white" position="relative" zIndex={2}>
+        <Box position="absolute" top={0} left={0} right={0} bottom={0} bg="white" zIndex={-1} />
+        <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
+          <h2 className="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+            be notified when it comes out!
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            we are a couple making this for the rest of the couples on the internet.
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto space-y-4">
+          <AnimatePresence>
+            {(showSuccess || showError) && (
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className={`text-sm rounded-md p-3 ${showSuccess ? 'bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200' : 'bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200'}`}
             >
-              Create Your Space Now
-            </Button>
-          </motion.div>
-        </Container>
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {showSuccess ? (
+                    <svg className="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5 text-red-600 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <div className="ml-3">
+                  <p className="font-medium">
+                    {showSuccess ? 'Thank you! 🎉' : 'Something went wrong'}
+                  </p>
+                  <p className="text-sm">
+                    {showSuccess 
+                      ? 'Thanks for joining our waitlist! Check your email for updates.'
+                      : errorMessage}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+            )}
+          </AnimatePresence>
+          <form className="hs-form" onSubmit={async (e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+            const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+            
+            // Basic email validation
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              alert('Please enter a valid email address');
+              return;
+            }
+            
+            try {
+              // Disable button and show loading state
+              submitButton.disabled = true;
+              submitButton.innerHTML = 'Joining...';
+              
+              const response = await fetch('/api/waitlist', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+              });
+              
+              const data = await response.json();
+              
+              if (!response.ok) {
+                throw new Error(data.error || 'Something went wrong');
+              }
+              
+              setShowSuccess(true);
+              setShowError(false);
+              form.reset();
+              // Hide success message after 5 seconds
+              setTimeout(() => setShowSuccess(false), 5000);
+            } catch (error: any) {
+              console.error('Error:', error);
+              setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
+              setShowError(true);
+              // Hide error message after 5 seconds
+              setTimeout(() => setShowError(false), 5000);
+            } finally {
+              // Re-enable button
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'join waitlist <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+            }
+          }}>
+            <div className="flex flex-col items-center gap-2 sm:flex-row border border-gray-200 rounded-lg p-1">
+              <div className="w-full">
+                <label htmlFor="email" className="sr-only">Email</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-20 pl-4">
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className="text-gray-400">
+                      <path d="M1 2C0.447715 2 0 2.44772 0 3V12C0 12.5523 0.447715 13 1 13H14C14.5523 13 15 12.5523 15 12V3C15 2.44772 14.5523 2 14 2H1ZM1 3L14 3V3.92494C13.9174 3.92486 13.8338 3.94751 13.7589 3.99505L7.5 7.96703L1.24112 3.99505C1.16621 3.94751 1.0826 3.92486 1 3.92494V3ZM1 4.90797V12H14V4.90797L7.74112 8.87995C7.59394 8.97335 7.40606 8.97335 7.25888 8.87995L1 4.90797Z" fillRule="evenodd" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 shadow-sm" 
+                    placeholder="Enter your email" 
+                    required
+                  />
+                </div>
+              </div>
+              <button 
+                type="submit"
+                className="w-full sm:w-auto whitespace-nowrap py-3 px-6 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-pink-500 text-white hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all"
+              >
+                join waitlist
+                <svg className="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"/>
+                  <path d="m12 5 7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+          <p className="mt-3 text-sm text-gray-500 dark:text-neutral-500">no spam, unsubscribe at any time.</p>
+        </div>
       </Box>
 
-      <Box py={6} borderTopWidth={1} borderColor="gray.200">
+      {/* Footer */}
+      <Box py={6} borderTopWidth={1} borderColor="gray.200" bg="white" position="relative" zIndex={2}>
+        <Box position="absolute" top={0} left={0} right={0} bottom={0} bg="white" zIndex={-1} />
         <Container maxW="container.xl" textAlign="center">
           <Text
             as={motion.p}
@@ -258,10 +458,10 @@ export default function Home() {
             fontSize="sm"
             color="gray.500"
           >
-            © {new Date().getFullYear()} ajeebtech
+            {new Date().getFullYear()} ajeebtech.
           </Text>
         </Container>
       </Box>
     </Box>
-  )
+  );
 }
