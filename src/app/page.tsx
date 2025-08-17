@@ -182,10 +182,10 @@ export default function Home() {
         {/* Grid */}
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-1">
-            <h2 className="font-bold text-2xl md:text-3xl text-gray-800 dark:text-neutral-200">
+            <h2 className="font-bold text-2xl md:text-3xl text-gray-800">
               Making long-distance love feel closer than ever
             </h2>
-            <p className="mt-2 md:mt-4 text-gray-500 dark:text-neutral-500">
+            <p className="mt-2 md:mt-4 text-gray-600">
               A small private space for you on the internet to write posts, plan dates, document everything you do, and most importantly, communicate.
             </p>
           </div>
@@ -197,10 +197,10 @@ export default function Home() {
               <div className="flex gap-x-5">
                 <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" x2="8" y1="16" y2="16"/><line x1="16" x2="16" y1="16" y2="16"/></svg>
                 <div className="grow">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-800">
                     private & secure
                   </h3>
-                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                  <p className="mt-1 text-gray-600">
                     Your space is just for the two of you, with end-to-end encryption and no distractions.
                   </p>
                 </div>
@@ -214,7 +214,7 @@ export default function Home() {
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     silly and simple
                   </h3>
-                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                  <p className="mt-1 text-gray-600">
                     Clean, modern design that puts your relationship first, making every interaction special.
                   </p>
                 </div>
@@ -228,7 +228,7 @@ export default function Home() {
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     document everything
                   </h3>
-                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                  <p className="mt-1 text-gray-600">
                     From sweet messages to important dates, keep all your memories organized in one place.
                   </p>
                 </div>
@@ -242,7 +242,7 @@ export default function Home() {
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     built for just you two.
                   </h3>
-                  <p className="mt-1 text-gray-600 dark:text-neutral-400">
+                  <p className="mt-1 text-gray-600">
                     Every feature is designed with your relationship in mind, making it easy to stay connected.
                   </p>
                 </div>
@@ -424,7 +424,7 @@ export default function Home() {
                     type="email" 
                     id="email" 
                     name="email" 
-                    className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 shadow-sm" 
+                    className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm text-gray-800 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm" 
                     placeholder="Enter your email" 
                     required
                   />
