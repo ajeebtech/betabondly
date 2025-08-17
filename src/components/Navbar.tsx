@@ -9,7 +9,7 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 inset-x-0 flex flex-wrap md:justify-start md:flex-nowrap z-50 w-full text-sm transition-all duration-300 bg-transparent">
-      <nav className="mt-4 relative max-w-2xl w-full bg-white/80 backdrop-blur-md border border-gray-200 rounded-[24px] mx-2 flex flex-wrap md:flex-nowrap items-center justify-between p-1 ps-4 md:py-0 sm:mx-auto dark:bg-neutral-900/80 dark:border-neutral-700">
+      <nav className="mt-4 relative max-w-2xl w-full bg-white/90 backdrop-blur-md border border-gray-200 rounded-[24px] mx-2 flex flex-wrap md:flex-nowrap items-center justify-between p-1 ps-4 md:py-0 sm:mx-auto">
         <div className="flex items-center">
           <Link 
             href="/" 
@@ -44,7 +44,7 @@ const Navbar = () => {
 
           <button 
             type="button" 
-            className="hs-collapse-toggle flex justify-center items-center size-9.5 border border-gray-200 text-gray-500 rounded-full hover:bg-gray-200 focus:outline-none focus:bg-gray-200 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700 md:hidden" 
+            className="hs-collapse-toggle flex justify-center items-center size-9.5 border border-gray-200 text-gray-500 rounded-full hover:bg-gray-200 focus:outline-none focus:bg-gray-200 md:hidden" 
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
             aria-controls="hs-navbar-header-floating"
@@ -77,7 +77,7 @@ const Navbar = () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setIsOpen(false);
               }}
-              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-800 hover:text-pink-500 focus:outline-none dark:text-neutral-200 dark:hover:text-pink-400"
+              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-800 hover:text-pink-500 focus:outline-none"
             >
               home
             </button>
@@ -90,7 +90,7 @@ const Navbar = () => {
                 }
                 setIsOpen(false);
               }}
-              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-600 hover:text-pink-500 focus:outline-none dark:text-neutral-400 dark:hover:text-pink-400"
+              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-600 hover:text-pink-500 focus:outline-none"
             >
               features
             </button>
@@ -103,7 +103,7 @@ const Navbar = () => {
                 }
                 setIsOpen(false);
               }}
-              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-600 hover:text-pink-500 focus:outline-none dark:text-neutral-400 dark:hover:text-pink-400"
+              className="py-0.5 md:py-3 px-4 md:px-1 border-s-2 md:border-s-0 md:border-b-2 border-transparent font-medium text-gray-600 hover:text-pink-500 focus:outline-none"
             >
               how it works
             </button>
