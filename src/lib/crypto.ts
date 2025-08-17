@@ -17,9 +17,14 @@ export async function generateAesKeyAndEncryptFile(file: File) {
   // RSA encrypt rawKey with server public key (PEM)
   export async function rsaEncryptRawKey(rawKey: Uint8Array, serverPublicPem: string) {
     // convert PEM to CryptoKey and encrypt with RSA-OAEP
-    function pemToArrayBuffer(pem: string) {
+    function pemToArrayBuffer(pem: string): ArrayBuffer {
       const b64 = pem.replace(/-----.*?-----/g, "").replace(/\s/g, "");
-      return Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer;
+      const byteString = atob(b64);
+      const byteArray = new Uint8Array(byteString.length);
+      for (let i = 0; i < byteString.length; i++) {
+        byteArray[i] = byteString.charCodeAt(i);
+      }
+      return byteArray.buffer;
     }
   
     const spki = pemToArrayBuffer(serverPublicPem);
@@ -31,7 +36,13 @@ export async function generateAesKeyAndEncryptFile(file: File) {
       ["encrypt"]
     );
   
-    const encrypted = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, pubKey, rawKey);
+    // Create a new ArrayBuffer from the Uint8Array to ensure proper type
+    const rawKeyBuffer = new Uint8Array(rawKey).buffer;
+    const encrypted = await crypto.subtle.encrypt(
+      { name: "RSA-OAEP" }, 
+      pubKey, 
+      rawKeyBuffer
+    );
     return btoa(String.fromCharCode(...new Uint8Array(encrypted))); // base64
   }
   
