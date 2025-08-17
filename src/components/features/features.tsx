@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import { Button as ChakraButton, Box, Flex, Text, VStack, HStack, Icon } from '@chakra-ui/react';
-import * as RadixButton from '@radix-ui/react-button';
 import { motion } from 'framer-motion';
 
 export default function Features() {
@@ -43,9 +42,9 @@ export default function Features() {
       description: 'Unstyled, accessible components for building high‑quality design systems and web apps in React.',
       icon: '✨',
       button: (
-        <RadixButton.Root className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
+        <Button className="w-full">
           Explore Components
-        </RadixButton.Root>
+        </Button>
       ),
       highlights: [
         'Unstyled components',
