@@ -6,7 +6,7 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx}", // Components
     "./node_modules/preline/preline.js",     // Preline UI
   ],
-  darkMode: 'class',
+  darkMode: false, // Disable dark mode
   theme: {
     extend: {
       colors: {

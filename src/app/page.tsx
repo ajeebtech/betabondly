@@ -424,9 +424,9 @@ export default function Home() {
                     type="email" 
                     id="email" 
                     name="email" 
-                    className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800" 
+                    className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
                     placeholder="Enter your email" 
-                    style={{ color: '#1a1a1a !important' }}
+                    style={{ color: '#1a1a1a' }}
                     required
                   />
                 </div>
