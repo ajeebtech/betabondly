@@ -211,7 +211,7 @@ export default function Home() {
               <div className="flex gap-x-5">
                 <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
                 <div className="grow">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-800">
                     silly and simple
                   </h3>
                   <p className="mt-1 text-gray-600">
@@ -225,7 +225,7 @@ export default function Home() {
               <div className="flex gap-x-5">
                 <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <div className="grow">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-800">
                     document everything
                   </h3>
                   <p className="mt-1 text-gray-600">
@@ -239,7 +239,7 @@ export default function Home() {
               <div className="flex gap-x-5">
                 <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <div className="grow">
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  <h3 className="text-lg font-semibold text-gray-800">
                     built for just you two.
                   </h3>
                   <p className="mt-1 text-gray-600">
@@ -319,7 +319,7 @@ export default function Home() {
       <Box id="waitlist" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" bg="white" position="relative" zIndex={2}>
         <Box position="absolute" top={0} left={0} right={0} bottom={0} bg="white" zIndex={-1} />
         <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-          <h2 className="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+          <h2 className="text-2xl font-bold md:text-4xl md:leading-tight text-gray-800">
             be notified when it comes out!
           </h2>
           <p className="mt-2 text-gray-600">
@@ -335,16 +335,16 @@ export default function Home() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 300, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className={`text-sm rounded-md p-3 ${showSuccess ? 'bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200' : 'bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200'}`}
+              className={`text-sm rounded-md p-3 ${showSuccess ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
             >
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {showSuccess ? (
-                    <svg className="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5 text-red-600 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg className="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -443,7 +443,7 @@ export default function Home() {
               </button>
             </div>
           </form>
-          <p className="mt-3 text-sm text-gray-500 dark:text-neutral-500">no spam, unsubscribe at any time.</p>
+          <p className="mt-3 text-sm text-gray-500">no spam, unsubscribe at any time.</p>
         </div>
       </Box>
 
