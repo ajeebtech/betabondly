@@ -322,7 +322,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
             be notified when it comes out!
           </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-gray-600">
             we are a couple making this for the rest of the couples on the internet.
           </p>
         </div>
