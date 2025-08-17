@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Button as ChakraButton } from '@chakra-ui/react';
+import { Button as RadixButton } from '@radix-ui/themes';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -60,11 +61,11 @@ export default function Hero() {
             </div>
             
             <div className="flex flex-col items-center gap-2">
-              <button 
+              <RadixButton.Root 
                 className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
-                Radix Style Button
-              </button>
+                Radix Button
+              </RadixButton.Root>
               <span className="text-xs text-muted-foreground">Radix UI</span>
             </div>
           </motion.div>
