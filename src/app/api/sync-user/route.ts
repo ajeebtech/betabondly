@@ -1,37 +1,32 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase.Admin";
-import { auth } from "@clerk/nextjs/server"; // or your auth
 import { randomUUID } from "crypto";
 
-// Request body: { coupleId, filename, mime, iv, key_encrypted_by_client, size }
+// Request body: { coupleId, filename, userId }
 export async function POST(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const body = await req.json();
-  const { coupleId, filename } = body;
-  if (!coupleId || !filename) return NextResponse.json({ error: "Missing" }, { status: 400 });
+  const { coupleId, filename, userId } = body;
+  
+  if (!coupleId || !filename || !userId) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
 
-  // verify that userId is member of coupleId
-  const { data: users, error: uerr } = await supabaseAdmin
-    .from("users")
-    .select("id")
-    .eq("clerk_id", userId)
-    .limit(1)
-    .maybeSingle();
-  if (uerr || !users) return NextResponse.json({ error: "User not found" }, { status: 403 });
-
-  const userDbId = users.id;
-
-  const { data: membership } = await supabaseAdmin
+  // Verify that userId is a member of coupleId
+  const { data: membership, error: membershipError } = await supabaseAdmin
     .from("memberships")
     .select("*")
     .eq("couple_id", coupleId)
-    .eq("user_id", userDbId)
+    .eq("user_id", userId)
     .limit(1)
     .maybeSingle();
 
-  if (!membership) return NextResponse.json({ error: "Not a member" }, { status: 403 });
+  if (membershipError) {
+    return NextResponse.json({ error: membershipError.message }, { status: 500 });
+  }
+
+  if (!membership) {
+    return NextResponse.json({ error: "Not a member of this couple" }, { status: 403 });
+  }
 
   // generate storage path
   const fileExt = filename.split('.').pop();

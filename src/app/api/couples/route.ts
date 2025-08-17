@@ -1,13 +1,18 @@
-import { auth } from "@clerk/nextjs"
 import { NextResponse } from "next/server"
 import { supabase } from "@/lib/supabaseClient"
 import { randomUUID } from "crypto"
 
 export async function POST(req: Request) {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-  const { name } = await req.json()
+  const { name, userId } = await req.json()
+  
+  if (!userId) {
+    return NextResponse.json({ error: "User ID is required" }, { status: 400 })
+  }
+  
+  if (!name) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 })
+  }
+  
   const slug = name.toLowerCase().replace(/\s+/g, "-") + "-" + Math.floor(Math.random() * 1000)
 
   const { data, error } = await supabase
