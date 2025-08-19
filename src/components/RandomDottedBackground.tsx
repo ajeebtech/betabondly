@@ -63,7 +63,7 @@ const RandomDottedBackground: React.FC<RandomDottedBackgroundProps> = ({
         zIndex: 0,
       }}
     >
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: ${opacity}; }
           50% { transform: scale(1.5); opacity: ${opacity * 0.5}; }

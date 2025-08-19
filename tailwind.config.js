@@ -6,7 +6,7 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx}", // Components
     "./node_modules/preline/preline.js",     // Preline UI
   ],
-  darkMode: false, // Disable dark mode
+  darkMode: 'media', // Use media query for dark mode
   theme: {
     extend: {
       colors: {
@@ -31,8 +31,6 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/typography'),
-    require('@tailwindcss/forms')({
-      strategy: 'class', // Use class strategy for forms
-    })
+    require('@tailwindcss/forms')({ strategy: 'class' })
   ],
 };
