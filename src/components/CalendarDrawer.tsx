@@ -34,6 +34,7 @@ export function CalendarDrawer({
   const [open, setOpen] = React.useState(false)
   const [detailsOpen, setDetailsOpen] = React.useState(false)
   const [tempDate, setTempDate] = React.useState<Date | undefined>(undefined)
+  const [budget, setBudget] = React.useState("")
 
   const handleSelect = (newDate: Date | undefined) => {
     if (!newDate) return
@@ -108,10 +109,10 @@ export function CalendarDrawer({
                   month: "space-y-1 w-full flex flex-col h-full",
                   caption: "flex justify-center pt-1 relative items-center h-8 flex-shrink-0",
                   caption_label: "hidden",
-                  nav: "w-full flex items-center justify-between absolute top-0 left-0",
-                  nav_button: "h-7 w-7 bg-transparent p-0 hover:bg-transparent hover:opacity-100",
-                  nav_button_previous: "static ml-1",
-                  nav_button_next: "static mr-1",
+                  nav: "hidden",
+                  nav_button: "hidden",
+                  nav_button_previous: "hidden",
+                  nav_button_next: "hidden",
                   table: "w-full border-collapse space-y-1 flex-1",
                   head_row: "flex justify-between w-full mb-2",
                   head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
@@ -167,6 +168,8 @@ export function CalendarDrawer({
         onOpenChange={setDetailsOpen}
         selectedDate={tempDate}
         onConfirm={handleConfirmDate}
+        budget={budget}
+        onBudgetChange={setBudget}
       />
     </Drawer>
   )

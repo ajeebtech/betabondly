@@ -16,30 +16,57 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DateDetailsDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedDate: Date | undefined
   onConfirm: () => void
+  budget: string
+  onBudgetChange: (value: string) => void
 }
 
 export function DateDetailsDrawer({ 
   open, 
   onOpenChange, 
   selectedDate,
-  onConfirm
+  onConfirm,
+  budget,
+  onBudgetChange
 }: DateDetailsDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-[hsl(54.5,91.7%,95.3%)] text-gray-900 border-0 h-[90vh] max-h-[800px] [&>div]:bg-[hsl(54.5,91.7%,95.3%)] [&>div]:rounded-t-2xl z-[100] fixed bottom-0 left-0 right-0">
-        <div className="p-6 flex flex-col items-center w-full">
-          <div className="w-full max-w-xs">
-            <DrawerHeader className="p-0 mb-4">
-              <DrawerTitle className="text-xl font-bold text-center">
-                {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a date'}
-              </DrawerTitle>
-            </DrawerHeader>
+      <DrawerContent className="bg-white flex flex-row justify-start">
+        <div className="w-full max-w-sm p-6 bg-white">
+          <DrawerHeader className="px-0">
+            <DrawerTitle>Plan a Date</DrawerTitle>
+            <DrawerDescription>
+              Add details for your date on {selectedDate && format(selectedDate, 'PPP')}
+            </DrawerDescription>
+          </DrawerHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">how much do you want to spend?</label>
+              <Select value={budget} onValueChange={onBudgetChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a budget" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="$">₹ - Budget-friendly</SelectItem>
+                  <SelectItem value="$$">₹₹ - Moderate</SelectItem>
+                  <SelectItem value="$$$">₹₹₹ - Expensive</SelectItem>
+                  <SelectItem value="$$$$">₹₹₹₹ - Very expensive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             <div className="min-h-[360px] flex flex-col h-full">
               <div>
