@@ -45,6 +45,44 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
   } | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
+  // Fix for Google Places dropdown z-index and styling
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .pac-container {
+        z-index: 10000 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        margin-top: 0.5rem !important;
+        font-family: inherit !important;
+      }
+      .pac-item {
+        padding: 0.75rem 1rem !important;
+        cursor: pointer !important;
+        border-top: 1px solid #e5e7eb !important;
+        transition: background-color 0.2s !important;
+      }
+      .pac-item:first-child {
+        border-top: none !important;
+      }
+      .pac-item:hover {
+        background-color: #f9fafb !important;
+      }
+      .pac-item-query {
+        font-size: 0.875rem !important;
+        color: #111827 !important;
+      }
+      .pac-icon {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement('script');
@@ -163,13 +201,14 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-4 ${className}`} style={{ position: 'relative', zIndex: 1 }}>
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          className="w-full pl-9 pr-4 py-2 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(54.5,60%,80%)]"
+          onClick={handleInputClick}
+          className="w-full pl-9 pr-4 py-2 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(54.5,60%,80%)] text-gray-900"
         />
         <svg
           className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -189,7 +228,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       </div>
       
       {selectedPlace && (
-        <div className="mt-4">
+        <div className="mt-4 z-0">
           <div className="text-sm font-medium text-gray-700 mb-2">
             {selectedPlace.name}
           </div>
