@@ -27,10 +27,12 @@ import {
 interface DateDetailsDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  selectedDate: Date | undefined
+  selectedDate: Date | null
   onConfirm: () => void
   budget: string
   onBudgetChange: (value: string) => void
+  distance: string
+  onDistanceChange: (value: string) => void
 }
 
 export function DateDetailsDrawer({ 
@@ -39,7 +41,9 @@ export function DateDetailsDrawer({
   selectedDate,
   onConfirm,
   budget,
-  onBudgetChange
+  onBudgetChange,
+  distance,
+  onDistanceChange
 }: DateDetailsDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -54,7 +58,19 @@ export function DateDetailsDrawer({
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none">how much do you want to spend?</label>
+              <h3 className="text-lg font-bold text-center">Name one place you want to go</h3>
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  type="search"
+                  placeholder="Search for places or activities..."
+                  className="w-full pl-9 pr-4 py-2 rounded-full bg-white border-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[hsl(54.5,60%,80%)]"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">How much do you want to spend?</label>
               <Select value={budget} onValueChange={onBudgetChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a budget" />
@@ -68,19 +84,23 @@ export function DateDetailsDrawer({
               </Select>
             </div>
             
-            <div className="min-h-[360px] flex flex-col h-full">
-              <div>
-                <h3 className="text-lg font-bold mb-3 text-center">Name one place you want to go</h3>
-                <div className="relative mb-6">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="search"
-                    placeholder="Search for places or activities..."
-                    className="w-full pl-9 pr-4 py-2 rounded-full bg-white border-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[hsl(54.5,60%,80%)]"
-                  />
-                </div>
-              </div>
-              
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none">Search radius</label>
+              <Select value={distance} onValueChange={onDistanceChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select search radius" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 km</SelectItem>
+                  <SelectItem value="3">3 km</SelectItem>
+                  <SelectItem value="5">5 km</SelectItem>
+                  <SelectItem value="10">10 km</SelectItem>
+                  <SelectItem value="15">15 km</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="min-h-[200px] flex flex-col h-full">
               <div className="mt-auto pt-4 mb-12">
                 <div className="flex gap-4">
                   <Button 
