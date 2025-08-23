@@ -32,7 +32,8 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "node_modules/@types/google.maps/**/*.d.ts"
   ],
   "exclude": [
     "node_modules"

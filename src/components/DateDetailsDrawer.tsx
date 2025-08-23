@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useState } from "react"
 import { format } from "date-fns"
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons"
 
@@ -12,7 +13,6 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer"
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { LocationSearch } from "./LocationSearch"
 
 interface DateDetailsDrawerProps {
   open: boolean
@@ -45,6 +46,21 @@ export function DateDetailsDrawer({
   distance,
   onDistanceChange
 }: DateDetailsDrawerProps) {
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedPlace, setSelectedPlace] = useState<{
+    name?: string;
+    formatted_address?: string;
+    geometry?: {
+      location: {
+        lat: () => number;
+        lng: () => number;
+      };
+    };
+    place_id?: string;
+  } | null>(null);
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="bg-white flex flex-row justify-start">
@@ -59,14 +75,25 @@ export function DateDetailsDrawer({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-center">Name one place you want to go</h3>
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="search"
-                  placeholder="Search for places or activities..."
-                  className="w-full pl-9 pr-4 py-2 rounded-full bg-white border-gray-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[hsl(54.5,60%,80%)]"
-                />
-              </div>
+              <LocationSearch
+                placeholder="Search for places or activities..."
+                onPlaceSelected={(place) => {
+                  console.log('Selected place:', place);
+                  setSelectedPlace(place);
+                  // You can also pass this to a parent component or form state
+                }}
+              />
+              {selectedPlace && (
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium">{selectedPlace.name}</p>
+                  <p className="text-sm text-gray-600">{selectedPlace.formatted_address}</p>
+                  {selectedPlace.geometry?.location && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Location: {selectedPlace.geometry.location.lat().toFixed(6)}, {selectedPlace.geometry.location.lng().toFixed(6)}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
