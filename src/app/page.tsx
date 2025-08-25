@@ -6,6 +6,7 @@ import { Button, Box, Container, Text, VStack, HStack, Icon } from '@chakra-ui/r
 import { useRouter } from 'next/navigation'
 import { WavyBackground } from "@/components/ui/wavy-background";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { HowItWorks } from "@/components/HowItWorks";
 
 // Animation variants
 const fadeUp = {
@@ -179,6 +180,7 @@ export default function Home() {
       
       {/* Features Section */}
       <Box id="features" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" position="relative" zIndex={2}>
+        <HowItWorks />
         {/* Grid */}
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-1">
