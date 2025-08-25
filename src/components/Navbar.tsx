@@ -7,8 +7,8 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-transparent">
-      <nav className="relative max-w-7xl w-full flex flex-wrap lg:grid lg:grid-cols-12 basis-full items-center px-4 md:px-6 lg:px-8 mx-auto bg-transparent">
+    <header className="font-sans flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-transparent">
+      <nav className="font-sans relative max-w-7xl w-full flex flex-wrap lg:grid lg:grid-cols-12 basis-full items-center px-4 md:px-6 lg:px-8 mx-auto bg-transparent">
         <div className="lg:col-span-3 flex items-center">
           <Link 
             href="/" 

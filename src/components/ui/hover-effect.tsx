@@ -93,27 +93,23 @@ export const Card = ({
         maskComposite: 'exclude',
         pointerEvents: 'none',
       }}
+      backdropFilter="blur(16px) saturate(180%)"
+      bg="rgba(255, 255, 255, 0.7)"
+      border="1px solid"
+      borderColor="rgba(255, 255, 255, 0.3)"
+      _hover={{
+        transform: 'translateY(-4px)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
+      }}
       _dark={{
         _before: {
           background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
         },
-      }}
-      backdropFilter="blur(16px) saturate(180%)"
-      bg="rgba(255, 255, 255, 0.7)"
-      _dark={{
         bg: 'rgba(26, 32, 44, 0.7)',
-      }}
-      border="1px solid"
-      borderColor="rgba(255, 255, 255, 0.3)"
-      _dark={{
         borderColor: 'rgba(255, 255, 255, 0.1)',
-      }}
-      _hover={{
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
-        _dark: {
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-        },
+        _hover: {
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
+        }
       }}
       transition="all 0.3s ease-in-out"
     >
@@ -135,10 +131,6 @@ export const CardNumber = ({
       h={12}
       borderRadius="full"
       bg="rgba(255, 255, 255, 0.8)"
-      _dark={{
-        bg: 'rgba(255, 255, 255, 0.1)',
-        color: 'pink.300',
-      }}
       color="pink.600"
       display="flex"
       alignItems="center"
@@ -149,7 +141,9 @@ export const CardNumber = ({
       border="1px solid"
       borderColor="rgba(255, 255, 255, 0.3)"
       _dark={{
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        bg: 'rgba(255, 255, 255, 0.1)',
+        color: 'pink.300',
+        borderColor: 'rgba(255, 255, 255, 0.1)'
       }}
       backdropFilter="blur(8px)"
     >

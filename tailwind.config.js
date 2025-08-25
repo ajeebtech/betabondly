@@ -23,6 +23,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        'indie-flower': ['Indie Flower', 'cursive'],
       },
       boxShadow: {
         'focus-ring': '0 0 0 3px rgba(59, 130, 246, 0.5)',

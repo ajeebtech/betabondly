@@ -3,17 +3,19 @@ import { Providers } from './providers';
 import './globals.css';
 import PrelineScript from '@/components/PrelineScript';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
   display: 'swap',
+  variable: '--font-inter',
+  fallback: ['system-ui', 'sans-serif']
 });
 
-const indieFlower = Indie_Flower({ 
+const indieFlower = Indie_Flower({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-indie-flower',
   display: 'swap',
+  variable: '--font-indie-flower',
+  fallback: ['cursive']
 });
 
 export const metadata = {
@@ -29,8 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${indieFlower.variable}`} suppressHydrationWarning>
-      <body style={{ minHeight: '100vh', margin: 0, padding: 0 }}>
+    <html lang="en" suppressHydrationWarning>
+      <body style={{
+        fontFamily: 'var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        minHeight: '100vh',
+        margin: 0,
+        padding: 0
+      }} className={`${inter.variable} ${indieFlower.variable}`}>
         <Providers>
           <Navbar />
           <main>
