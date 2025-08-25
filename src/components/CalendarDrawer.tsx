@@ -163,13 +163,15 @@ export function CalendarDrawer({
           </div>
         </div>
       </DrawerContent>
-      <DateDetailsDrawer 
+      <DateDetailsDrawer
         open={detailsOpen}
         onOpenChange={setDetailsOpen}
-        selectedDate={tempDate}
+        selectedDate={tempDate || null}
         onConfirm={handleConfirmDate}
         budget={budget}
         onBudgetChange={setBudget}
+        distance="5"
+        onDistanceChange={() => {}}
       />
     </Drawer>
   )

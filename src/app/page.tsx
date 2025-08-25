@@ -147,7 +147,7 @@ export default function Home() {
                 py={6}
                 fontSize="lg"
               >
-                coming soon!
+                waitlist
               </Button>
               <Button 
                 variant="outline" 
@@ -180,8 +180,6 @@ export default function Home() {
       
       {/* Features Section */}
       <Box id="features" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" position="relative" zIndex={2}>
-        <HowItWorks />
-        {/* Grid */}
         <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
           <div className="lg:col-span-1">
             <h2 className="font-bold text-2xl md:text-3xl text-gray-800">
@@ -271,50 +269,7 @@ export default function Home() {
             borderTop: '1px solid rgba(0, 0, 0, 0.05)'
           }} 
         />
-        <Container maxW="container.lg">
-          <VStack spacing={8} textAlign="center">
-            <motion.div variants={fadeUp}>
-              <Text fontSize="4xl" fontWeight="bold" color="gray.800" mb={4}>
-                how it works
-              </Text>
-              <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto">
-                getting started is very simple and takes just a few minutes.
-              </Text>
-            </motion.div>
-
-            <VStack spacing={12} align="stretch" w="100%" maxW="3xl" mx="auto">
-              {[
-                { number: '1', title: 'register for a bondly bond.', desc: 'register your account with a phone number.' },
-                { number: '2', title: 'invite your partner with a one time password', desc: 'send an invite to your special someone.' },
-                { number: '3', title: 'you are all good to go!', desc: 'plan dates, shitpost, have fun documenting everything everything in private, no one else needs to see it, except you, and your partner' }
-              ].map((step, index) => (
-                <motion.div key={step.number} variants={fadeUp} custom={index}>
-                  <HStack spacing={6} align="start" bg="white" p={6} borderRadius="lg" boxShadow="sm">
-                    <Box 
-                      bg="pink.100" 
-                      color="pink.600" 
-                      w={10} 
-                      h={10} 
-                      borderRadius="full" 
-                      display="flex" 
-                      alignItems="center" 
-                      justifyContent="center"
-                      fontSize="lg"
-                      fontWeight="bold"
-                      flexShrink={0}
-                    >
-                      {step.number}
-                    </Box>
-                    <Box>
-                      <Text fontSize="xl" fontWeight="bold" color="gray.800" mb={1}>{step.title}</Text>
-                      <Text color="gray.600">{step.desc}</Text>
-                    </Box>
-                  </HStack>
-                </motion.div>
-              ))}
-            </VStack>
-          </VStack>
-        </Container>
+        <HowItWorks />
       </Box>
 
       {/* Subscribe Section */}

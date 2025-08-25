@@ -4,22 +4,22 @@ import { motion } from "framer-motion";
 
 const steps = [
   {
-    title: "1. Sign Up & Invite",
-    description: "Create your account and invite your partner to join your private space.",
+    title: "1. sign up and invite your partner in your bond",
+    description: "create an account with your phone number and make a bond, send a code to your partner for them to join your bond.",
     icon: "👋"
   },
   {
-    title: "2. Customize Your Space",
-    description: "Personalize your shared space with photos, memories, and special dates.",
+    title: "2. you're all done, enjoy bondly for free",
+    description: "compose anything you want for your partner, document everything, all within a space of you both.",
     icon: "✨"
   },
   {
-    title: "3. Start Connecting",
+    title: "3. try our special features!",
     description: "Share moments, plan dates, and stay connected in your private corner of the internet.",
     icon: "💌"
   },
   {
-    title: "4. Grow Together",
+    title: "4. unlock more features and limits with bondly premium",
     description: "Document your journey and watch your relationship flourish over time.",
     icon: "🌱"
   }
@@ -30,9 +30,9 @@ export function HowItWorks() {
     <section id="how-it-works" className="py-16" style={{ backgroundColor: 'hsl(54.5, 91.7%, 95.3%)' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">How It Works</h2>
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">how it works</h2>
           <p className="mt-4 text-xl text-gray-600">
-            Create your private space in just a few simple steps
+          getting started is very simple and takes just a few minutes.
           </p>
         </div>
 

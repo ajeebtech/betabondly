@@ -28,22 +28,40 @@ interface LocationSearchProps {
 
 export function LocationSearch({ onPlaceSelected, placeholder = 'Search for places...', className = '' }: LocationSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
+  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [selectedPlace, setSelectedPlace] = useState<{
     name?: string;
     formatted_address?: string;
     geometry?: {
       location: {
-        lat: () => number;
-        lng: () => number;
+        lat: number;
+        lng: number;
       };
     };
     place_id?: string;
     types?: string[];
   } | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  // Add null checks for refs
+  const getMap = () => {
+    if (!mapRef.current) {
+      console.error('Map not initialized');
+      return null;
+    }
+    return mapRef.current;
+  };
+  
+  const getSearchBox = () => {
+    if (!searchBoxRef.current) {
+      console.error('SearchBox not initialized');
+      return null;
+    }
+    return searchBoxRef.current;
+  };
 
   // Fix for Google Places dropdown z-index and styling
   useEffect(() => {
@@ -91,7 +109,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       script.defer = true;
       
       // Set up the global initMap function
-      window.initMap = initializeSearchBox;
+      window.initMap = initializeAutocomplete;
       
       script.onerror = (error) => {
         console.error('Error loading Google Maps script:', error);
@@ -99,13 +117,13 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       
       document.head.appendChild(script);
     } else {
-      initializeSearchBox();
+      initializeAutocomplete();
     }
 
     return () => {
       // Clean up event listeners
-      if (searchBoxRef.current) {
-        window.google.maps.event.clearInstanceListeners(searchBoxRef.current);
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
       if (mapRef.current) {
         window.google.maps.event.clearInstanceListeners(mapRef.current);
@@ -113,7 +131,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
     };
   }, []);
 
-  const initializeSearchBox = () => {
+  const initializeAutocomplete = () => {
     if (!inputRef.current) return;
 
     if (!window.google || !window.google.maps || !window.google.maps.places) {
@@ -121,71 +139,41 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       return;
     }
 
-    // Create a hidden map (required for SearchBox)
+    // Create a hidden map (required for Autocomplete)
     const hiddenMapDiv = document.createElement('div');
     hiddenMapDiv.style.display = 'none';
     document.body.appendChild(hiddenMapDiv);
 
-    // Create a map instance (required for SearchBox)
+    // Create a map instance (required for Autocomplete)
     mapRef.current = new window.google.maps.Map(hiddenMapDiv, {
       center: { lat: 28.6139, lng: 77.209 }, // Default to New Delhi
       zoom: 13,
     });
 
-    // Create the search box and link it to the UI element
-    searchBoxRef.current = new window.google.maps.places.SearchBox(inputRef.current, {
+    // Create the autocomplete and link it to the UI element
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ['establishment', 'geocode'],
       componentRestrictions: { country: 'in' }
     });
 
-    // Bias the SearchBox results towards current map's viewport
-    mapRef.current.addListener('bounds_changed', () => {
-      if (searchBoxRef.current) {
-        searchBoxRef.current.setBounds(mapRef.current?.getBounds() as google.maps.LatLngBounds);
-      }
-    });
-
     // Listen for the event fired when the user selects a prediction and retrieve more details for that place
-    searchBoxRef.current.addListener('places_changed', () => {
-      const places = searchBoxRef.current?.getPlaces();
-      
-      if (!places || places.length === 0 || !places[0]) {
+    if (autocompleteRef.current) {
+      autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
+    }
+  };
+
+  const handlePlaceChanged = () => {
+    try {
+      const place = autocompleteRef.current?.getPlace();
+      if (!place || !place.geometry?.location) {
+        console.log('No place selected or no geometry available');
         return;
       }
 
-      // For now, we'll just take the first place
-      const place = places[0];
-      
-      if (!place.geometry || !place.geometry.location) {
-        console.log('Returned place contains no geometry');
-        return;
-      }
-
-      // Update the map to show the selected location
-      if (mapContainerRef.current && place.geometry?.location) {
-        const map = new window.google.maps.Map(mapContainerRef.current, {
-          center: place.geometry.location,
-          zoom: 15,
-          mapTypeControl: false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          zoomControl: true,
-        });
-
-        new window.google.maps.Marker({
-          position: place.geometry.location,
-          map: map,
-          title: place.name,
-        });
-
-        setMap(map);
-        setSelectedPlace(place);
-      }
-
-      // Transform the place data to a simpler format
+      // Create a simplified place object with only the properties we need
       const simplifiedPlace = {
-        name: place.name,
-        formatted_address: place.formatted_address,
+        name: place.name || '',
+        formatted_address: place.formatted_address || '',
         geometry: {
           location: {
             lat: place.geometry.location.lat(),
@@ -197,7 +185,14 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       };
 
       onPlaceSelected(simplifiedPlace);
-    });
+    } catch (error) {
+      console.error('Error handling place selection:', error);
+    }
+  };
+
+  const handleInputClick = () => {
+    // This function is intentionally left empty as we're using the input's ref
+    // to initialize the autocomplete when it's focused
   };
 
   return (

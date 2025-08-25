@@ -39,7 +39,7 @@ const Navbar = () => {
               }
             }}
           >
-            coming soon!
+            waitlist
           </Link>
 
           <button 

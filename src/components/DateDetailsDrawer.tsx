@@ -54,17 +54,18 @@ export function DateDetailsDrawer({
     formatted_address?: string;
     geometry?: {
       location: {
-        lat: () => number;
-        lng: () => number;
+        lat: number;
+        lng: number;
       };
     };
     place_id?: string;
+    types?: string[];
   } | null>(null);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="bg-white flex flex-row justify-start">
-        <div className="w-full max-w-sm p-6 bg-white">
+      <DrawerContent className="bg-white">
+        <div className="w-full p-6 bg-white max-w-2xl mx-auto">
           <DrawerHeader className="px-0">
             <DrawerTitle>Plan a Date</DrawerTitle>
             <DrawerDescription>
@@ -89,7 +90,7 @@ export function DateDetailsDrawer({
                   <p className="text-sm text-gray-600">{selectedPlace.formatted_address}</p>
                   {selectedPlace.geometry?.location && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Location: {selectedPlace.geometry.location.lat().toFixed(6)}, {selectedPlace.geometry.location.lng().toFixed(6)}
+                      Location: {selectedPlace.geometry.location.lat.toFixed(6)}, {selectedPlace.geometry.location.lng.toFixed(6)}
                     </p>
                   )}
                 </div>
