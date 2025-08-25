@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Box, Container, Text, VStack, HStack, Icon } from '@chakra-ui/react'
 import { useRouter } from 'next/navigation'
-import { WavyBackground } from "@/components/ui/wavy-background";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HowItWorks } from "@/components/HowItWorks";
+import { GrainGradient } from '@paper-design/shaders-react';
 
 // Animation variants
 const fadeUp = {
@@ -47,7 +47,7 @@ export default function Home() {
         pt={16} // Account for fixed navbar
         pb={20}
       >
-        {/* Waves ONLY in hero */}
+        {/* Grain Gradient Background */}
         <Box 
           position="absolute" 
           top={0} 
@@ -55,25 +55,33 @@ export default function Home() {
           right={0} 
           bottom={0} 
           zIndex={0}
+          overflow="hidden"
         >
-          <WavyBackground
-            colors={[
-              "#d9266d",
-              "#e93b88",
-              "#f67cb1",
-              "#fbb8d9",
-              "#fff0f7"
-            ]}
-            waveWidth={50}
-            backgroundFill="hsl(54.5, 91.7%, 95.3%)"
-            blur={10}
-            speed="fast"
-            waveOpacity={0.5}
-            style={{
+          <GrainGradient
+            style={{ 
               position: 'absolute',
               width: '100%',
               height: '100%',
+              opacity: 0.7
             }}
+            colorBack="hsl(30, 100%, 97%)"  // Cream white as background
+            softness={0.5}
+            intensity={0.5}
+            noise={1}
+            shape="corners"
+            offsetX={0}
+            offsetY={0}
+            scale={1}
+            rotation={0}
+            speed={1}
+            colors={[
+              "hsl(30, 100%, 97%)",  // Cream white
+              "hsl(30, 90%, 94%)",   // Light cream
+              "hsl(338, 100%, 95%)", // Very light pink
+              "hsl(338, 100%, 90%)", // Light pink
+              "hsl(338, 100%, 85%)", // Medium light pink
+              "hsl(338, 100%, 80%)"  // Slightly darker pink
+            ]}
           />
         </Box>
 

@@ -30,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${indieFlower.variable}`} suppressHydrationWarning>
-      <body style={{ backgroundColor: 'hsl(54.5, 91.7%, 95.3%)', minHeight: '100vh', margin: 0, padding: 0 }}>
+      <body style={{ minHeight: '100vh', margin: 0, padding: 0 }}>
         <Providers>
           <Navbar />
           <main>

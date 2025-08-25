@@ -35,8 +35,8 @@ export default function CoupleDashboard() {
   const posts = [
     {
       id: 1,
-      author: "Alex Morgan",
-      username: "@alex_morgan",
+      author: "jatin roy",
+      username: "@ajeebtech",
       time: "2h ago",
       content: `Just had an amazing dinner date with my love! ❤️ #DateNight #CoupleGoals`,
       likes: 5,
@@ -44,8 +44,8 @@ export default function CoupleDashboard() {
     },
     {
       id: 2,
-      author: "Jessica Lee",
-      username: "@jessica_lee",
+      author: "hiya roy",
+      username: "@duckdealer",
       time: "5h ago",
       content: `Celebrating 6 months together today! Time flies when you're having fun with the love of your life. 💕 #Anniversary`,
       likes: 12,
