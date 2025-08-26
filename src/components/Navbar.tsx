@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    setIsOpen(false);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 font-sans flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-white/30 backdrop-blur-md border-b border-white/20">
@@ -93,51 +99,55 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Collapse */}
+        {/* Navigation Links */}
         <div 
           id="hs-pro-hcail" 
           className={`${isOpen ? 'block' : 'hidden'} hs-collapse overflow-hidden transition-all duration-300 basis-full grow lg:block lg:w-auto lg:basis-auto lg:order-2 lg:col-span-6`} 
           aria-labelledby="hs-pro-hcail-collapse"
         >
-          <div className="flex flex-col gap-y-4 gap-x-0 mt-5 lg:flex-row lg:justify-center lg:items-center lg:gap-y-0 lg:gap-x-7 lg:mt-0">
-            <div>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                  setIsOpen(false);
-                }}
-                className="relative inline-block text-gray-800 hover:text-pink-600 focus:outline-hidden before:absolute before:bottom-0.5 before:start-0 before:-z-1 before:w-full before:h-1 before:bg-pink-500"
-              >
-                home
-              </button>
-            </div>
-            <div>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  const element = document.getElementById('features');
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                  setIsOpen(false);
-                }}
-                className="inline-block text-gray-800 hover:text-pink-600 focus:outline-hidden"
-              >
-                features
-              </button>
-            </div>
-            <div>
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  const element = document.getElementById('how-it-works');
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                  setIsOpen(false);
-                }}
-                className="inline-block text-gray-800 hover:text-pink-600 focus:outline-hidden"
-              >
-                how it works
-              </button>
-            </div>
+          <div className="flex flex-col gap-y-4 gap-x-0 mt-5 lg:flex-row lg:items-center lg:justify-center lg:gap-y-0 lg:gap-x-7 lg:mt-0 lg:ps-7">
+            <Link 
+              href="/" 
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setIsOpen(false);
+              }}
+              className="font-medium text-gray-800 hover:text-pink-600 transition-colors"
+            >
+              home
+            </Link>
+            <Link 
+              href="#features" 
+              onClick={(e) => {
+                e.preventDefault();
+                const element = document.getElementById('features');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+                setIsOpen(false);
+              }}
+              className="font-medium text-gray-800 hover:text-pink-600 transition-colors"
+            >
+              features
+            </Link>
+            <Link 
+              href="#how-it-works" 
+              onClick={(e) => {
+                e.preventDefault();
+                const element = document.getElementById('how-it-works');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+                setIsOpen(false);
+              }}
+              className="font-medium text-gray-800 hover:text-pink-600 transition-colors"
+            >
+              how it works
+            </Link>
+            <Link 
+              href="/privacy" 
+              className="font-medium text-gray-800 hover:text-pink-600 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              privacy policy
+            </Link>
           </div>
         </div>
       </nav>

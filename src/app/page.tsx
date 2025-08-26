@@ -74,7 +74,7 @@ export default function Home() {
             offsetY={0}
             scale={1}
             rotation={0}
-            speed={1}
+            speed={2}
             colors={[
               "hsl(30, 100%, 97%)",  // Cream white
               "hsl(30, 90%, 94%)",   // Light cream
