@@ -21,8 +21,8 @@ export const theme = extendTheme({
     heading: 'var(--font-inter), system-ui, sans-serif',
   },
   config: {
-    initialColorMode: 'system',
-    useSystemColorMode: true,
+    initialColorMode: 'light',
+    useSystemColorMode: false,
   },
 });
 

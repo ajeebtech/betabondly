@@ -62,11 +62,12 @@ export default function Home() {
               position: 'absolute',
               width: '100%',
               height: '100%',
-              opacity: 0.7
+              opacity: 0.7,
+              mixBlendMode: 'multiply'  // This will help blend the colors
             }}
             colorBack="hsl(30, 100%, 97%)"  // Cream white as background
-            softness={0.5}
-            intensity={0.5}
+            softness={0.6}
+            intensity={0.6}
             noise={1}
             shape="corners"
             offsetX={0}
@@ -77,6 +78,7 @@ export default function Home() {
             colors={[
               "hsl(30, 100%, 97%)",  // Cream white
               "hsl(30, 90%, 94%)",   // Light cream
+              "hsl(272, 76%, 93%)",  // Light purple
               "hsl(338, 100%, 95%)", // Very light pink
               "hsl(338, 100%, 90%)", // Light pink
               "hsl(338, 100%, 85%)", // Medium light pink
@@ -85,7 +87,7 @@ export default function Home() {
           />
         </Box>
 
-        <Container maxW="container.xl" position="relative" zIndex={1}>
+        <Container maxW="container.xl" position="relative" zIndex={1} pt="80px">
           <VStack
             as={motion.div}
             initial="hidden"
@@ -165,7 +167,7 @@ export default function Home() {
                 _hover={{ bg: 'pink.50' }}
                 borderColor="pink.500"
               >
-                learn more
+                privacy policy
               </Button>
             </HStack>
           </VStack>

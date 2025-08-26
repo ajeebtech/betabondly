@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState } from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, ColorModeScript } from '@chakra-ui/react';
 import theme from '../theme';
 
 const AppContext = createContext<any>(null);
@@ -14,6 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ChakraProvider theme={theme}>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <AppContext.Provider
         value={{
           isConnected,
