@@ -73,27 +73,37 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
         margin-top: 0.5rem !important;
         font-family: inherit !important;
+        background-color: white !important;
       }
       .pac-item {
         padding: 0.75rem 1rem !important;
         cursor: pointer !important;
         border-top: 1px solid #e5e7eb !important;
         transition: background-color 0.2s !important;
+        font-size: 0.875rem !important;
+        color: #374151 !important;
       }
       .pac-item:first-child {
         border-top: none !important;
       }
       .pac-item:hover {
-        background-color: #f9fafb !important;
+        background-color: #f3f4f6 !important;
       }
       .pac-item-query {
         font-size: 0.875rem !important;
         color: #111827 !important;
+        padding-right: 3px;
       }
       .pac-icon {
         display: none !important;
       }
-    `;
+      .pac-item:after {
+        display: none !important;
+      }
+      .pac-matched {
+        font-weight: 500 !important;
+        color: #111827 !important;
+      }`;
     document.head.appendChild(style);
 
     return () => {
@@ -150,15 +160,28 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       zoom: 13,
     });
 
-    // Create the autocomplete and link it to the UI element
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      types: ['establishment', 'geocode'],
-      componentRestrictions: { country: 'in' }
-    });
+    // Create the autocomplete with more comprehensive configuration
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
+      }
+    );
 
-    // Listen for the event fired when the user selects a prediction and retrieve more details for that place
+    // Add a class to the autocomplete dropdown for styling
     if (autocompleteRef.current) {
-      autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
+      autocompleteRef.current.addListener('place_changed', () => {
+        handlePlaceChanged();
+        // Add a small delay to ensure the dropdown is rendered
+        setTimeout(() => {
+          const pacContainer = document.querySelector('.pac-container');
+          if (pacContainer) {
+            pacContainer.setAttribute('data-testid', 'autocomplete-dropdown');
+          }
+        }, 100);
+      });
     }
   };
 
@@ -191,8 +214,13 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
   };
 
   const handleInputClick = () => {
-    // This function is intentionally left empty as we're using the input's ref
-    // to initialize the autocomplete when it's focused
+    // Force the dropdown to show when input is clicked
+    if (inputRef.current) {
+      inputRef.current.focus();
+      // Trigger a small input change to show suggestions
+      const event = new Event('input', { bubbles: true });
+      inputRef.current.dispatchEvent(event);
+    }
   };
 
   return (

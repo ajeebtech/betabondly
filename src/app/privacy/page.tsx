@@ -2,8 +2,16 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Container, Text, VStack } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import { GrainGradient } from '@paper-design/shaders-react';
+import { Playfair_Display } from 'next/font/google';
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700'],
+  style: ['italic'], // enable italic
+});
+
 
 export default function PrivacyPage() {
   const [showSuccess, setShowSuccess] = useState(false);
@@ -15,15 +23,14 @@ export default function PrivacyPage() {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
-    
-    // Basic email validation
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrorMessage('Please enter a valid email address');
       setShowError(true);
       setTimeout(() => setShowError(false), 5000);
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       const response = await fetch('/api/waitlist', {
@@ -31,12 +38,12 @@ export default function PrivacyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to join waitlist');
       }
-      
+
       setShowSuccess(true);
       form.reset();
       setTimeout(() => setShowSuccess(false), 5000);
@@ -72,9 +79,55 @@ export default function PrivacyPage() {
         ]}
       />
 
-      <Box position="relative" zIndex={1} w="100%" h="100vh" display="flex" alignItems="center" justifyContent="center">
-        <Box id="waitlist" className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" bg="white" position="relative" zIndex={2} borderRadius="xl" boxShadow="lg" maxW="container.lg">
-          <Box position="absolute" top={0} left={0} right={0} bottom={0} bg="white" zIndex={-1} borderRadius="xl" />
+     {/* Header */}
+<Box
+  position="absolute"
+  top={{ base: '80px', md: '120px' }} // moved further down
+  left={0}
+  right={0}
+  zIndex={2}
+  display="flex"
+  justifyContent="center"
+  px={4}
+>
+  <h1
+    className={`${playfair.className} text-center text-3xl md:text-5xl leading-tight`}
+    style={{ fontWeight: 700 }}
+  >
+    privacy policy
+  </h1>
+</Box>
+
+
+      <Box 
+        position="relative" 
+        zIndex={1} 
+        w="100%" 
+        h="100vh" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+      >
+        <Box 
+          id="waitlist" 
+          className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" 
+          bg="white" 
+          position="relative" 
+          zIndex={2} 
+          borderRadius="xl" 
+          boxShadow="lg" 
+          maxW="container.lg"
+        >
+          <Box 
+            position="absolute" 
+            top={0} 
+            left={0} 
+            right={0} 
+            bottom={0} 
+            bg="white" 
+            zIndex={-1} 
+            borderRadius="xl" 
+          />
           <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
             <h2 className="text-2xl font-bold md:text-4xl md:leading-tight text-gray-800">
               be notified when it comes out!
@@ -120,6 +173,7 @@ export default function PrivacyPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+
             <form className="hs-form" onSubmit={handleSubmit}>
               <div className="flex flex-col items-center gap-2 sm:flex-row border border-gray-200 rounded-lg p-1">
                 <div className="w-full">

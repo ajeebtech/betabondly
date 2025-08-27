@@ -1,7 +1,6 @@
 import { Inter, Indie_Flower } from 'next/font/google';
 import { Providers } from './providers';
 import './globals.css';
-import PrelineScript from '@/components/PrelineScript';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -32,6 +31,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Remove the server-side injected class
+                  if (document.documentElement.classList.contains('chakra-ui-light') || 
+                      document.documentElement.classList.contains('chakra-ui-dark')) {
+                    document.documentElement.classList.remove('chakra-ui-light', 'chakra-ui-dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body style={{
         fontFamily: 'var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         minHeight: '100vh',
@@ -43,7 +59,6 @@ export default function RootLayout({
           <main>
             {children}
           </main>
-          <PrelineScript />
         </Providers>
       </body>
     </html>
