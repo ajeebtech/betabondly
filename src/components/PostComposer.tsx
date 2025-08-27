@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Button as StatefulButton } from "@/components/ui/stateful-button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface PostComposerProps {
@@ -205,7 +206,7 @@ export function PostComposer({ onPost, className = "" }: PostComposerProps) {
 
               {/* Right side - Post button */}
               <div className="flex items-center">
-                <Button
+                <StatefulButton
                   type="submit"
                   disabled={!content.trim() || isOverLimit}
                   className={`h-8 px-4 rounded-full text-sm font-medium transition-colors ${
@@ -214,9 +215,16 @@ export function PostComposer({ onPost, className = "" }: PostComposerProps) {
                       : "bg-blue-500 hover:bg-blue-600 text-white"
                   }`}
                   aria-label="Post"
+                  onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
+                    if (onPost && content.trim() && !isOverLimit) {
+                      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+                      onPost(content);
+                      setContent("");
+                    }
+                  }}
                 >
                   Post
-                </Button>
+                </StatefulButton>
               </div>
             </div>
           </div>

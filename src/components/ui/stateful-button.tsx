@@ -85,16 +85,31 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
       layoutId="button"
       ref={scope}
       className={cn(
-        "flex min-w-[120px] cursor-pointer items-center justify-center gap-2 rounded-full bg-green-500 px-4 py-2 font-medium text-white ring-offset-2 transition duration-200 hover:ring-2 hover:ring-green-500 dark:ring-offset-black",
+        "relative flex min-w-[80px] cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 font-medium text-white transition duration-200",
         className,
+        props.disabled ? 'opacity-50 cursor-not-allowed' : ''
       )}
       {...buttonProps}
       onClick={handleClick}
+      disabled={props.disabled}
     >
-      <motion.div layout className="flex items-center gap-2">
+      <motion.div 
+        layout 
+        className="flex items-center justify-center gap-2"
+        style={{ minHeight: '24px' }}
+      >
         <Loader />
         <CheckIcon />
-        <motion.span layout>{children}</motion.span>
+        <motion.span 
+          layout 
+          className="relative z-10"
+          style={{
+            opacity: 1,
+            transition: 'opacity 0.2s',
+          }}
+        >
+          {children}
+        </motion.span>
       </motion.div>
     </motion.button>
   );
@@ -102,38 +117,88 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
 
 const Loader = () => {
   return (
-    <motion.svg
-      animate={{
-        rotate: [0, 360],
-      }}
+    <motion.div 
+      className="loader absolute inset-0 flex items-center justify-center"
       initial={{
-        scale: 0,
-        width: 0,
-        display: "none",
-      }}
-      style={{
+        opacity: 0,
         scale: 0.5,
-        display: "none",
+      }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+      }}
+      exit={{
+        opacity: 0,
+        scale: 0.5,
       }}
       transition={{
-        duration: 0.3,
-        repeat: Infinity,
-        ease: "linear",
+        duration: 0.2,
       }}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="loader text-white"
     >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M12 3a9 9 0 1 0 9 9" />
-    </motion.svg>
+      <motion.svg
+        className="h-5 w-5 text-current"
+        animate={{
+          rotate: 360,
+        }}
+        transition={{
+          duration: 1,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M12 2V6"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M12 18V22"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M4.92993 4.92993L7.75999 7.75999"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16.24 16.24L19.07 19.07"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M2 12H6"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M18 12H22"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M4.92993 19.07L7.75999 16.24"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16.24 7.75999L19.07 4.92993"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </motion.svg>
+    </motion.div>
   );
 };
 
