@@ -148,9 +148,31 @@ const Navbar = () => {
             >
               privacy policy
             </Link>
+            <Link 
+              href="/premium" 
+              className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              premium
+            </Link>
           </div>
         </div>
       </nav>
+      
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="lg:hidden w-full bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex justify-end">
+            <Link 
+              href="/premium" 
+              className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 transition-colors text-sm"
+              onClick={() => setIsOpen(false)}
+            >
+              premium
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
