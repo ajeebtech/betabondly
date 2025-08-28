@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { format, addMonths, subMonths, isToday } from "date-fns"
+import { ChevronLeft, ChevronRight, X, Calendar as CalendarIcon } from "lucide-react"
+import { format, addMonths, subMonths, isToday, isSameDay } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -12,167 +12,166 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
+  DrawerClose,
 } from "@/components/ui/drawer"
-import { DateDetailsDrawer } from "./DateDetailsDrawer"
 
 interface CalendarDrawerProps {
-  date?: Date
-  onSelect?: (date: Date | undefined) => void
-  triggerLabel?: string
-  className?: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  date: Date | undefined;
+  onDateSelect: (date: Date | undefined) => void;
+  className?: string;
 }
 
-export function CalendarDrawer({
-  date,
-  onSelect,
-  triggerLabel = "plan a date!",
-  className,
+export function CalendarDrawer({ 
+  open, 
+  onOpenChange, 
+  date, 
+  onDateSelect,
+  className 
 }: CalendarDrawerProps) {
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(date)
-  const [currentMonth, setCurrentMonth] = React.useState<Date>(new Date())
-  const [open, setOpen] = React.useState(false)
-  const [detailsOpen, setDetailsOpen] = React.useState(false)
-  const [tempDate, setTempDate] = React.useState<Date | undefined>(undefined)
-  const [budget, setBudget] = React.useState("")
+  const [currentMonth, setCurrentMonth] = React.useState<Date>(date || new Date())
+  const [tempDate, setTempDate] = React.useState<Date | undefined>(date)
+
+  React.useEffect(() => {
+    if (date) {
+      setCurrentMonth(date)
+      setTempDate(date)
+    }
+  }, [date])
 
   const handleSelect = (newDate: Date | undefined) => {
     if (!newDate) return
     setTempDate(newDate)
-    setDetailsOpen(true)
+    onDateSelect(newDate)
+    onOpenChange(false)
   }
 
-  const handleConfirmDate = () => {
-    if (!tempDate) return
-    setSelectedDate(tempDate)
-    onSelect?.(tempDate)
-    setDetailsOpen(false)
-    setOpen(false)
+  const handleMonthChange = (date: Date) => {
+    setCurrentMonth(date)
   }
 
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+  const handleClear = () => {
+    setTempDate(undefined)
+    onDateSelect(undefined)
+    onOpenChange(false)
+  }
 
   return (
-    <Drawer open={open} onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (isOpen) {
-          setCurrentMonth(new Date());
-        }
-      }}>
-      <DrawerTrigger asChild>
-        <div className={cn("inline-flex items-center justify-center", className)}>
-          <Button 
-            className="px-6 py-6 text-base font-medium rounded-full bg-[hsl(54.5,60%,80%)] hover:bg-[hsl(54.5,60%,75%)] text-gray-900 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            size="lg"
-          >
-            {triggerLabel}
-          </Button>
-        </div>
-      </DrawerTrigger>
-      <DrawerContent className="bg-[hsl(54.5,91.7%,95.3%)] text-gray-900 border-0 h-[90vh] max-h-[800px] [&>div]:bg-[hsl(54.5,91.7%,95.3%)] [&>div]:rounded-t-2xl">
-        <div className="p-6 flex flex-col items-center">
-          <div className="w-full max-w-xs">
-            <div className="flex items-center justify-between mb-4">
-              <button 
-                onClick={prevMonth}
-                className="p-2 rounded-full hover:bg-[hsl(54.5,60%,90%)] text-gray-900"
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="h-[85vh] overflow-hidden rounded-t-2xl">
+        <div className="flex flex-col h-full">
+          <DrawerHeader className="border-b p-4">
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="text-xl font-semibold">
+                {tempDate ? format(tempDate, 'MMMM d, yyyy') : 'Select a Date'}
+              </DrawerTitle>
+              <DrawerClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </DrawerClose>
+            </div>
+            {tempDate && (
+              <p className="text-sm text-muted-foreground">
+                {isToday(tempDate) ? 'Today' : format(tempDate, 'EEEE')}
+              </p>
+            )}
+          </DrawerHeader>
+          
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex items-center justify-center mb-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleMonthChange(subMonths(currentMonth, 1))}
+                className="h-9 w-9"
               >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <h3 className="text-lg font-medium">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-lg font-medium w-40 text-center">
                 {format(currentMonth, 'MMMM yyyy')}
-              </h3>
-              <button 
-                onClick={nextMonth}
-                className="p-2 rounded-full hover:bg-[hsl(54.5,60%,90%)] text-gray-900"
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleMonthChange(addMonths(currentMonth, 1))}
+                className="h-9 w-9"
               >
-                <ChevronRight className="h-5 w-5" />
-              </button>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
 
-            <div className="mx-auto w-full">
+            <div className="w-full max-w-xs mx-auto">
               <Calendar
                 mode="single"
-                selected={selectedDate}
+                selected={tempDate}
                 onSelect={handleSelect}
                 month={currentMonth}
-                onMonthChange={setCurrentMonth}
-                disabled={(date) => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  return date < today;
-                }}
-                className="rounded-md border-0"
+                onMonthChange={handleMonthChange}
+                className="w-full"
                 classNames={{
-                  months: "w-full min-h-[360px] flex justify-center",
-                  month: "space-y-1 w-full flex flex-col h-full",
-                  caption: "flex justify-center pt-1 relative items-center h-8 flex-shrink-0",
+                  months: "w-full",
+                  month: "w-full space-y-2",
+                  caption: "hidden",
                   caption_label: "hidden",
                   nav: "hidden",
-                  nav_button: "hidden",
-                  nav_button_previous: "hidden",
-                  nav_button_next: "hidden",
-                  table: "w-full border-collapse space-y-1 flex-1",
-                  head_row: "flex justify-between w-full mb-2",
-                  head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem]",
-                  row: "flex w-full mt-2 justify-between flex-1",
-                  cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-transparent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                  table: "w-full border-collapse",
+                  head_row: "w-full flex justify-between mb-1",
+                  head_cell: "text-muted-foreground text-xs font-normal w-8 text-center",
+                  row: "w-full flex justify-between my-1",
+                  cell: "w-8 h-8 p-0 text-center text-sm",
                   day: cn(
-                    "h-10 w-10 p-0 font-normal rounded-full transition-colors flex items-center justify-center",
-                    "hover:bg-[hsl(54.5,60%,90%)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(54.5,60%,80%)]",
-                    "aria-selected:bg-white aria-selected:text-black aria-selected:font-medium",
-                    "text-gray-900",
-                    "data-[today]:font-semibold data-[today]:text-gray-900",
-                    "data-[today]:before:border-2 data-[today]:before:border-[hsl(54.5,60%,60%)]",
-                    "data-[today][aria-selected]:before:border-black",
-                    "data-[outside]:text-gray-400",
-                    "data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none"
+                    "h-8 w-8 p-0 text-sm font-normal rounded-full flex items-center justify-center mx-auto",
+                    "hover:bg-gray-100 dark:hover:bg-gray-800"
                   ),
+                  day_today: "bg-gray-100 dark:bg-gray-800 font-semibold",
+                  day_selected: cn(
+                    "bg-gradient-to-br from-pink-500 to-rose-500 text-white",
+                    "hover:from-pink-600 hover:to-rose-600 hover:text-white"
+                  ),
+                  day_outside: "text-muted-foreground opacity-50",
+                  day_disabled: "text-muted-foreground opacity-50",
+                  day_hidden: "invisible",
                 }}
-                formatters={{
-                  formatDay: (date) => {
-                    const day = date.getDate()
-                    return day.toString()
-                  },
+                disabled={(date) => {
+                  const today = new Date()
+                  today.setHours(0, 0, 0, 0)
+                  return date < today && !isSameDay(date, today)
                 }}
+                initialFocus
               />
             </div>
-            
-            <div className="mt-6 flex justify-center w-full">
+          </div>
+          
+          <div className="p-4 border-t flex justify-between gap-2">
+            <Button 
+              variant="ghost" 
+              onClick={handleClear}
+              disabled={!tempDate}
+              className="text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+            >
+              Clear
+            </Button>
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => setOpen(false)}
-                className="mr-2 border-gray-400 text-gray-800 hover:bg-gray-100 w-24"
+                onClick={() => onOpenChange(false)}
+                className="min-w-[100px]"
               >
                 Cancel
               </Button>
               <Button 
-                onClick={() => {
-                  if (selectedDate) {
-                    onSelect?.(selectedDate);
-                  }
-                  setOpen(false);
-                }}
-                className="bg-[hsl(54.5,60%,80%)] text-gray-900 hover:bg-[hsl(54.5,60%,75%)] w-24"
-                disabled={!selectedDate}
+                onClick={() => tempDate && handleSelect(tempDate)}
+                disabled={!tempDate}
+                className="min-w-[100px] bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
               >
-                Done
+                Select
               </Button>
             </div>
           </div>
         </div>
       </DrawerContent>
-      <DateDetailsDrawer
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
-        selectedDate={tempDate || null}
-        onConfirm={handleConfirmDate}
-        budget={budget}
-        onBudgetChange={setBudget}
-        distance="5"
-        onDistanceChange={() => {}}
-      />
     </Drawer>
   )
 }

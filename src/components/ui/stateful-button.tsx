@@ -9,64 +9,32 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = ({ className, children, ...props }: ButtonProps) => {
-  const [scope, animate] = useAnimate();
-
-  const animateLoading = async () => {
-    await animate(
-      ".loader",
-      {
-        width: "20px",
-        scale: 1,
-        display: "block",
-      },
-      {
-        duration: 0.2,
-      },
-    );
-  };
-
-  const animateSuccess = async () => {
-    await animate(
-      ".loader",
-      {
-        width: "0px",
-        scale: 0,
-        display: "none",
-      },
-      {
-        duration: 0.2,
-      },
-    );
-    await animate(
-      ".check",
-      {
-        width: "20px",
-        scale: 1,
-        display: "block",
-      },
-      {
-        duration: 0.2,
-      },
-    );
-
-    await animate(
-      ".check",
-      {
-        width: "0px",
-        scale: 0,
-        display: "none",
-      },
-      {
-        delay: 2,
-        duration: 0.2,
-      },
-    );
-  };
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    await animateLoading();
-    await props.onClick?.(event);
-    await animateSuccess();
+    if (isLoading || props.disabled) return;
+    
+    try {
+      setIsLoading(true);
+      setIsSuccess(false);
+      
+      // Call the original onClick handler if provided
+      if (props.onClick) {
+        await props.onClick(event);
+      }
+      
+      // Show success state
+      setIsSuccess(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error('Button action failed:', error);
+    } finally {
+      setIsLoading(false);
+      setIsSuccess(false);
+    }
   };
 
   const {
@@ -81,36 +49,25 @@ export const Button = ({ className, children, ...props }: ButtonProps) => {
 
   return (
     <motion.button
-      layout
-      layoutId="button"
-      ref={scope}
+      ref={buttonRef}
       className={cn(
-        "relative flex min-w-[80px] cursor-pointer items-center justify-center gap-2 rounded-full px-4 py-2 font-medium text-white transition duration-200",
-        className,
-        props.disabled ? 'opacity-50 cursor-not-allowed' : ''
+        "relative flex min-w-[80px] items-center justify-center rounded-full px-4 py-2 font-medium text-white transition-colors",
+        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
+        className
       )}
-      {...buttonProps}
       onClick={handleClick}
-      disabled={props.disabled}
+      disabled={isLoading || props.disabled}
+      {...buttonProps}
     >
-      <motion.div 
-        layout 
-        className="flex items-center justify-center gap-2"
-        style={{ minHeight: '24px' }}
-      >
-        <Loader />
-        <CheckIcon />
-        <motion.span 
-          layout 
-          className="relative z-10"
-          style={{
-            opacity: 1,
-            transition: 'opacity 0.2s',
-          }}
-        >
-          {children}
-        </motion.span>
-      </motion.div>
+      <span className={`relative flex items-center justify-center transition-opacity ${isLoading || isSuccess ? 'opacity-0' : 'opacity-100'}`}>
+        {children}
+      </span>
+      
+      <div className="absolute inset-0 flex items-center justify-center">
+        {isLoading && !isSuccess && <Loader />}
+        {isSuccess && <CheckIcon />}
+      </div>
     </motion.button>
   );
 };
@@ -204,30 +161,24 @@ const Loader = () => {
 
 const CheckIcon = () => {
   return (
-    <motion.svg
-      initial={{
-        scale: 0,
-        width: 0,
-        display: "none",
-      }}
-      style={{
-        scale: 0.5,
-        display: "none",
-      }}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="check text-white"
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      className="h-5 w-5 rounded-full bg-green-500 flex items-center justify-center"
     >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-      <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
-      <path d="M9 12l2 2l4 -4" />
-    </motion.svg>
+      <svg
+        className="h-3.5 w-3.5 text-white"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={3}
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    </motion.div>
   );
 };

@@ -226,58 +226,61 @@ export function DateDetailsDrawer({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Starting Point</label>
-                <LocationSearch
-                  onPlaceSelected={(place: Place) => {
-                    if (place) {
-                      const address = place.formatted_address || place.name || '';
-                      setStartingPoint(address);
-                      
-                      if (place.geometry?.location) {
-                        const latLng = {
-                          lat: typeof place.geometry.location.lat === 'function' 
-                            ? (place.geometry.location as any).lat()
-                            : place.geometry.location.lat,
-                          lng: typeof place.geometry.location.lng === 'function'
-                            ? (place.geometry.location as any).lng()
-                            : place.geometry.location.lng
-                        };
+                <div onClick={(e) => e.stopPropagation()}>
+                  <LocationSearch
+                    onPlaceSelected={(place: Place) => {
+                      if (place) {
+                        const address = place.formatted_address || place.name || '';
+                        setStartingPoint(address);
                         
-                        // Pan map to the selected location
-                        if (mapInstance.current) {
-                          mapInstance.current.setCenter(latLng);
-                          mapInstance.current.setZoom(15);
+                        if (place.geometry?.location) {
+                          const latLng = {
+                            lat: typeof place.geometry.location.lat === 'function' 
+                              ? (place.geometry.location as any).lat()
+                              : place.geometry.location.lat,
+                            lng: typeof place.geometry.location.lng === 'function'
+                              ? (place.geometry.location as any).lng()
+                              : place.geometry.location.lng
+                          };
                           
-                          // Clear existing markers (optional, or manage them in state)
-                          // Add a marker
-                          new window.google.maps.Marker({
-                            position: latLng,
-                            map: mapInstance.current,
-                            title: place.name || 'Starting Point',
-                            label: 'A',
-                            animation: window.google.maps.Animation.DROP,
-                          });
+                          // Pan map to the selected location
+                          if (mapInstance.current) {
+                            mapInstance.current.setCenter(latLng);
+                            mapInstance.current.setZoom(15);
+                            
+                            // Clear existing markers (optional, or manage them in state)
+                            // Add a marker
+                            new window.google.maps.Marker({
+                              position: latLng,
+                              map: mapInstance.current,
+                              title: place.name || 'Starting Point',
+                              label: 'A',
+                              animation: window.google.maps.Animation.DROP,
+                            });
+                          }
                         }
                       }
-                    }
-                  }}
-                  placeholder="Where are you starting from?"
-                />
+                    }}
+                    placeholder="Where are you starting from?"
+                  />
+                </div>
               </div>
               
               <div>
                 <label className="block text-sm font-medium mb-1">Destination</label>
-                <LocationSearch
-                  onPlaceSelected={(place: Place) => {
-                    if (place) {
-                      const address = place.formatted_address || place.name || '';
-                      setDestination(address);
-                      
-                      if (place.geometry?.location) {
-                        const latLng = {
-                          lat: typeof place.geometry.location.lat === 'function' 
-                            ? (place.geometry.location as any).lat()
-                            : place.geometry.location.lat,
-                          lng: typeof place.geometry.location.lng === 'function'
+                <div onClick={(e) => e.stopPropagation()}>
+                  <LocationSearch
+                    onPlaceSelected={(place: Place) => {
+                      if (place) {
+                        const address = place.formatted_address || place.name || '';
+                        setDestination(address);
+                        
+                        if (place.geometry?.location) {
+                          const latLng = {
+                            lat: typeof place.geometry.location.lat === 'function' 
+                              ? (place.geometry.location as any).lat()
+                              : place.geometry.location.lat,
+                            lng: typeof place.geometry.location.lng === 'function'
                             ? (place.geometry.location as any).lng()
                             : place.geometry.location.lng
                         };

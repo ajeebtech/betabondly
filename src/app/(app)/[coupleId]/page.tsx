@@ -3,18 +3,34 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Calendar as CalendarIcon } from "lucide-react"
 import { CalendarDrawer } from "@/components/CalendarDrawer"
+import { DateDetailsDrawer } from "@/components/DateDetailsDrawer"
 import { format } from "date-fns"
 import { Textarea as HeroTextarea } from "@heroui/react"
-import SidebarDemo from "@/components/sidebar-demo";
-import HeartIcon from "@/components/HeartIcon";
+import SidebarDemo from "@/components/sidebar-demo"
+import HeartIcon from "@/components/HeartIcon"
+
+type DatePlan = {
+  date: Date
+  startingPoint: string
+  destination: string
+  waypoints: string[]
+  budget: string
+  distance: string
+}
 
 export default function CoupleDashboard() {
   const params = useParams()
   const coupleId = params.coupleId as string || 'default-couple';
   const [postContent, setPostContent] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [date, setDate] = useState<Date | undefined>(new Date())
+  const [date, setDate] = useState<Date | undefined>(undefined)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [isDateDetailsOpen, setIsDateDetailsOpen] = useState(false)
+  const [budget, setBudget] = useState("")
+  const [distance, setDistance] = useState("5")
+  const [datePlan, setDatePlan] = useState<DatePlan | null>(null)
   
   // Simulate data loading
   useEffect(() => {
@@ -30,6 +46,14 @@ export default function CoupleDashboard() {
     console.log("Post content for couple", coupleId, ":", postContent)
     // In a real app, you would save this to your database
     setPostContent("")
+  }
+
+  const handleSelect = (newDate: Date | undefined) => {
+    setDate(newDate)
+    setIsCalendarOpen(false)
+    if (newDate) {
+      setIsDateDetailsOpen(true)
+    }
   }
 
   // Sample posts data - in a real app, this would come from your database
@@ -48,7 +72,7 @@ export default function CoupleDashboard() {
       author: "hiya roy",
       username: "@duckdealer",
       time: "5h ago",
-      content: `Celebrating 6 months together today! Time flies when you're having fun with the love of your life. 💕 #Anniversary`,
+      content: `best boyfriend in the world❤️`,
       likes: 12,
       comments: 8,
     },
@@ -186,13 +210,39 @@ export default function CoupleDashboard() {
       </main>
       
       {/* Calendar Drawer Trigger */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <CalendarDrawer 
-          date={date}
-          onSelect={setDate}
-          className=""
-        />
+      {/* Floating Action Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button 
+          onClick={() => setIsCalendarOpen(true)}
+          className="rounded-full h-12 px-6 flex items-center space-x-2 shadow-lg hover:scale-105 transition-transform duration-200 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+        >
+          <CalendarIcon className="h-5 w-5" />
+          <span>plan a date!</span>
+        </Button>
       </div>
+      
+      {/* Calendar Drawer */}
+      <CalendarDrawer 
+        open={isCalendarOpen}
+        onOpenChange={setIsCalendarOpen}
+        date={date}
+        onDateSelect={handleSelect}
+      />
+
+      {/* Date Details Drawer */}
+      <DateDetailsDrawer
+        open={isDateDetailsOpen}
+        onOpenChange={setIsDateDetailsOpen}
+        selectedDate={date || null}
+        onConfirm={() => {
+          // This will be called when the date details are confirmed
+          setIsDateDetailsOpen(false)
+        }}
+        budget={budget}
+        onBudgetChange={setBudget}
+        distance={distance}
+        onDistanceChange={setDistance}
+      />
     </div>
   )
 }

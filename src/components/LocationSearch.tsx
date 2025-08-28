@@ -74,7 +74,20 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         margin-top: 0.5rem !important;
         font-family: inherit !important;
         background-color: white !important;
+        pointer-events: auto !important;
       }
+      
+      /* Fix for dropdown click events */
+      .pac-item {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+      }
+      
+      /* Prevent clicks from being intercepted */
+      .pac-container:after {
+        display: none !important;
+      }
+      
       .pac-item {
         padding: 0.75rem 1rem !important;
         cursor: pointer !important;
@@ -82,6 +95,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         transition: background-color 0.2s !important;
         font-size: 0.875rem !important;
         color: #374151 !important;
+        pointer-events: auto !important;
       }
       .pac-item:first-child {
         border-top: none !important;
@@ -103,6 +117,16 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       .pac-matched {
         font-weight: 500 !important;
         color: #111827 !important;
+      }
+      
+      /* Prevent clicks on the dropdown from being intercepted */
+      .pac-container:after {
+        content: none !important;
+      }
+      
+      /* Fix for dropdown positioning */
+      .pac-logo:after {
+        display: none !important;
       }`;
     document.head.appendChild(style);
 
@@ -111,8 +135,20 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
     };
   }, []);
 
+  // Load Google Maps script with error handling
   useEffect(() => {
-    if (!window.google) {
+    const loadGoogleMapsScript = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        initializeAutocomplete();
+        return;
+      }
+
+      // Remove any existing script with the same src to prevent duplicates
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
       script.async = true;
@@ -126,70 +162,131 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       };
       
       document.head.appendChild(script);
-    } else {
-      initializeAutocomplete();
-    }
+    };
+
+    loadGoogleMapsScript();
 
     return () => {
-      // Clean up event listeners
-      if (autocompleteRef.current) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      // Clean up event listeners and global function
+      if (window.google && window.google.maps && window.google.maps.event) {
+        if (autocompleteRef.current) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
+        if (mapRef.current) {
+          window.google.maps.event.clearInstanceListeners(mapRef.current);
+        }
       }
-      if (mapRef.current) {
-        window.google.maps.event.clearInstanceListeners(mapRef.current);
-      }
+      window.initMap = undefined;
     };
   }, []);
 
   const initializeAutocomplete = () => {
-    if (!inputRef.current) return;
-
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      console.error('Google Maps JavaScript API not loaded');
+    if (!inputRef.current) {
+      console.error('Input ref not available');
       return;
     }
 
-    // Create a hidden map (required for Autocomplete)
-    const hiddenMapDiv = document.createElement('div');
-    hiddenMapDiv.style.display = 'none';
-    document.body.appendChild(hiddenMapDiv);
-
-    // Create a map instance (required for Autocomplete)
-    mapRef.current = new window.google.maps.Map(hiddenMapDiv, {
-      center: { lat: 28.6139, lng: 77.209 }, // Default to New Delhi
-      zoom: 13,
-    });
-
-    // Create the autocomplete with more comprehensive configuration
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(
-      inputRef.current,
-      {
-        types: ['geocode', 'establishment'],
-        componentRestrictions: { country: 'in' },
-        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
-      }
-    );
-
-    // Add a class to the autocomplete dropdown for styling
+    if (!window.google?.maps?.places) {
+      console.error('Google Maps JavaScript API not fully loaded');
+      return;
+    }
+    
+    // Clean up any existing autocomplete instance
     if (autocompleteRef.current) {
-      autocompleteRef.current.addListener('place_changed', () => {
-        handlePlaceChanged();
-        // Add a small delay to ensure the dropdown is rendered
-        setTimeout(() => {
-          const pacContainer = document.querySelector('.pac-container');
-          if (pacContainer) {
-            pacContainer.setAttribute('data-testid', 'autocomplete-dropdown');
-          }
-        }, 100);
+      window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      autocompleteRef.current = null;
+    }
+
+    // Clean up any existing autocomplete instance
+    if (autocompleteRef.current) {
+      window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      autocompleteRef.current = null;
+    }
+
+    try {
+      // Create a hidden map (required for Autocomplete)
+      const hiddenMapDiv = document.createElement('div');
+      hiddenMapDiv.style.display = 'none';
+      document.body.appendChild(hiddenMapDiv);
+
+      // Create a map instance (required for Autocomplete)
+      mapRef.current = new window.google.maps.Map(hiddenMapDiv, {
+        center: { lat: 28.6139, lng: 77.209 }, // Default to New Delhi
+        zoom: 13,
       });
+
+      // Create the autocomplete with more comprehensive configuration
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ['geocode', 'establishment'],
+          componentRestrictions: { country: 'in' },
+          fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
+        }
+      );
+
+      // Prevent clicks on the dropdown from being intercepted
+      document.addEventListener('click', (e) => {
+        if (e.target && (e.target as HTMLElement).closest && 
+            (e.target as HTMLElement).closest('.pac-container')) {
+          e.stopPropagation();
+        }
+      }, true);
+
+      // Add place_changed event listener with null check
+      const autocomplete = autocompleteRef.current;
+      if (autocomplete) {
+        autocomplete.addListener('place_changed', () => {
+          handlePlaceChanged();
+        });
+        
+        // Prevent clicks on the dropdown from being intercepted
+        window.google.maps.event.addDomListener(inputRef.current, 'keydown', (e: KeyboardEvent) => {
+          if (e.key === 'Enter' && document.activeElement === inputRef.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
+      }
+
+      // Handle click events on the input to show suggestions
+      const handleInputClick = (e: MouseEvent) => {
+        e.stopPropagation();
+      };
+
+      // Add click event listener to the input
+      if (inputRef.current) {
+        inputRef.current.addEventListener('click', handleInputClick);
+      }
+
+      // Clean up function
+      return () => {
+        if (inputRef.current) {
+          inputRef.current.removeEventListener('click', handleInputClick);
+        }
+        document.body.removeChild(hiddenMapDiv);
+      };
+    } catch (error) {
+      console.error('Error initializing autocomplete:', error);
     }
   };
 
   const handlePlaceChanged = () => {
     try {
-      const place = autocompleteRef.current?.getPlace();
-      if (!place || !place.geometry?.location) {
-        console.log('No place selected or no geometry available');
+      if (!autocompleteRef.current) {
+        console.error('Autocomplete not initialized');
+        return;
+      }
+
+      const place = autocompleteRef.current.getPlace();
+      
+      if (!place) {
+        console.log('No place selected');
+        return;
+      }
+
+      if (!place.geometry || !place.geometry.location) {
+        console.log('No geometry available for the selected place');
         return;
       }
 
@@ -207,62 +304,63 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         types: place.types
       };
 
+      setSelectedPlace(simplifiedPlace);
       onPlaceSelected(simplifiedPlace);
     } catch (error) {
       console.error('Error handling place selection:', error);
     }
   };
 
-  const handleInputClick = () => {
-    // Force the dropdown to show when input is clicked
+  const handleInputFocus = () => {
     if (inputRef.current) {
-      inputRef.current.focus();
       // Trigger a small input change to show suggestions
-      const event = new Event('input', { bubbles: true });
-      inputRef.current.dispatchEvent(event);
+      const inputEvent = new Event('input', { bubbles: true });
+      inputRef.current.dispatchEvent(inputEvent);
     }
   };
 
   return (
-    <div className={`space-y-4 ${className}`} style={{ position: 'relative', zIndex: 1 }}>
+    <div className="relative w-full" onClick={(e) => e.stopPropagation()}>
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          onClick={handleInputClick}
-          className="w-full pl-9 pr-4 py-2 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[hsl(54.5,60%,80%)] text-gray-900"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onFocus={() => {
+            if (inputRef.current) {
+              inputRef.current.value = '';
+              const event = new Event('input', { bubbles: true });
+              inputRef.current.dispatchEvent(event);
+            }
+          }}
+          className={`w-full rounded-md border border-gray-300 pl-10 pr-4 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
         />
-        <svg
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </div>
       </div>
-      
       {selectedPlace && (
-        <div className="mt-4 z-0">
-          <div className="text-sm font-medium text-gray-700 mb-2">
-            {selectedPlace.name}
-          </div>
-          <div 
-            ref={mapContainerRef} 
-            className="w-full h-48 rounded-lg overflow-hidden border border-gray-200"
-            style={{ minHeight: '200px' }}
-          />
-          <p className="mt-2 text-sm text-gray-500">
-            {selectedPlace.formatted_address}
-          </p>
+        <div className="mt-2 text-sm text-gray-600">
+          Selected: {selectedPlace.name || selectedPlace.formatted_address}
         </div>
       )}
     </div>
