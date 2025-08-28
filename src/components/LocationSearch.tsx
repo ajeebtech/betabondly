@@ -2,6 +2,39 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Define types for Google Maps objects
+interface GoogleLatLngLiteral {
+  lat: number;
+  lng: number;
+}
+
+interface GoogleLatLng {
+  lat(): number;
+  lng(): number;
+  // Add other methods that might be needed
+  toJSON(): GoogleLatLngLiteral;
+}
+
+interface Place {
+  name?: string;
+  formatted_address?: string;
+  geometry?: {
+    location: GoogleLatLng | GoogleLatLngLiteral;
+  };
+  place_id?: string;
+  types?: string[];
+}
+
+interface SimplifiedPlace {
+  name: string;
+  formatted_address: string;
+  geometry: {
+    location: GoogleLatLngLiteral;
+  };
+  place_id?: string;
+  types?: string[];
+}
+
 declare global {
   interface Window {
     google: any;
@@ -26,25 +59,44 @@ interface LocationSearchProps {
   className?: string;
 }
 
-export function LocationSearch({ onPlaceSelected, placeholder = 'Search for places...', className = '' }: LocationSearchProps) {
+export function LocationSearch({ 
+  onPlaceSelected, 
+  placeholder = 'Search for places...', 
+  className = '',
+  value = ''
+}: LocationSearchProps & { value?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [selectedPlace, setSelectedPlace] = useState<{
-    name?: string;
-    formatted_address?: string;
-    geometry?: {
-      location: {
-        lat: number;
-        lng: number;
-      };
-    };
-    place_id?: string;
-    types?: string[];
-  } | null>(null);
+  const [inputValue, setInputValue] = useState(value);
+  const [selectedPlace, setSelectedPlace] = useState<SimplifiedPlace | null>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  // Helper function to get coordinates from a LatLng or LatLngLiteral
+  const getCoordinates = (location: GoogleLatLng | GoogleLatLngLiteral | undefined | null): GoogleLatLngLiteral => {
+    if (!location) return { lat: 0, lng: 0 };
+    
+    try {
+      if ('lat' in location) {
+        const lat = typeof location.lat === 'function' ? (location as GoogleLatLng).lat() : location.lat;
+        const lng = typeof location.lng === 'function' ? (location as GoogleLatLng).lng() : location.lng;
+        return { lat, lng };
+      }
+      
+      const latLng = location as google.maps.LatLng;
+      if (latLng && typeof latLng.lat === 'function' && typeof latLng.lng === 'function') {
+        return { lat: latLng.lat(), lng: latLng.lng() };
+      }
+      
+      console.error('Invalid location object:', location);
+      return { lat: 0, lng: 0 };
+    } catch (error) {
+      console.error('Error getting coordinates:', error);
+      return { lat: 0, lng: 0 };
+    }
+  };
 
   // Add null checks for refs
   const getMap = () => {
@@ -225,28 +277,58 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         }
       );
 
-      // Prevent clicks on the dropdown from being intercepted
-      document.addEventListener('click', (e) => {
-        if (e.target && (e.target as HTMLElement).closest && 
-            (e.target as HTMLElement).closest('.pac-container')) {
-          e.stopPropagation();
-        }
-      }, true);
-
       // Add place_changed event listener with null check
       const autocomplete = autocompleteRef.current;
       if (autocomplete) {
+        // Add the place_changed event listener
         autocomplete.addListener('place_changed', () => {
           handlePlaceChanged();
         });
         
-        // Prevent clicks on the dropdown from being intercepted
+        // Handle Enter key press
         window.google.maps.event.addDomListener(inputRef.current, 'keydown', (e: KeyboardEvent) => {
           if (e.key === 'Enter' && document.activeElement === inputRef.current) {
             e.preventDefault();
             e.stopPropagation();
           }
         });
+        
+        // Handle click events on the dropdown items
+        const handleDocumentClick = (e: Event) => {
+          const target = e.target as HTMLElement;
+          const pacItem = target.closest('.pac-item');
+          if (pacItem) {
+            // Small delay to ensure the place is selected
+            setTimeout(() => {
+              handlePlaceChanged();
+            }, 50);
+          }
+        };
+        
+        // Add a small delay to ensure the pac-container is in the DOM
+        const setupClickHandler = () => {
+          const pacContainer = document.querySelector('.pac-container');
+          if (pacContainer) {
+            // Use capture phase to ensure we catch the event
+            document.addEventListener('click', handleDocumentClick, { capture: true });
+            return true;
+          }
+          return false;
+        };
+        
+        // Try to set up immediately, then retry if needed
+        if (!setupClickHandler()) {
+          const interval = setInterval(() => {
+            if (setupClickHandler()) {
+              clearInterval(interval);
+            }
+          }, 100);
+        }
+        
+        // Clean up the event listener
+        return () => {
+          document.removeEventListener('click', handleDocumentClick, { capture: true });
+        };
       }
 
       // Handle click events on the input to show suggestions
@@ -278,6 +360,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         return;
       }
 
+      // Get the place details from the autocomplete
       const place = autocompleteRef.current.getPlace();
       
       if (!place) {
@@ -285,25 +368,53 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
         return;
       }
 
-      if (!place.geometry || !place.geometry.location) {
-        console.log('No geometry available for the selected place');
+      console.log('Selected place:', place);
+
+      // If we don't have geometry, try to get it using the place_id
+      if (!place.geometry?.location) {
+        console.log('No geometry available, trying to fetch place details...');
+        
+        if (!place.place_id) {
+          console.error('No place_id available to fetch details');
+          return;
+        }
+
+        const service = new window.google.maps.places.PlacesService(document.createElement('div'));
+        service.getDetails({ 
+          placeId: place.place_id, 
+          fields: ['geometry', 'formatted_address', 'name', 'place_id', 'types'] 
+        }, (details: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+          if (status === 'OK' && details?.geometry?.location) {
+            const location = getCoordinates(details.geometry.location);
+            const simplifiedPlace: SimplifiedPlace = {
+              name: details.name || '',
+              formatted_address: details.formatted_address || '',
+              geometry: { location },
+              place_id: details.place_id,
+              types: details.types
+            };
+            
+            setInputValue(details.formatted_address || details.name || '');
+            setSelectedPlace(simplifiedPlace);
+            onPlaceSelected(simplifiedPlace);
+          } else {
+            console.error('Error fetching place details:', status);
+          }
+        });
         return;
       }
 
-      // Create a simplified place object with only the properties we need
-      const simplifiedPlace = {
+      // If we have geometry, proceed normally
+      const location = getCoordinates(place.geometry.location);
+      const simplifiedPlace: SimplifiedPlace = {
         name: place.name || '',
         formatted_address: place.formatted_address || '',
-        geometry: {
-          location: {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-          }
-        },
+        geometry: { location },
         place_id: place.place_id,
         types: place.types
       };
 
+      setInputValue(place.formatted_address || place.name || '');
       setSelectedPlace(simplifiedPlace);
       onPlaceSelected(simplifiedPlace);
     } catch (error) {
@@ -319,12 +430,37 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
     }
   };
 
+  // Update input value when value prop changes
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  // Handle click events on the dropdown items
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.pac-container')) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
+    // Use capture phase to catch the event early
+    document.addEventListener('click', handleDocumentClick, { capture: true });
+    
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, { capture: true });
+    };
+  }, []);
+
   return (
     <div className="relative w-full" onClick={(e) => e.stopPropagation()}>
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           placeholder={placeholder}
           onClick={(e) => {
             e.stopPropagation();
@@ -339,7 +475,7 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
               inputRef.current.dispatchEvent(event);
             }
           }}
-          className={`w-full rounded-md border border-gray-300 pl-10 pr-4 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
+          className={`w-full rounded-md border border-gray-300 pl-10 pr-8 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
         />
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
           <svg
