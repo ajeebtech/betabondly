@@ -453,25 +453,49 @@ export function LocationSearch({
     };
   }, []);
 
+  // Prevent event propagation for all events that might cause the drawer to close
+  const stopPropagation = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    const nativeEvent = e.nativeEvent as Event;
+    if (nativeEvent.stopImmediatePropagation) {
+      nativeEvent.stopImmediatePropagation();
+    }
+  };
+
+  // Touch event handlers
+  const handleTouch = (e: React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="relative w-full" onClick={(e) => e.stopPropagation()}>
-      <div className="relative">
+    <div 
+      className={`relative ${className}`}
+      onClick={stopPropagation}
+      onMouseDown={stopPropagation}
+      onMouseUp={stopPropagation}
+      onTouchStart={handleTouch}
+      onTouchEnd={handleTouch}
+    >
+      <div 
+        className="relative"
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
+      >
         <input
           ref={inputRef}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={placeholder}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
+          onClick={stopPropagation}
+          onMouseDown={stopPropagation}
+          onMouseUp={stopPropagation}
+          onTouchStart={handleTouch}
+          onTouchEnd={handleTouch}
           onFocus={() => {
             if (inputRef.current) {
               inputRef.current.value = '';
-              const event = new Event('input', { bubbles: true });
+              const event = new Event('input', { bubbles: false });
               inputRef.current.dispatchEvent(event);
             }
           }}

@@ -421,8 +421,8 @@ export function DateDetailsDrawer({
               try {
                 const bounds = new window.google.maps.LatLngBounds();
                 result.routes[0].legs.forEach(leg => {
-                  if (leg.start_location) bounds.union(leg.start_location);
-                  if (leg.end_location) bounds.union(leg.end_location);
+                  if (leg.start_location) bounds.extend(leg.start_location);
+                  if (leg.end_location) bounds.extend(leg.end_location);
                 });
                 
                 if (!bounds.isEmpty()) {
@@ -442,9 +442,17 @@ export function DateDetailsDrawer({
     }
   }, [startingPoint, destination, waypoints, mapLoaded, open]);
 
+  // Prevent clicks inside the drawer content from closing it
+  const handleDrawerContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[90vh]">
+      <DrawerContent 
+        className="h-[90vh]"
+        onClick={handleDrawerContentClick}
+      >
         <div className="flex flex-col h-full">
           <DrawerHeader>
             <div className="flex justify-between items-start w-full">
