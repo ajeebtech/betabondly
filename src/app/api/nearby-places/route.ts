@@ -2,7 +2,17 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { location, radius = 500, keyword = 'vegetarian restaurant' } = await request.json();
+    const { location, radius = 500, filter = 'vegetarian' } = await request.json();
+    
+    // Map filter values to Google Places keywords
+    const filterKeywords: Record<string, string> = {
+      vegetarian: 'vegetarian restaurant',
+      coffee: 'coffee shop',
+      bar: 'bar brewery',
+      takeout: 'restaurant with takeout'
+    };
+    
+    const keyword = filterKeywords[filter as string] || 'restaurant';
     
     if (!location || !location.lat || !location.lng) {
       return NextResponse.json(

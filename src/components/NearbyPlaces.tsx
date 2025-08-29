@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Select, SelectItem, Button } from '@heroui/react';
 
 export interface PlaceResult {
   place_id: string;
@@ -19,6 +20,19 @@ export interface PlaceResult {
   types?: string[];
 }
 
+type PlaceFilter = {
+  key: string;
+  label: string;
+  value: string;
+};
+
+const PLACE_FILTERS: PlaceFilter[] = [
+  { key: 'servesVegetarianFood', label: 'Vegetarian', value: 'vegetarian' },
+  { key: 'servesCoffee', label: 'Coffee Shop', value: 'coffee' },
+  { key: 'servesBeer', label: 'Brewery/Bar', value: 'bar' },
+  { key: 'takeout', label: 'Takeout Available', value: 'takeout' },
+];
+
 interface NearbyPlacesProps {
   location: {
     lat: number;
@@ -36,6 +50,7 @@ export default function NearbyPlaces({
   const [places, setPlaces] = useState<PlaceResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState<PlaceFilter>(PLACE_FILTERS[0]);
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
@@ -91,18 +106,56 @@ export default function NearbyPlaces({
     };
   }, [location]);
 
-  const findNearbyPlaces = () => {
+  const findNearbyPlaces = async () => {
     if (!placesService.current || !location) return;
 
     setLoading(true);
     setError(null);
 
+    // First, try to use the Places API directly
+    try {
+      const response = await fetch('/api/nearby-places', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location: { lat: location.lat, lng: location.lng },
+          radius: radius,
+          filter: selectedFilter.value
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch places');
+      }
+
+      const data = await response.json();
+      setPlaces(data.places || []);
+      updateMarkers(data.places || []);
+      setLoading(false);
+      return;
+    } catch (err) {
+      console.error('Error fetching places from API:', err);
+      // Fallback to client-side search if API fails
+    }
+
+    // Fallback to client-side search
     const request = {
       location: new window.google.maps.LatLng(location.lat, location.lng),
       radius: radius,
       type: 'restaurant',
-      keyword: 'vegetarian',
-      fields: ['name', 'geometry', 'formatted_address', 'rating', 'user_ratings_total', 'price_level', 'photos'],
+      keyword: selectedFilter.value,
+      fields: [
+        'name', 
+        'geometry', 
+        'formatted_address', 
+        'rating', 
+        'user_ratings_total', 
+        'price_level', 
+        'photos',
+        ...PLACE_FILTERS.map(filter => filter.key)
+      ],
     };
 
     placesService.current.nearbySearch(
@@ -172,17 +225,44 @@ export default function NearbyPlaces({
 
   if (!location) return null;
 
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Nearby Vegetarian Restaurants</h3>
-        <button 
-          onClick={findNearbyPlaces}
-          className="text-sm text-blue-600 hover:underline"
-          disabled={loading}
-        >
-          Refresh
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <h3 className="text-lg font-medium">Nearby Places</h3>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="w-full sm:w-48">
+            <Select
+              selectedKeys={[selectedFilter.value]}
+              onSelectionChange={(keys) => {
+                const selectedKey = Array.from(keys)[0] as string;
+                const newFilter = PLACE_FILTERS.find(f => f.value === selectedKey) || PLACE_FILTERS[0];
+                setSelectedFilter(newFilter);
+              }}
+              isOpen={isOpen}
+              onOpenChange={setIsOpen}
+              className="w-full"
+              placeholder="Select a filter"
+              labelPlacement="outside"
+              aria-label="Filter places"
+            >
+              {PLACE_FILTERS.map((filter) => (
+                <SelectItem key={filter.value} value={filter.value}>
+                  {filter.label}
+                </SelectItem>
+              ))}
+            </Select>
+          </div>
+          <Button 
+            onPress={findNearbyPlaces}
+            isLoading={loading}
+            className="h-10 px-4"
+            color="primary"
+          >
+            {loading ? 'Searching...' : 'Search'}
+          </Button>
+        </div>
       </div>
 
       {/* Map Container */}
