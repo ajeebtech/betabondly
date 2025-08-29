@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { format } from "date-fns"
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons"
 import { X, MapPin, Plus, Trash2 } from "lucide-react"
@@ -15,6 +15,7 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
+  DrawerFooter,
 } from "@/components/ui/drawer"
 import {
   Select,
@@ -25,6 +26,17 @@ import {
 } from "@/components/ui/select"
 import { LocationSearch } from "./LocationSearch"
 import { Badge } from "@/components/ui/badge"
+import dynamic from 'next/dynamic';
+
+// Dynamically import the NearbyPlaces component to avoid SSR issues with Google Maps
+const NearbyPlaces = dynamic(() => import('@/components/NearbyPlaces'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+    </div>
+  ),
+});
 
 declare global {
   interface Window {
@@ -96,8 +108,20 @@ export function DateDetailsDrawer({
   const mapInstance = useRef<google.maps.Map | null>(null);
   const directionsService = useRef<google.maps.DirectionsService | null>(null);
   const directionsRenderer = useRef<google.maps.DirectionsRenderer | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
   
-  // Load Google Maps script
+  // Get destination coordinates for nearby places
+  const destinationCoords = useMemo(() => {
+    if (!destination.place?.geometry?.location) return null;
+    
+    const loc = destination.place.geometry.location;
+    return {
+      lat: typeof loc.lat === 'function' ? loc.lat() : loc.lat,
+      lng: typeof loc.lng === 'function' ? loc.lng() : loc.lng,
+    };
+  }, [destination.place]);
+
+  // Load Google Maps script with Directions and Places libraries
   useEffect(() => {
     console.log('🔄 [Map] Loading Google Maps script...');
     
@@ -106,39 +130,45 @@ export function DateDetailsDrawer({
       setMapLoaded(true);
     };
 
-    // Check if already loaded
-    if (window.google && window.google.maps) {
-      console.log('ℹ️ [Map] Google Maps already loaded');
-      setMapLoaded(true);
-      return;
-    }
-    
+    const loadGoogleMapsScript = () => {
+      // Check if already loaded with required libraries
+      if (window.google?.maps?.places && window.google.maps.DirectionsService) {
+        console.log('✅ [Map] Google Maps with required libraries already loaded');
+        setMapLoaded(true);
+        return;
+      }
+
+      // Remove any existing scripts to prevent duplicates
+      document.querySelectorAll('script[src*="maps.googleapis.com"]').forEach(el => el.remove());
+
+      // Set up the global initMap function
+      window.initMap = initMap;
+
+      // Create and append the script
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,directions&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      script.onerror = (error) => {
+        console.error('❌ [Map] Error loading Google Maps script:', error);
+      };
+      
+      document.head.appendChild(script);
+      return script;
+    };
+
     // Check API key
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
       console.error('❌ [Map] Missing Google Maps API key');
       return;
     }
     
-    // Create script element
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,directions&callback=initMap`;
-    script.async = true;
-    script.defer = true;
-    
-    // Set global init function
-    window.initMap = initMap;
-    
-    script.onerror = (error) => {
-      console.error('❌ [Map] Error loading Google Maps script:', error);
-    };
-    
-    console.log('📡 [Map] Appending Google Maps script to document');
-    document.head.appendChild(script);
-    
+    const script = loadGoogleMapsScript();
+
     // Cleanup
     return () => {
       console.log('🧹 [Map] Cleaning up Google Maps script');
-      if (document.head.contains(script)) {
+      if (script && document.head.contains(script)) {
         document.head.removeChild(script);
       }
       // @ts-ignore
@@ -470,7 +500,7 @@ export function DateDetailsDrawer({
             </div>
           </DrawerHeader>
           
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 overflow-y-auto">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 overflow-y-auto">
             {/* Left Column - Form */}
             <div className="space-y-4">
               <div>
@@ -617,29 +647,53 @@ export function DateDetailsDrawer({
               </div>
             </div>
             
-            {/* Right Column - Map */}
-            <div className="relative flex-1 bg-gray-100 rounded-lg overflow-hidden" style={{ height: '500px' }}>
-              <div 
-                ref={mapRef} 
-                style={{ width: '100%', height: '100%', minHeight: '500px' }}
-              >
-                {!mapLoaded && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-2"></div>
-                    <p className="text-gray-600">Loading map...</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      If this takes too long, check your Google Maps API key
-                    </p>
-                  </div>
-                )}
+            {/* Right Column - Map and Nearby Places */}
+            <div className="space-y-6 h-full flex flex-col">
+              {/* Map Container */}
+              <div className="relative flex-1 min-h-[300px] rounded-lg overflow-hidden border border-gray-200">
+                <div 
+                  ref={mapRef} 
+                  className="w-full h-full"
+                >
+                  {!mapLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white bg-opacity-90">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto mb-2"></div>
+                      <p className="text-gray-600">Loading map...</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              {mapLoaded && (
-                <div className="absolute bottom-2 right-2 bg-white px-2 py-1 text-xs text-gray-600 rounded shadow">
-                  Map loaded
+              
+              {/* Nearby Places Section */}
+              {destinationCoords && (
+                <div className="mt-4 border-t pt-4">
+                  <NearbyPlaces 
+                    location={destinationCoords} 
+                    radius={500}
+                    onPlaceSelect={(place) => {
+                      // Center the map on the selected place
+                      if (mapInstance.current) {
+                        mapInstance.current.setCenter({
+                          lat: place.geometry.location.lat,
+                          lng: place.geometry.location.lng
+                        });
+                        mapInstance.current.setZoom(17);
+                      }
+                    }}
+                  />
                 </div>
               )}
             </div>
           </div>
+          
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DrawerClose>
+            <Button onClick={handleConfirm} disabled={!destination.place}>
+              Confirm Date
+            </Button>
+          </DrawerFooter>
         </div>
       </DrawerContent>
     </Drawer>
