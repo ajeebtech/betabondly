@@ -21,21 +21,18 @@ export function SpinningText({
       )}
       {...props}
     >
-      <div
-        className="inline-flex animate-marquee whitespace-nowrap"
-        style={{
-          animation: inView ? `marquee ${children?.toString().split("•").length * 2}s linear infinite` : "none",
-        }}
-      >
-        {children}
-      </div>
-      <div
-        className="absolute left-full ml-2 inline-flex animate-marquee whitespace-nowrap"
-        style={{
-          animation: inView ? `marquee ${children?.toString().split("•").length * 2}s linear infinite` : "none",
-        }}
-      >
-        {children}
+      <div className="relative w-full overflow-hidden">
+        <div
+          className="inline-flex animate-marquee whitespace-nowrap"
+          style={{
+            animation: inView ? `marquee ${children?.toString().split("•").length * 2}s linear infinite` : "none",
+            display: 'inline-block',
+            paddingRight: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
+          {children}
+        </div>
       </div>
       <style jsx global>{`
         @keyframes marquee {
