@@ -6,7 +6,6 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx}", // Components
     "./node_modules/preline/preline.js",     // Preline UI
   ],
-  darkMode: false, // Disable dark mode
   theme: {
     extend: {
       colors: {
@@ -18,7 +17,6 @@ module.exports = {
         blue: {
           500: "#3b82f6",
           600: "#2563eb",
-          700: "#1d4ed8",
         },
       },
       fontFamily: {

@@ -1,12 +1,11 @@
 import { getTweets } from '@/lib/tweets';
 import PostForm from '@/components/PostForm';
 
-interface PageProps {
+interface CouplePageProps {
   params: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default async function CouplePage({ params }: PageProps) {
+export default async function CouplePage({ params }: CouplePageProps) {
   const tweets = await getTweets(params.slug);
 
   return (

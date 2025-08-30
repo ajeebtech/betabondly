@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HowItWorks } from "@/components/HowItWorks";
 import { GrainGradient } from '@paper-design/shaders-react';
+import { SpinningTextBadge } from "@/components/SpinningTextBadge";
 
 // Animation variants
 const fadeUp = {
@@ -430,6 +431,9 @@ export default function Home() {
           </Text>
         </Container>
       </Box>
+      
+      {/* Spinning Text Badge */}
+      <SpinningTextBadge />
     </Box>
   );
 }
