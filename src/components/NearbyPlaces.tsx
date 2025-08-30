@@ -232,7 +232,7 @@ export default function NearbyPlaces({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <h3 className="text-lg font-medium">Nearby Places</h3>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="w-full sm:w-48">
+          <div className="w-full sm:w-48 relative z-10">
             <Select
               selectedKeys={[selectedFilter.value]}
               onSelectionChange={(keys) => {
@@ -242,26 +242,39 @@ export default function NearbyPlaces({
               }}
               isOpen={isOpen}
               onOpenChange={setIsOpen}
-              className="w-full"
+              className="w-full bg-white rounded-md border border-gray-300"
+              classNames={{
+                trigger: 'h-10 px-3 py-2 text-sm text-left text-black',
+                popoverContent: 'bg-white border border-gray-300 rounded-md shadow-lg',
+                listbox: 'py-1',
+              }}
               placeholder="Select a filter"
-              labelPlacement="outside"
               aria-label="Filter places"
+              variant="flat"
+              size="sm"
             >
               {PLACE_FILTERS.map((filter) => (
-                <SelectItem key={filter.value} value={filter.value}>
+                <SelectItem 
+                  key={filter.value} 
+                  className="px-3 py-2 text-sm text-black hover:bg-gray-100"
+                >
                   {filter.label}
                 </SelectItem>
               ))}
             </Select>
           </div>
-          <Button 
-            onPress={findNearbyPlaces}
-            isLoading={loading}
-            className="h-10 px-4"
-            color="primary"
-          >
-            {loading ? 'Searching...' : 'Search'}
-          </Button>
+          <div className="relative">
+            <Button 
+              onPress={findNearbyPlaces}
+              isLoading={loading}
+              className="h-10 px-6 min-w-[120px] border-2 border-black bg-white text-black hover:bg-gray-50 transition-colors"
+              variant="flat"
+              size="md"
+            >
+              {loading ? 'Searching...' : 'Search'}
+            </Button>
+            <div className="absolute inset-0 border-2 border-black rounded-md translate-x-1 translate-y-1 -z-10" />
+          </div>
         </div>
       </div>
 

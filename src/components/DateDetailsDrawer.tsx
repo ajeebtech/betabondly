@@ -477,8 +477,29 @@ export function DateDetailsDrawer({
     e.stopPropagation();
   };
 
+  const resetDrawer = () => {
+    setStartingPoint({ address: '', place: null });
+    setDestination({ address: '', place: null });
+    setWaypoints([]);
+    setShowSuccess(false);
+    setShowError(false);
+    setErrorMessage('');
+    // Reset any other relevant state here
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    onOpenChange(isOpen);
+    if (!isOpen) {
+      // Reset all states when closing
+      resetDrawer();
+    } else {
+      // Reset states when opening as well to ensure a fresh start
+      resetDrawer();
+    }
+  };
+
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerContent 
         className="h-[90vh]"
         onClick={handleDrawerContentClick}
