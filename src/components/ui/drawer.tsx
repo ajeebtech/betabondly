@@ -55,6 +55,13 @@ function DrawerContent({
       <DrawerOverlay />
       <DrawerPrimitive.Content
         data-slot="drawer-content"
+        // ⬇️ Add this
+        onInteractOutside={(e) => {
+          // If user clicked inside Google autocomplete dropdown, don’t close
+          if ((e.target as HTMLElement).closest(".pac-container")) {
+            e.preventDefault();
+          }
+        }}
         className={cn(
           "fixed inset-x-0 bottom-0 z-[100] mt-24 flex h-auto flex-col rounded-t-[10px] border bg-white shadow-xl",
           className
@@ -67,6 +74,7 @@ function DrawerContent({
     </DrawerPortal>
   )
 }
+
 
 function DrawerHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
