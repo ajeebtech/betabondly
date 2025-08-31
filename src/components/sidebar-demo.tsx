@@ -7,6 +7,13 @@ import {
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Inter } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const SettingsIcon = () => (
   <svg 
@@ -126,14 +133,29 @@ export default function SidebarDemo() {
       )}
     >
       <Sidebar open={open} setOpen={setOpen}>
-        <SidebarBody className="justify-between gap-10">
-          <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-            {open ? <Logo /> : <LogoIcon />}
-            <div className="mt-8 flex flex-col gap-2">
-              {links.map((link, idx) => (
-                <SidebarLink key={idx} link={link} />
-              ))}
-              <SidebarPremiumButton />
+        <SidebarBody>
+          <div className="flex flex-col h-full">
+            <div className="px-4 pt-4 pb-2">
+              <button 
+                onClick={() => window.location.href = '/'}
+                className="hover:opacity-80 transition-opacity focus:outline-none"
+              >
+                {open ? (
+                  <span className={`${inter.className} text-2xl font-bold text-pink-500`}>
+                    bondly.
+                  </span>
+                ) : (
+                  <span className="text-2xl font-bold text-pink-500">b</span>
+                )}
+              </button>
+            </div>
+            <div className="flex-1">
+              <div className="mt-2 flex flex-col gap-1">
+                {links.map((link, idx) => (
+                  <SidebarLink key={idx} link={link} />
+                ))}
+                <SidebarPremiumButton />
+              </div>
             </div>
           </div>
           <div className="space-y-2">
@@ -165,7 +187,7 @@ export const Logo = () => {
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="font-medium whitespace-pre text-black dark:text-white"
+        className={`${inter.className} text-2xl font-bold text-pink-500`}
       >
         bondly.
       </motion.span>

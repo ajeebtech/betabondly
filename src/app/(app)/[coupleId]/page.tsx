@@ -130,89 +130,92 @@ export default function CoupleDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen bg-gray-50">
+      {/* Notification Popover */}
       <div className="fixed top-4 right-4 z-50">
         <NotificationsPopover />
       </div>
-      <div className="relative min-h-screen bg-gray-50 w-full">
-        {/* Sidebar - Fixed */}
-        <div className="fixed inset-y-0 left-0 z-40">
-          <SidebarDemo />
-        </div>
-        <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 md:pl-[280px]">
-          {/* Post Composer */}
-          <div className="w-full max-w-2xl mb-6 bg-white rounded-lg shadow p-4">
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="[&_.heroui-textarea]:focus:ring-0 [&_.heroui-textarea]:focus:ring-offset-0 [&_.heroui-textarea]:focus:outline-none [&_.heroui-textarea]:focus:ring-transparent [&_.heroui-textarea]:focus:border-transparent">
-                <HeroTextarea
-                  placeholder="say whatever"
-                  className="w-full focus:ring-0 focus:ring-offset-0 focus:outline-none focus:ring-transparent focus:border-transparent"
-                  value={postContent}
-                  onChange={(e) => setPostContent(e.target.value)}
-                  label=""
-                  labelPlacement="inside"
-                  maxRows={5}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  {postContent.length}/280
+      
+      {/* Sidebar */}
+      <div className="fixed inset-y-0 left-0 z-40">
+        <SidebarDemo />
+      </div>
+      
+      {/* Main Content */}
+      <div className="md:ml-[280px] min-h-screen">
+        <div className="max-w-3xl mx-auto px-6 py-8">
+            {/* Post Composer */}
+            <div className="w-full mb-8 bg-white rounded-2xl shadow-lg p-8">
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div className="[&_.heroui-textarea]:focus:ring-0 [&_.heroui-textarea]:focus:ring-offset-0 [&_.heroui-textarea]:focus:outline-none [&_.heroui-textarea]:focus:ring-transparent [&_.heroui-textarea]:focus:border-transparent">
+                    <HeroTextarea
+                      placeholder="say whatever"
+                      className="w-full focus:ring-0 focus:ring-offset-0 focus:outline-none focus:ring-transparent focus:border-transparent"
+                      value={postContent}
+                      onChange={(e) => setPostContent(e.target.value)}
+                      label=""
+                      labelPlacement="inside"
+                      maxRows={5}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-500">
+                      {postContent.length}/280
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={!postContent.trim()}
+                      className="bg-pink-500 hover:bg-pink-600 text-white p-2"
+                      title="Post"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1.20308 1.04312C1.00481 0.954998 0.772341 1.0048 0.627577 1.16641C0.482813 1.32802 0.458794 1.56455 0.568117 1.75196L3.92115 7.50002L0.568117 13.2481C0.458794 13.4355 0.482813 13.672 0.627577 13.8336C0.772341 13.9952 1.00481 14.045 1.20308 13.9569L14.7031 7.95693C14.8836 7.87668 15 7.69762 15 7.50002C15 7.30243 14.8836 7.12337 14.7031 7.04312L1.20308 1.04312ZM4.84553 7.10002L2.21234 2.586L13.2689 7.50002L2.21234 12.414L4.84552 7.90002H9C9.22092 7.90002 9.4 7.72094 9.4 7.50002C9.4 7.27911 9.22092 7.10002 9 7.10002H4.84553Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
+                      </svg>
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={!postContent.trim()}
-                  className="bg-pink-500 hover:bg-pink-600 text-white p-2"
-                  title="Post"
-                >
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1.20308 1.04312C1.00481 0.954998 0.772341 1.0048 0.627577 1.16641C0.482813 1.32802 0.458794 1.56455 0.568117 1.75196L3.92115 7.50002L0.568117 13.2481C0.458794 13.4355 0.482813 13.672 0.627577 13.8336C0.772341 13.9952 1.00481 14.045 1.20308 13.9569L14.7031 7.95693C14.8836 7.87668 15 7.69762 15 7.50002C15 7.30243 14.8836 7.12337 14.7031 7.04312L1.20308 1.04312ZM4.84553 7.10002L2.21234 2.586L13.2689 7.50002L2.21234 12.414L4.84552 7.90002H9C9.22092 7.90002 9.4 7.72094 9.4 7.50002C9.4 7.27911 9.22092 7.10002 9 7.10002H4.84553Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
-                  </svg>
-                </Button>
-              </div>
+              </form>
             </div>
-          </form>
-        </div>
 
-        {/* Posts Feed */}
-        <div className="w-full max-w-2xl space-y-6">
-          {posts.map((post) => (
-            <div key={post.id} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-medium">
-                    {post.author.charAt(0)}
+            {/* Posts Feed */}
+            <div className="w-full space-y-8">
+              {posts.map((post) => (
+                <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg w-full">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-14 h-14 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-medium text-xl">
+                        {post.author.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{post.author}</p>
+                        <p className="text-sm text-gray-500">{post.username} · {post.time}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{post.author}</p>
-                    <p className="text-sm text-gray-500">{post.username} · {post.time}</p>
+                  <p className="mt-6 text-gray-800 text-lg leading-relaxed">{post.content}</p>
+                  <div className="mt-6 flex items-center space-x-8 text-base text-gray-500">
+                    <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
+                      <HeartIcon className="w-5 h-5" />
+                      <span>{post.likes}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <span>{post.comments}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              </div>
-              <p className="mt-4 text-gray-700">{post.content}</p>
-              <div className="mt-4 flex items-center space-x-6 text-sm text-gray-500">
-                <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
-                  <HeartIcon className="w-5 h-5" />
-                  <span>{post.likes}</span>
-                </button>
-                <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  <span>{post.comments}</span>
-                </button>
-                <button className="flex items-center space-x-1 hover:text-pink-500 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                  </svg>
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
-          </div>
-        </main>
+        </div>
         
-        {/* Calendar Drawer Trigger */}
         {/* Floating Action Button */}
         <div className="fixed bottom-6 right-6 z-50">
           <Button 
@@ -237,16 +240,15 @@ export default function CoupleDashboard() {
           open={isDateDetailsOpen}
           onOpenChange={setIsDateDetailsOpen}
           selectedDate={date || null}
-          onConfirm={() => {
-            // This will be called when the date details are confirmed
-            setIsDateDetailsOpen(false)
-          }}
           budget={budget}
           onBudgetChange={setBudget}
           distance={distance}
           onDistanceChange={setDistance}
+          onConfirm={() => {
+            setIsDateDetailsOpen(false);
+          }}
         />
       </div>
     </div>
-  )
+  );
 }
