@@ -186,3 +186,35 @@ export const SidebarLink = ({
     </a>
   );
 };
+
+export const SidebarPremiumButton = ({
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof motion.button>, 'onAnimationStart'>) => {
+  const { open, animate } = useSidebar();
+  
+  return (
+    <motion.button
+      className={cn(
+        "flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+        "bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent hover:from-yellow-600 hover:to-yellow-700",
+        className
+      )}
+      initial={false}
+      animate={{
+        width: animate ? (open ? "auto" : "40px") : "auto",
+      }}
+      {...props}
+    >
+      <motion.span
+        animate={{
+          display: animate ? (open ? "inline-block" : "none") : "inline-block",
+          opacity: animate ? (open ? 1 : 0) : 1,
+        }}
+        className="whitespace-nowrap bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent"
+      >
+        premium
+      </motion.span>
+    </motion.button>
+  );
+};

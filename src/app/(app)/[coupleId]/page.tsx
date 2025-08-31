@@ -10,6 +10,7 @@ import { format } from "date-fns"
 import { Textarea as HeroTextarea } from "@heroui/react"
 import SidebarDemo from "@/components/sidebar-demo"
 import HeartIcon from "@/components/HeartIcon"
+import { NotificationsPopover } from "@/components/NotificationsPopover"
 
 type DatePlan = {
   date: Date
@@ -129,16 +130,18 @@ export default function CoupleDashboard() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-50 flex">
-      {/* Sidebar - Fixed */}
-      <div className="fixed inset-y-0 left-0 z-40">
-        <SidebarDemo />
+    <div className="flex min-h-screen">
+      <div className="fixed top-4 right-4 z-50">
+        <NotificationsPopover />
       </div>
-
-      {/* Main Content */}
-      <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 md:pl-[280px]">
-        {/* Post Composer */}
-        <div className="w-full max-w-2xl mb-6 bg-white rounded-lg shadow p-4">
+      <div className="relative min-h-screen bg-gray-50 w-full">
+        {/* Sidebar - Fixed */}
+        <div className="fixed inset-y-0 left-0 z-40">
+          <SidebarDemo />
+        </div>
+        <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 md:pl-[280px]">
+          {/* Post Composer */}
+          <div className="w-full max-w-2xl mb-6 bg-white rounded-lg shadow p-4">
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div className="[&_.heroui-textarea]:focus:ring-0 [&_.heroui-textarea]:focus:ring-offset-0 [&_.heroui-textarea]:focus:outline-none [&_.heroui-textarea]:focus:ring-transparent [&_.heroui-textarea]:focus:border-transparent">
@@ -206,43 +209,44 @@ export default function CoupleDashboard() {
               </div>
             </div>
           ))}
+          </div>
+        </main>
+        
+        {/* Calendar Drawer Trigger */}
+        {/* Floating Action Button */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button 
+            onClick={() => setIsCalendarOpen(true)}
+            className="rounded-full h-12 px-6 flex items-center space-x-2 shadow-lg hover:scale-105 transition-transform duration-200 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+          >
+            <CalendarIcon className="h-5 w-5" />
+            <span>plan a date!</span>
+          </Button>
         </div>
-      </main>
-      
-      {/* Calendar Drawer Trigger */}
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button 
-          onClick={() => setIsCalendarOpen(true)}
-          className="rounded-full h-12 px-6 flex items-center space-x-2 shadow-lg hover:scale-105 transition-transform duration-200 bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
-        >
-          <CalendarIcon className="h-5 w-5" />
-          <span>plan a date!</span>
-        </Button>
-      </div>
-      
-      {/* Calendar Drawer */}
-      <CalendarDrawer 
-        open={isCalendarOpen}
-        onOpenChange={setIsCalendarOpen}
-        date={date}
-        onDateSelect={handleSelect}
-      />
+        
+        {/* Calendar Drawer */}
+        <CalendarDrawer 
+          open={isCalendarOpen}
+          onOpenChange={setIsCalendarOpen}
+          date={date}
+          onDateSelect={handleSelect}
+        />
 
-      {/* Date Details Drawer */}
-      <DateDetailsDrawer
-        open={isDateDetailsOpen}
-        onOpenChange={setIsDateDetailsOpen}
-        selectedDate={date || null}
-        onConfirm={() => {
-          // This will be called when the date details are confirmed
-          setIsDateDetailsOpen(false)
-        }}
-        budget={budget}
-        onBudgetChange={setBudget}
-        distance={distance}
-        onDistanceChange={setDistance}
-      />
+        {/* Date Details Drawer */}
+        <DateDetailsDrawer
+          open={isDateDetailsOpen}
+          onOpenChange={setIsDateDetailsOpen}
+          selectedDate={date || null}
+          onConfirm={() => {
+            // This will be called when the date details are confirmed
+            setIsDateDetailsOpen(false)
+          }}
+          budget={budget}
+          onBudgetChange={setBudget}
+          distance={distance}
+          onDistanceChange={setDistance}
+        />
+      </div>
     </div>
   )
 }
