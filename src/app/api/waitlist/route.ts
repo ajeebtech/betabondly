@@ -1,55 +1,66 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { NextResponse } from 'next/server';
 
-// Initialize the Supabase client with the service role key
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+// Initialize Firebase Admin
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
+
+// Initialize Firebase Admin if not already initialized
+if (!global.firebaseAdminApp) {
+  global.firebaseAdminApp = initializeApp({
+    credential: cert(serviceAccount)
+  });
+}
+
+const db = getFirestore(global.firebaseAdminApp);
+
+declare global {
+  var firebaseAdminApp: any;
+}
 
 export async function POST(request: Request) {
-  const { email } = await request.json()
+  const { email } = await request.json();
   
   // Basic validation
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json(
       { error: 'Please provide a valid email address' },
       { status: 400 }
-    )
+    );
   }
 
   try {
-    // Insert the email into the waitlist table
-    const { data, error } = await supabase
-      .from('waitlist')
-      .insert([{ email }])
-      .select()
+    // Check if email already exists
+    const snapshot = await db.collection('waitlist')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
 
-    if (error) {
-      if (error.code === '23505') { // Duplicate email
-        return NextResponse.json(
-          { message: 'You\'re already on the waitlist!' },
-          { status: 200 }
-        )
-      }
-      throw error
+    if (!snapshot.empty) {
+      return NextResponse.json(
+        { message: 'You\'re already on the waitlist!' },
+        { status: 200 }
+      );
     }
 
+    // Add to waitlist
+    const docRef = await db.collection('waitlist').add({
+      email,
+      createdAt: new Date().toISOString()
+    });
+
     return NextResponse.json(
-      { message: 'Thanks for joining our waitlist!', data },
+      { 
+        message: 'Thanks for joining our waitlist!',
+        id: docRef.id 
+      },
       { status: 201 }
-    )
+    );
   } catch (error) {
-    console.error('Error adding to waitlist:', error)
+    console.error('Error adding to waitlist:', error);
     return NextResponse.json(
-      { error: 'Failed to add to waitlist. Please try again.' },
+      { error: 'Failed to add to waitlist' },
       { status: 500 }
-    )
+    );
   }
 }
