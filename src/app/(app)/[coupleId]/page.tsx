@@ -10,7 +10,7 @@ import { format } from "date-fns"
 import { Textarea as HeroTextarea } from "@heroui/react"
 import SidebarDemo from "@/components/sidebar-demo"
 import HeartIcon from "@/components/HeartIcon"
-import { NotificationsPopover } from "@/components/NotificationsPopover"
+import NotificationsPopover from "@/components/NotificationsPopover"
 
 type DatePlan = {
   date: Date
