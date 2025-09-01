@@ -13,46 +13,46 @@ const playfair = Playfair_Display({
 
 const pricingTiers = [
   {
-    name: 'Free',
+    name: 'free',
     price: '$0',
     period: 'forever',
-    description: 'Perfect for getting started',
+    description: 'get a taste of bondly',
     features: [
-      'Basic memory storage',
-      'Limited photo uploads',
-      'Basic analytics',
-      'Community support',
-      'Standard features',
-      'Basic customization'
+      '5 media dynamic memory',
+      '2x date agent plan calls',
+      'access to any 2 mini games',
+      'community support',
+      '100 tweets in total',
+      'basic customization'
     ],
     buttonText: 'Get Started',
     buttonVariant: 'outline',
     popular: false
   },
   {
-    name: 'Monthly',
-    price: '$9.99',
+    name: 'monthly',
+    price: '$4.99',
     period: 'per month',
-    description: 'For those who want flexibility',
+    description: 'for those who want more',
     features: [
-      'Everything in Free',
+      'Everything in free',
       'Unlimited photo uploads',
       'Advanced analytics',
       'Priority support',
       'Advanced features',
       'Custom themes'
     ],
-    buttonText: 'Start Free Trial',
+    buttonText: 'Get Started',
     buttonVariant: 'primary',
     popular: false
   },
   {
-    name: '6 Months',
-    price: '$49.99',
+    name: '6 months',
+    price: '$19.99',
     period: 'every 6 months',
-    description: 'Best value - Save 17%',
+    description: 'Best value - Save 50%',
     features: [
-      'Everything in Monthly',
+      'Everything in monthly',
       'Exclusive content',
       'Early access to features',
       'Dedicated account manager',
@@ -64,12 +64,12 @@ const pricingTiers = [
     popular: true
   },
   {
-    name: 'Annual',
-    price: '$89.99',
+    name: 'annual',
+    price: '$39.99',
     period: 'per year',
     description: 'Best for long-term users',
     features: [
-      'Everything in 6 Months',
+      'Everything in 6 months',
       'Highest priority support',
       'Custom development',
       'API access',
@@ -90,7 +90,7 @@ export default function PremiumPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-base-100 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <motion.h1 
@@ -107,7 +107,7 @@ export default function PremiumPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            Select the plan that works best for you and your relationship journey.
+            select the plan that works best for you and your relationship journey.
           </motion.p>
         </div>
 
@@ -116,23 +116,13 @@ export default function PremiumPage() {
             <motion.div
               key={tier.name}
               className={`relative rounded-2xl border-2 ${
-                tier.popular 
-                  ? 'border-pink-500 shadow-lg transform scale-105' 
-                  : 'border-gray-200 hover:border-pink-300'
+                'border-gray-200 hover:border-pink-300'
               } bg-white overflow-hidden`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
               whileHover={{ y: -5 }}
             >
-              {tier.popular && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <span className="bg-pink-500 text-white text-xs font-bold px-4 py-1 rounded-full whitespace-nowrap">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-              
               <div className="p-6">
                 <h3 className="text-2xl font-bold text-gray-900 mb-1">{tier.name}</h3>
                 <p className="text-gray-500 text-sm mb-6">{tier.description}</p>
@@ -142,15 +132,17 @@ export default function PremiumPage() {
                   <span className="text-gray-500 ml-2">{tier.period}</span>
                 </div>
                 
-                <div className="w-full mb-6">
-                  <RainbowButton 
-                    variant="default"
-                    size="lg"
-                    className="w-full"
-                  >
-                    {tier.buttonText}
-                  </RainbowButton>
-                </div>
+                {tier.name !== 'free' && (
+                  <div className="w-full mb-6">
+                    <RainbowButton 
+                      variant="default"
+                      size="lg"
+                      className="w-full"
+                    >
+                      {tier.buttonText}
+                    </RainbowButton>
+                  </div>
+                )}
                 
                 <ul className="space-y-3">
                   {tier.features.map((feature, i) => (
