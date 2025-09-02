@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // User profile pictures
+    match /profilePictures/{userId} {
+      // Users can read any profile picture
+      allow read: if true;
+      
+      // Users can only upload their own profile picture
+      allow write: if request.auth != null && 
+                   request.auth.uid == userId &&
+                   request.resource.size < 5 * 1024 * 1024 && // 5MB limit
+                   request.resource.contentType.matches('image/.*');
+    }
+    
+    // Post media files
+    match /posts/{coupleId}/{postId}/{mediaId} {
+      // Only users in the couple can read the media
+      allow read: if request.auth != null && 
+                 request.auth.uid in get(
+                   /databases/$(database)/documents/couples/$(coupleId)
+                 ).data.users;
+      
+      // Only users in the couple can upload media
+      allow write: if request.auth != null && 
+                  request.auth.uid in get(
+                    /databases/$(database)/documents/couples/$(coupleId)
+                  ).data.users &&
+                  request.resource.size < 10 * 1024 * 1024 && // 10MB limit
+                  request.resource.contentType.matches('(image|video)/.*');
+    }
+  }
+}

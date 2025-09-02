@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Couples collection
+    match /couples/{coupleId} {
+      // Users can read their own couple document
+      allow read: if request.auth != null && 
+        (resource.data.users.hasAny([request.auth.uid]) || 
+         request.auth.token.admin == true);
+      
+      // Only users in the couple can update it
+      allow update: if request.auth != null && 
+        resource.data.users.hasAny([request.auth.uid]);
+      
+      // Only authenticated users can create a couple
+      allow create: if request.auth != null;
+    }
+
+    // Posts collection
+    match /posts/{postId} {
+      // Users can read posts from their couple
+      allow read: if request.auth != null && 
+        (resource.data.coupleId in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users);
+      
+      // Users can create posts for their couple
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
+      
+      // Only the post creator can update/delete their posts
+      allow update, delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+  }
+}
