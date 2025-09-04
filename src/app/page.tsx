@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Box, Container, Text, VStack, HStack, Icon } from '@chakra-ui/react'
+import { AnimatedGradientBadge } from "@/components/magicui/animated-gradient-badge"
+import { AnimatedSubscribeButton } from "@/components/magicui/animated-subscribe-button"
+import { CheckIcon, ChevronRightIcon } from "lucide-react";
 import { useRouter } from 'next/navigation'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HowItWorks } from "@/components/HowItWorks";
@@ -11,8 +14,15 @@ import { GrainGradient } from '@paper-design/shaders-react';
 // Animation variants
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-}
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.6, 
+      ease: [0.16, 1, 0.3, 1] as const 
+    } 
+  },
+} as const
 
 const stagger = {
   hidden: {},
@@ -87,7 +97,18 @@ export default function Home() {
           />
         </Box>
 
-        <Container maxW="container.xl" position="relative" zIndex={1} pt="80px">
+        <Container 
+          maxW="container.xl" 
+          position="relative" 
+          zIndex={1} 
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minH={{ base: 'calc(100vh - 80px)', md: 'calc(100vh - 100px)' }}
+          pt="80px"
+          px={4}
+        >
           <VStack
             as={motion.div}
             initial="hidden"
@@ -95,17 +116,24 @@ export default function Home() {
             variants={stagger}
             spacing={8}
             w="100%"
+            maxW="3xl"
+            mx="auto"
             textAlign="center"
             justifyContent="center"
-            minH={{ base: 'calc(100vh - 80px)', md: 'calc(100vh - 100px)' }}
           >
-            <Box position="relative" zIndex={10}>
+            <Box position="relative" zIndex={10} w="full">
+              <motion.div 
+                variants={fadeUp}
+                className="flex justify-center w-full"
+              >
+                <AnimatedGradientBadge text=" Early Access • Limited Spots Available" />
+              </motion.div>
               <Text
                 as={motion.p}
                 variants={fadeUp}
                 fontSize={{ base: '4.5rem', sm: '6rem', md: '8rem' }}
                 fontWeight="bold"
-                color="pink.300"
+                color="#e60076"
                 lineHeight={1}
                 letterSpacing="tighter"
                 textShadow={[
@@ -141,10 +169,10 @@ export default function Home() {
               <Button 
                 as="a"
                 href="#waitlist"
-                colorScheme="pink" 
+                colorScheme="red" 
                 size="lg" 
-                bg="pink.400" 
-                _hover={{ bg: 'pink.500', textDecoration: 'none' }} 
+                bg="#e60076" 
+                _hover={{ bg: '#be123c', textDecoration: 'none' }} 
                 color="white"
                 onClick={(e) => {
                   e.preventDefault();
@@ -157,15 +185,20 @@ export default function Home() {
                 py={6}
                 fontSize="lg"
               >
-                waitlist
+                <span className="inline-flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="text-white">
+                    <path d="M4.89346 2.35248C3.49195 2.35248 2.35248 3.49359 2.35248 4.90532C2.35248 6.38164 3.20954 7.9168 4.37255 9.33522C5.39396 10.581 6.59464 11.6702 7.50002 12.4778C8.4054 11.6702 9.60608 10.581 10.6275 9.33522C11.7905 7.9168 12.6476 6.38164 12.6476 4.90532C12.6476 3.49359 11.5081 2.35248 10.1066 2.35248C9.27059 2.35248 8.81894 2.64323 8.5397 2.95843C8.27877 3.25295 8.14623 3.58566 8.02501 3.88993C8.00391 3.9429 7.98315 3.99501 7.96211 4.04591C7.88482 4.23294 7.7024 4.35494 7.50002 4.35494C7.29765 4.35494 7.11523 4.23295 7.03793 4.04592C7.01689 3.99501 6.99612 3.94289 6.97502 3.8899C6.8538 3.58564 6.72126 3.25294 6.46034 2.95843C6.18109 2.64323 5.72945 2.35248 4.89346 2.35248ZM1.35248 4.90532C1.35248 2.94498 2.936 1.35248 4.89346 1.35248C6.0084 1.35248 6.73504 1.76049 7.20884 2.2953C7.32062 2.42147 7.41686 2.55382 7.50002 2.68545C7.58318 2.55382 7.67941 2.42147 7.79119 2.2953C8.265 1.76049 8.99164 1.35248 10.1066 1.35248C12.064 1.35248 13.6476 2.94498 13.6476 4.90532C13.6476 6.74041 12.6013 8.50508 11.4008 9.96927C10.2636 11.3562 8.92194 12.5508 8.00601 13.3664C7.94645 13.4194 7.88869 13.4709 7.83291 13.5206C7.64324 13.6899 7.3568 13.6899 7.16713 13.5206C7.11135 13.4709 7.05359 13.4194 6.99403 13.3664C6.0781 12.5508 4.73641 11.3562 3.59926 9.96927C2.39872 8.50508 1.35248 6.74041 1.35248 4.90532Z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>join the waitlist</span>
+                </span>
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                colorScheme="pink"
+                colorScheme="red"
                 color="gray.700"
-                _hover={{ bg: 'pink.50' }}
-                borderColor="pink.500"
+                _hover={{ bg: '#fef2f2' }}
+                borderColor="#e11d48"
               >
                 privacy policy
               </Button>
@@ -205,7 +238,7 @@ export default function Home() {
             <div className="grid sm:grid-cols-2 gap-8 md:gap-12">
               {/* Icon Block */}
               <div className="flex gap-x-5">
-                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" x2="8" y1="16" y2="16"/><line x1="16" x2="16" y1="16" y2="16"/></svg>
+                <svg className="shrink-0 mt-1 size-6 text-[#e11d48]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" x2="8" y1="16" y2="16"/><line x1="16" x2="16" y1="16" y2="16"/></svg>
                 <div className="grow">
                   <h3 className="text-lg font-semibold text-gray-800">
                     private & secure
@@ -219,7 +252,7 @@ export default function Home() {
 
               {/* Icon Block */}
               <div className="flex gap-x-5">
-                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                <svg className="shrink-0 mt-1 size-6 text-[#e11d48]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
                 <div className="grow">
                   <h3 className="text-lg font-semibold text-gray-800">
                     silly and simple
@@ -233,7 +266,7 @@ export default function Home() {
 
               {/* Icon Block */}
               <div className="flex gap-x-5">
-                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <svg className="shrink-0 mt-1 size-6 text-[#e11d48]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <div className="grow">
                   <h3 className="text-lg font-semibold text-gray-800">
                     document everything
@@ -247,7 +280,7 @@ export default function Home() {
 
               {/* Icon Block */}
               <div className="flex gap-x-5">
-                <svg className="shrink-0 mt-1 size-6 text-pink-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg className="shrink-0 mt-1 size-6 text-[#e11d48]" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 <div className="grow">
                   <h3 className="text-lg font-semibold text-gray-800">
                     built for just you two.
@@ -398,16 +431,19 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <button 
+              <AnimatedSubscribeButton 
                 type="submit"
-                className="w-full sm:w-auto whitespace-nowrap py-3 px-6 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-pink-500 text-white hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all"
+                className="w-full sm:w-auto whitespace-nowrap py-3 px-6 text-sm font-semibold rounded-lg border border-transparent bg-[#e11d48] text-white hover:bg-[#be123c] focus:outline-none focus:ring-2 focus:ring-[#e11d48] focus:ring-offset-2 transition-all"
               >
-                join waitlist
-                <svg className="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"/>
-                  <path d="m12 5 7 7-7 7"/>
-                </svg>
-              </button>
+                <span className="group inline-flex items-center">
+                  join waitlist
+                  <ChevronRightIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+                <span className="group inline-flex items-center">
+                  <CheckIcon className="mr-1 size-4" />
+                  Joined!
+                </span>
+              </AnimatedSubscribeButton>
             </div>
           </form>
           <p className="mt-3 text-sm text-gray-500">no spam, unsubscribe at any time.</p>

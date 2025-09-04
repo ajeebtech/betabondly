@@ -133,7 +133,7 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={!formData.name.trim()}
-              className="w-full py-2.5 rounded-lg bg-pink-500 text-white disabled:bg-pink-100 disabled:text-pink-300 transition-colors"
+              className="w-full py-2.5 rounded-lg bg-[#e60076] text-white disabled:bg-gray-100 disabled:text-gray-300 transition-colors"
             >
               Continue
             </button>
@@ -165,8 +165,8 @@ export default function OnboardingPage() {
         return (
           <form onSubmit={handleVerify} className="space-y-6">
             <div className="text-center space-y-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-pink-100">
-                <Phone className="h-6 w-6 text-pink-600" />
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fce4ec]">
+                <Phone className="h-6 w-6 text-[#e60076]" />
               </div>
               <h3 className="text-lg font-medium">Verify your phone</h3>
               <p className="text-sm text-gray-500">
@@ -204,7 +204,7 @@ export default function OnboardingPage() {
                       className={[
                         'h-12 w-10 text-lg font-medium text-center',
                         'bg-gray-100 border-2 border-gray-300 rounded-lg',
-                        'focus:border-pink-500 focus:ring-1 focus:ring-pink-200',
+                        'focus:border-[#e60076] focus:ring-1 focus:ring-[#fce4ec]',
                         'transition-colors duration-200',
                         'text-gray-900',
                         'py-2',
@@ -228,7 +228,7 @@ export default function OnboardingPage() {
 
             <div className="text-center text-sm text-gray-500">
               Didn't receive a code?{' '}
-              <button type="button" className="font-medium text-pink-600 hover:text-pink-500">
+              <button type="button" className="font-medium text-[#e60076] hover:text-[#c41262]">
                 Resend
               </button>
             </div>
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
             </div>
             <button
               type="submit"
-              className="w-full py-2.5 rounded-lg bg-pink-500 text-white"
+              className="w-full py-2.5 rounded-lg bg-[#e60076] text-white hover:bg-[#c41262]"
             >
               Complete Setup
             </button>
