@@ -53,9 +53,9 @@ const pricingTiers = [
     description: 'Best value - Save 50%',
     features: [
       'Everything in monthly',
-      'Exclusive content',
-      'Early access to features',
-      'Dedicated account manager',
+      'text chat',
+      'monthly wrapped',
+      'more agents',
       'Premium support',
       'Custom domain'
     ],
