@@ -1,24 +1,24 @@
-"use client";
+// src/app/onboarding/page.tsx
+'use client';
 
-import { useState } from 'react';
-import { InputOtp } from "@heroui/react";
-import PhoneInput from "@/components/ui/phone-input";
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { signInWithPhoneNumber, updateProfile, updateEmail, User as FirebaseUser } from 'firebase/auth';
+import { auth, RecaptchaVerifier } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Phone, User, UserCircle, ArrowRight, ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CheckCircle, Phone, User as UserIcon, Mail, ArrowRight, ArrowLeft } from "lucide-react";
 
-type Step = 'name' | 'phone' | 'verify' | 'profile';
+type Step = 'name' | 'phone' | 'verify' | 'email';
 
 interface FormData {
   name: string;
   phone: string;
   verificationCode: string;
   email: string;
-  bio: string;
 }
 
 export default function OnboardingPage() {
@@ -28,274 +28,343 @@ export default function OnboardingPage() {
     phone: '',
     verificationCode: '',
     email: '',
-    bio: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<{confirm: (code: string) => Promise<{user: FirebaseUser} | null>} | null>(null);
+  const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
+  const router = useRouter();
 
-  const updateFormData = (updates: Partial<typeof formData>) => {
-    setFormData(prev => {
-      const newData = { ...prev, ...updates };
-      // Clear error when user starts typing
-      if (updates.name !== undefined && error) {
-        setError('');
-      }
-      return newData;
-    });
+  // Initialize reCAPTCHA
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      recaptchaVerifier.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleNameSubmit = (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      setError('Please enter your name');
-      return;
-    }
-    setStep('phone');
-  };
-
-  const handlePhoneSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.phone) {
-      setError('Please enter your phone number');
-      return;
-    }
-    setStep('verify');
+    setLoading(true);
     setError('');
+
+    try {
+      const phoneNumber = formData.phone.trim();
+      if (!phoneNumber || phoneNumber.length !== 10) {
+        setError('Please enter a valid 10-digit Indian phone number');
+        setLoading(false);
+        return;
+      }
+
+      // Format phone number with Indian country code
+      const formattedPhoneNumber = `+91${phoneNumber}`;
+      
+      // Reset reCAPTCHA if it exists
+      if (recaptchaVerifier.current) {
+        recaptchaVerifier.current.clear();
+      }
+      
+      // Create new reCAPTCHA verifier
+      recaptchaVerifier.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
+      
+      console.log('Sending code to:', formattedPhoneNumber);
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        formattedPhoneNumber,
+        recaptchaVerifier.current
+      );
+      
+      console.log('Confirmation result:', confirmation);
+      setConfirmationResult(confirmation);
+      setStep('verify');
+    } catch (err: any) {
+      console.error('Error sending code:', err);
+      setError(err.message || 'Failed to send verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerify = (e: React.FormEvent) => {
+  // Auto-submit when 6 digits are entered and handle focus
+  useEffect(() => {
+    if (step === 'verify') {
+      if (formData.verificationCode.length === 6) {
+        handleVerifyCode({ preventDefault: () => {} } as React.FormEvent);
+      } else if (formData.verificationCode.length === 0) {
+        const firstInput = document.getElementById('code-0');
+        if (firstInput) firstInput.focus();
+      }
+    }
+  }, [formData.verificationCode, step]);
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!confirmationResult) {
+      setError('Verification session expired. Please request a new code.');
+      setStep('phone');
+      return;
+    }
+
     if (formData.verificationCode.length !== 6) {
       setError('Please enter a valid 6-digit code');
       return;
     }
-    setStep('profile');
-  };
 
-  const handleOTPChange = (value: string) => {
-    updateFormData({ verificationCode: value });
-    if (value.length === 6) {
-      // Auto-submit when 6 digits are entered
-      handleVerify({ preventDefault: () => {} } as React.FormEvent);
+    setLoading(true);
+    setError('');
+
+    try {
+      console.log('Verifying code:', formData.verificationCode);
+      const result = await confirmationResult.confirm(formData.verificationCode);
+      if (result?.user) {
+        setStep('email');
+      } else {
+        setError('Verification failed. Please try again.');
+      }
+    } catch (err: any) {
+      setError('Invalid verification code');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    // Handle backspace to move to previous input
-    if (e.key === 'Backspace' && !formData.verificationCode[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
-      if (prevInput) prevInput.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleSubmitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text');
-    const otp = pastedData.replace(/\D/g, '').slice(0, 6); // Get only digits and limit to 6
-    if (otp.length === 6) {
-      updateFormData({ verificationCode: otp });
-      // Auto-submit if pasted a complete OTP
-      setTimeout(() => {
-        handleVerify({ preventDefault: () => {} } as React.FormEvent);
-      }, 0);
+    const user = auth.currentUser;
+    if (!user) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await updateProfile(user, { displayName: formData.name });
+      await updateEmail(user, formData.email);
+      // Redirect to dashboard or next step
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update profile');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const nextStep = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission
+    
+    if (step === 'name') {
+      if (formData.name.trim()) {
+        setStep('phone');
+      }
+    } else if (step === 'phone' && formData.phone.trim()) {
+      handleSendCode(e);
+    } else if (step === 'verify' && formData.verificationCode.trim()) {
+      handleVerifyCode(e);
+    } else if (step === 'email' && formData.email.trim()) {
+      handleSubmitEmail(e);
+    }
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    handleSubmit(e);
+  const handleContinue = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (step === 'name' && formData.name.trim()) {
+      setStep('phone');
+    }
   };
 
-  const renderStep = () => {
-    switch (step) {
-      case 'name':
-        return (
-          <form onSubmit={handleNameSubmit} className="space-y-4">
-            <h3 className="text-lg font-medium">What's your name?</h3>
-            <div className="space-y-2">
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => updateFormData({ name: e.target.value })}
-                placeholder="Your full name"
-                className="w-full"
-                autoFocus
-              />
-              {error && step === 'name' && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={!formData.name.trim()}
-              className="w-full py-2.5 rounded-lg bg-[#e60076] text-white disabled:bg-gray-100 disabled:text-gray-300 transition-colors"
-            >
-              Continue
-            </button>
-          </form>
-        );
+  const prevStep = () => {
+    if (step === 'phone') setStep('name');
+    else if (step === 'verify') setStep('phone');
+    else if (step === 'email') setStep('verify');
+  };
 
-      case 'phone':
-        return (
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
-            <h3 className="text-lg font-medium">What's your phone number?</h3>
-            <p className="text-sm text-gray-500">We'll send you a verification code</p>
-            <div className="space-y-2">
-              <PhoneInput
-                value={formData.phone as any} // Type assertion to handle E164Number type
-                onChange={(value) => updateFormData({ phone: value || '' })}
-                placeholder="Enter phone number"
-                className="w-full"
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full">
-              Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </form>
-        );
+  const progress = {
+    'name': 25,
+    'phone': 50,
+    'verify': 75,
+    'email': 100,
+  }[step];
 
-      case 'verify':
-        return (
-          <form onSubmit={handleVerify} className="space-y-6">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#fce4ec]">
-                <Phone className="h-6 w-6 text-[#e60076]" />
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">
+            Complete Your Profile
+          </CardTitle>
+          <CardDescription className="text-center">
+            Step {['name', 'phone', 'verify', 'email'].indexOf(step) + 1} of 4
+          </CardDescription>
+          <Progress value={progress} className="h-2" />
+        </CardHeader>
+        
+        <CardContent>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={nextStep} className="space-y-4">
+            {step === 'name' && (
+              <div>
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="John Doe"
+                  required
+                  className="mt-1"
+                />
               </div>
-              <h3 className="text-lg font-medium">Verify your phone</h3>
-              <p className="text-sm text-gray-500">
-                We've sent a verification code to {formData.phone}
-              </p>
-            </div>
+            )}
 
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex justify-center mb-4">
-                <div className="flex gap-3">
-                  {[...Array(6)].map((_, i) => (
-                    <input
+            {step === 'phone' && (
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative mt-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500">+91</span>
+                  </div>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      // Allow only numbers
+                      const value = e.target.value.replace(/\D/g, '');
+                      setFormData(prev => ({ ...prev, phone: value }));
+                    }}
+                    placeholder="1234567890"
+                    className="pl-14"
+                    required
+                    maxLength={10}
+                    minLength={10}
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                  />
+                </div>
+              </div>
+            )}
+
+            {step === 'verify' && (
+              <div>
+                <Label htmlFor="verificationCode">Verification Code</Label>
+                <div className="flex space-x-2">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <Input
                       key={i}
-                      id={`otp-input-${i}`}
                       type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
                       maxLength={1}
                       value={formData.verificationCode[i] || ''}
                       onChange={(e) => {
-                        const newCode = formData.verificationCode.split('');
-                        const value = e.target.value.replace(/\D/g, '').slice(-1); // Only allow one digit
-                        newCode[i] = value;
-                        const code = newCode.join('');
-                        handleOTPChange(code);
-                        
-                        // Auto-focus next input
-                        if (value && i < 5) {
-                          const nextInput = document.getElementById(`otp-input-${i + 1}`) as HTMLInputElement;
-                          if (nextInput) nextInput.focus();
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value || e.target.value === '') {
+                          const newCode = formData.verificationCode.split('');
+                          newCode[i] = value;
+                          const updatedCode = newCode.join('').substring(0, 6);
+                          setFormData(prev => ({
+                            ...prev,
+                            verificationCode: updatedCode
+                          }));
+                          
+                          // Auto-focus next input or previous on backspace
+                          if (value && i < 5) {
+                            const nextInput = document.getElementById(`code-${i + 1}`);
+                            if (nextInput) nextInput.focus();
+                          } else if (e.target.value === '' && i > 0) {
+                            const prevInput = document.getElementById(`code-${i - 1}`);
+                            if (prevInput) prevInput.focus();
+                          }
                         }
                       }}
-                      onKeyDown={(e) => handleKeyDown(e, i)}
-                      onPaste={handlePaste}
-                      className={[
-                        'h-12 w-10 text-lg font-medium text-center',
-                        'bg-gray-100 border-2 border-gray-300 rounded-lg',
-                        'focus:border-[#e60076] focus:ring-1 focus:ring-[#fce4ec]',
-                        'transition-colors duration-200',
-                        'text-gray-900',
-                        'py-2',
-                        'appearance-none' // Remove number input spinners
-                      ].join(' ')}
+                      onKeyDown={(e) => {
+                        // Handle backspace on empty input
+                        if (e.key === 'Backspace' && !e.currentTarget.value && i > 0) {
+                          const prevInput = document.getElementById(`code-${i - 1}`);
+                          if (prevInput) prevInput.focus();
+                        }
+                      }}
+                      id={`code-${i}`}
+                      className="text-center w-12 h-12 text-xl"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                     />
                   ))}
                 </div>
+                <input
+                  type="hidden"
+                  name="verificationCode"
+                  value={formData.verificationCode}
+                  required
+                  minLength={6}
+                  maxLength={6}
+                />
               </div>
-              
-              <div className="text-sm text-default-500">
-                Verification code: <span className="font-medium">{formData.verificationCode}</span>
-              </div>
-            </div>
-
-            {error && (
-              <p className="text-center text-sm text-red-500">
-                {error}
-              </p>
             )}
 
-            <div className="text-center text-sm text-gray-500">
-              Didn't receive a code?{' '}
-              <button type="button" className="font-medium text-[#e60076] hover:text-[#c41262]">
-                Resend
-              </button>
-            </div>
-
-            <div className="flex gap-2 w-full">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-1/2"
-                onClick={() => setStep('phone')}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
-              <Button type="submit" className="w-1/2">
-                Verify
-                <CheckCircle className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </form>
-        );
-
-      case 'profile':
-        return (
-          <form onSubmit={handleProfileSubmit} className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Complete your profile</h3>
+            {step === 'email' && (
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input
+                  id="email"
+                  name="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => updateFormData({ email: e.target.value })}
-                  placeholder="your.email@example.com"
-                  className="w-full"
+                  onChange={handleChange}
+                  placeholder="you@example.com"
+                  className="mt-1"
                   required
                 />
               </div>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-lg bg-[#e60076] text-white hover:bg-[#c41262]"
-            >
-              Complete Setup
-            </button>
-          </form>
-        );
-    }
-  };
+            )}
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {step === 'name' ? 'Welcome!' : 
-             step === 'phone' ? 'Your Phone Number' :
-             step === 'verify' ? 'Verify Your Number' :
-             'Almost There!'}
-          </h1>
-        </div>
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg">
-            {error}
-          </div>
-        )}
-        {renderStep()}
-      </div>
+            <div className="flex justify-between pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                disabled={step === 'name' || loading}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              
+              <Button
+                type={step === 'name' ? 'button' : 'submit'}
+                onClick={step === 'name' ? handleContinue : undefined}
+                disabled={
+                  loading || 
+                  (step === 'name' && !formData.name.trim()) ||
+                  (step === 'phone' && formData.phone.length !== 10) ||
+                  (step === 'verify' && formData.verificationCode.length !== 6) ||
+                  (step === 'email' && !formData.email.trim())
+                }
+                className="w-full"
+              >
+                {loading ? 'Loading...' : step === 'email' ? 'Complete' : 'Continue'}
+                {!loading && step !== 'email' && <ArrowRight className="ml-2 h-4 w-4" />}
+              </Button>
+            </div>
+          </form>
+
+          {/* Hidden reCAPTCHA container */}
+          <div id="recaptcha-container" className="invisible"></div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
