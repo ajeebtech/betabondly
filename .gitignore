@@ -1,42 +1,43 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Default .gitignore for Node.js projects
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+*.pem
+.env*.local
 
-# dependencies
-/node_modules
-/.pnp
+# Ignore other pages
+src/app/onboarding/
+src/app/premium/
+src/app/dashboard/
+src/app/default-couple/
+src/app/privacy/
+src/app/(app)/
+
+# Ignore development files
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
 *.tsbuildinfo
 next-env.d.ts
-node_modules
+
+# Keep only the landing page and essential files
+!src/app/page.tsx
+!public/
+!src/components/
+!styles/
+!next.config.js
+!package.json
+!package-lock.json
+!tsconfig.json
+!tailwind.config.js
+!postcss.config.js

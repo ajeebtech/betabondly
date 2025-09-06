@@ -1,121 +1,198 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
-// Define types for Google Maps objects
-interface GoogleLatLngLiteral {
-  lat: number;
-  lng: number;
-}
-
-interface GoogleLatLng {
-  lat(): number;
-  lng(): number;
-  // Add other methods that might be needed
-  toJSON(): GoogleLatLngLiteral;
-}
-
-interface Place {
-  name?: string;
-  formatted_address?: string;
-  geometry?: {
-    location: GoogleLatLng | GoogleLatLngLiteral;
-  };
-  place_id?: string;
-  types?: string[];
-}
-
-interface SimplifiedPlace {
-  name: string;
-  formatted_address: string;
-  geometry: {
-    location: GoogleLatLngLiteral;
-  };
-  place_id?: string;
-  types?: string[];
-}
+/// <reference path="../types/google-maps-new.d.ts" />
 
 declare global {
   interface Window {
-    google: any;
+    google: typeof google;
     initMap?: () => void;
   }
 }
 
+interface LatLng {
+  lat: () => number;
+  lng: () => number;
+}
+
+export interface Place {
+  name?: string;
+  formatted_address?: string;
+  geometry?: {
+    location: LatLng;
+  };
+  place_id?: string;
+  types?: string[];
+}
+
 interface LocationSearchProps {
-  onPlaceSelected: (place: {
-    name?: string;
-    formatted_address?: string;
-    geometry?: {
-      location: {
-        lat: number;
-        lng: number;
-      };
-    };
-    place_id?: string;
-    types?: string[];
-  }) => void;
+  onPlaceSelected: (place: Place) => void;
   placeholder?: string;
   className?: string;
 }
 
-export function LocationSearch({ 
-  onPlaceSelected, 
-  placeholder = 'Search for places...', 
-  className = '',
-  value = ''
-}: LocationSearchProps & { value?: string }) {
+export function LocationSearch({ onPlaceSelected, placeholder = 'Search for places...', className = '' }: LocationSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [inputValue, setInputValue] = useState(value);
-  const [selectedPlace, setSelectedPlace] = useState<SimplifiedPlace | null>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const hiddenMapDivRef = useRef<HTMLDivElement | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  
+  // Initialize Google Places Autocomplete
+  const initializeAutocomplete = useCallback(() => {
+    if (!inputRef.current || !window.google?.maps?.places) {
+      return;
+    }
 
-  // Helper function to get coordinates from a LatLng or LatLngLiteral
-  const getCoordinates = (location: GoogleLatLng | GoogleLatLngLiteral | undefined | null): GoogleLatLngLiteral => {
-    if (!location) return { lat: 0, lng: 0 };
+    // Create a hidden map div if it doesn't exist
+    if (!hiddenMapDivRef.current) {
+      const hiddenMapDiv = document.createElement('div');
+      hiddenMapDiv.style.display = 'none';
+      document.body.appendChild(hiddenMapDiv);
+      hiddenMapDivRef.current = hiddenMapDiv;
+      
+      // Create a map instance (required for Autocomplete)
+      mapRef.current = new window.google.maps.Map(hiddenMapDiv, {
+        center: { lat: 28.6139, lng: 77.209 }, // Default to New Delhi
+        zoom: 13,
+      });
+    }
+
+    // Clean up existing autocomplete
+    if (autocompleteRef.current) {
+      window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+    }
+
+    // Create new autocomplete instance
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
+      }
+    );
+
+    // Add place changed listener
+    const placeChangedHandler = () => {
+      if (!autocompleteRef.current) return;
+      
+      const place = autocompleteRef.current.getPlace();
+      if (place.geometry?.location) {
+        const location = place.geometry.location;
+        const selectedPlace: Place = {
+          name: place.name,
+          formatted_address: place.formatted_address,
+          geometry: {
+            location: {
+              lat: () => location.lat(),
+              lng: () => location.lng()
+            }
+          },
+          place_id: place.place_id,
+          types: place.types
+        };
+        
+        setSelectedPlace(selectedPlace);
+        onPlaceSelected(selectedPlace);
+      }
+    };
+
+    autocompleteRef.current.addListener('place_changed', placeChangedHandler);
+
+    // Handle keyboard events
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && document.activeElement === inputRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    inputRef.current.addEventListener('keydown', handleKeyDown);
+
+    // Set up cleanup function
+    cleanupRef.current = () => {
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      }
+      inputRef.current?.removeEventListener('keydown', handleKeyDown);
+    };
+
+    return cleanupRef.current;
+  }, [onPlaceSelected]);
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (window.google?.maps?.places) {
+      initializeAutocomplete();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
     
-    try {
-      if ('lat' in location) {
-        const lat = typeof location.lat === 'function' ? (location as GoogleLatLng).lat() : location.lat;
-        const lng = typeof location.lng === 'function' ? (location as GoogleLatLng).lng() : location.lng;
-        return { lat, lng };
-      }
-      
-      const latLng = location as google.maps.LatLng;
-      if (latLng && typeof latLng.lat === 'function' && typeof latLng.lng === 'function') {
-        return { lat: latLng.lat(), lng: latLng.lng() };
-      }
-      
-      console.error('Invalid location object:', location);
-      return { lat: 0, lng: 0 };
-    } catch (error) {
-      console.error('Error getting coordinates:', error);
-      return { lat: 0, lng: 0 };
-    }
-  };
+    window.initMap = initializeAutocomplete;
+    
+    script.onerror = (error) => {
+      console.error('Error loading Google Maps script:', error);
+    };
+    
+    document.head.appendChild(script);
 
-  // Add null checks for refs
-  const getMap = () => {
-    if (!mapRef.current) {
-      console.error('Map not initialized');
-      return null;
-    }
-    return mapRef.current;
+    return () => {
+      if (window.google?.maps?.event) {
+        if (autocompleteRef.current) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
+      }
+      if (hiddenMapDivRef.current) {
+        document.body.removeChild(hiddenMapDivRef.current);
+      }
+      window.initMap = undefined;
+    };
+  }, [initializeAutocomplete]);
+  
+  // Handle clicks on the input to prevent event propagation
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
   
-  const getSearchBox = () => {
-    if (!searchBoxRef.current) {
-      console.error('SearchBox not initialized');
-      return null;
-    }
-    return searchBoxRef.current;
+  // Handle mousedown on the input to prevent event propagation
+  const handleInputMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
-  // Fix for Google Places dropdown z-index and styling
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+      }
+      if (hiddenMapDivRef.current) {
+        document.body.removeChild(hiddenMapDivRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className={`relative ${className}`}>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={handleInputClick}
+        onMouseDown={handleInputMouseDown}
+      />
+    </div>
+  );
+}
+
+export default LocationSearch;
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -129,17 +206,6 @@ export function LocationSearch({
         pointer-events: auto !important;
       }
       
-      /* Fix for dropdown click events */
-      .pac-item {
-        pointer-events: auto !important;
-        cursor: pointer !important;
-      }
-      
-      /* Prevent clicks from being intercepted */
-      .pac-container:after {
-        display: none !important;
-      }
-      
       .pac-item {
         padding: 0.75rem 1rem !important;
         cursor: pointer !important;
@@ -149,37 +215,57 @@ export function LocationSearch({
         color: #374151 !important;
         pointer-events: auto !important;
       }
+      
       .pac-item:first-child {
         border-top: none !important;
       }
+      
       .pac-item:hover {
         background-color: #f3f4f6 !important;
       }
+      
       .pac-item-query {
         font-size: 0.875rem !important;
         color: #111827 !important;
         padding-right: 3px;
       }
+      
       .pac-icon {
         display: none !important;
       }
-      .pac-item:after {
-        display: none !important;
-      }
+      
       .pac-matched {
         font-weight: 500 !important;
         color: #111827 !important;
-      }
-      
-      /* Prevent clicks on the dropdown from being intercepted */
-      .pac-container:after {
-        content: none !important;
-      }
-      
-      /* Fix for dropdown positioning */
-      .pac-logo:after {
-        display: none !important;
       }`;
+      
+    document.head.appendChild(style);
+    
+    // Add global click handler to prevent event propagation from dropdown
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest('.pac-container')) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+    
+    // Add mousedown handler to prevent drawer from closing
+    const handleDocumentMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest('.pac-container')) {
+        e.stopPropagation();
+      }
+    };
+    
+    document.addEventListener('click', handleDocumentClick, true);
+    document.addEventListener('mousedown', handleDocumentMouseDown, true);
+    
+    return () => {
+      document.head.removeChild(style);
+      document.removeEventListener('click', handleDocumentClick, true);
+      document.removeEventListener('mousedown', handleDocumentMouseDown, true);
+    };
     document.head.appendChild(style);
 
     return () => {
@@ -277,58 +363,28 @@ export function LocationSearch({
         }
       );
 
+      // Prevent clicks on the dropdown from being intercepted
+      document.addEventListener('click', (e) => {
+        if (e.target && (e.target as HTMLElement).closest && 
+            (e.target as HTMLElement).closest('.pac-container')) {
+          e.stopPropagation();
+        }
+      }, true);
+
       // Add place_changed event listener with null check
       const autocomplete = autocompleteRef.current;
       if (autocomplete) {
-        // Add the place_changed event listener
         autocomplete.addListener('place_changed', () => {
           handlePlaceChanged();
         });
         
-        // Handle Enter key press
+        // Prevent clicks on the dropdown from being intercepted
         window.google.maps.event.addDomListener(inputRef.current, 'keydown', (e: KeyboardEvent) => {
           if (e.key === 'Enter' && document.activeElement === inputRef.current) {
             e.preventDefault();
             e.stopPropagation();
           }
         });
-        
-        // Handle click events on the dropdown items
-        const handleDocumentClick = (e: Event) => {
-          const target = e.target as HTMLElement;
-          const pacItem = target.closest('.pac-item');
-          if (pacItem) {
-            // Small delay to ensure the place is selected
-            setTimeout(() => {
-              handlePlaceChanged();
-            }, 50);
-          }
-        };
-        
-        // Add a small delay to ensure the pac-container is in the DOM
-        const setupClickHandler = () => {
-          const pacContainer = document.querySelector('.pac-container');
-          if (pacContainer) {
-            // Use capture phase to ensure we catch the event
-            document.addEventListener('click', handleDocumentClick, { capture: true });
-            return true;
-          }
-          return false;
-        };
-        
-        // Try to set up immediately, then retry if needed
-        if (!setupClickHandler()) {
-          const interval = setInterval(() => {
-            if (setupClickHandler()) {
-              clearInterval(interval);
-            }
-          }, 100);
-        }
-        
-        // Clean up the event listener
-        return () => {
-          document.removeEventListener('click', handleDocumentClick, { capture: true });
-        };
       }
 
       // Handle click events on the input to show suggestions
@@ -360,7 +416,6 @@ export function LocationSearch({
         return;
       }
 
-      // Get the place details from the autocomplete
       const place = autocompleteRef.current.getPlace();
       
       if (!place) {
@@ -368,53 +423,25 @@ export function LocationSearch({
         return;
       }
 
-      console.log('Selected place:', place);
-
-      // If we don't have geometry, try to get it using the place_id
-      if (!place.geometry?.location) {
-        console.log('No geometry available, trying to fetch place details...');
-        
-        if (!place.place_id) {
-          console.error('No place_id available to fetch details');
-          return;
-        }
-
-        const service = new window.google.maps.places.PlacesService(document.createElement('div'));
-        service.getDetails({ 
-          placeId: place.place_id, 
-          fields: ['geometry', 'formatted_address', 'name', 'place_id', 'types'] 
-        }, (details: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
-          if (status === 'OK' && details?.geometry?.location) {
-            const location = getCoordinates(details.geometry.location);
-            const simplifiedPlace: SimplifiedPlace = {
-              name: details.name || '',
-              formatted_address: details.formatted_address || '',
-              geometry: { location },
-              place_id: details.place_id,
-              types: details.types
-            };
-            
-            setInputValue(details.formatted_address || details.name || '');
-            setSelectedPlace(simplifiedPlace);
-            onPlaceSelected(simplifiedPlace);
-          } else {
-            console.error('Error fetching place details:', status);
-          }
-        });
+      if (!place.geometry || !place.geometry.location) {
+        console.log('No geometry available for the selected place');
         return;
       }
 
-      // If we have geometry, proceed normally
-      const location = getCoordinates(place.geometry.location);
-      const simplifiedPlace: SimplifiedPlace = {
+      // Create a simplified place object with only the properties we need
+      const simplifiedPlace = {
         name: place.name || '',
         formatted_address: place.formatted_address || '',
-        geometry: { location },
+        geometry: {
+          location: {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+          }
+        },
         place_id: place.place_id,
         types: place.types
       };
 
-      setInputValue(place.formatted_address || place.name || '');
       setSelectedPlace(simplifiedPlace);
       onPlaceSelected(simplifiedPlace);
     } catch (error) {
@@ -430,76 +457,118 @@ export function LocationSearch({
     }
   };
 
-  // Update input value when value prop changes
-  useEffect(() => {
-    setInputValue(value);
-  }, [value]);
-
-  // Handle click events on the dropdown items
-  useEffect(() => {
-    const handleDocumentClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest('.pac-container')) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
-    };
-
-    // Use capture phase to catch the event early
-    document.addEventListener('click', handleDocumentClick, { capture: true });
-    
+    // Clean up function
     return () => {
-      document.removeEventListener('click', handleDocumentClick, { capture: true });
+      if (inputRef.current) {
+        inputRef.current.removeEventListener('click', handleInputClick);
+      }
+      document.body.removeChild(hiddenMapDiv);
     };
-  }, []);
+  } catch (error) {
+    console.error('Error initializing autocomplete:', error);
+  }
+};
 
-  // Prevent event propagation for all events that might cause the drawer to close
-  const stopPropagation = (e: React.SyntheticEvent) => {
-    e.stopPropagation();
-    const nativeEvent = e.nativeEvent as Event;
-    if (nativeEvent.stopImmediatePropagation) {
-      nativeEvent.stopImmediatePropagation();
+const handlePlaceChanged = () => {
+  try {
+    if (!autocompleteRef.current) {
+      console.error('Autocomplete not initialized');
+      return;
+    }
+
+    const place = autocompleteRef.current.getPlace();
+    
+    if (!place) {
+      console.log('No place selected');
+      return;
+    }
+
+    if (!place.geometry || !place.geometry.location) {
+      console.log('No geometry available for the selected place');
+      return;
+    }
+
+    // Create a simplified place object with only the properties we need
+    const simplifiedPlace = {
+      name: place.name || '',
+      formatted_address: place.formatted_address || '',
+      geometry: {
+        location: {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng()
+        }
+      },
+      place_id: place.place_id,
+      types: place.types
+    };
+
+    setSelectedPlace(simplifiedPlace);
+    onPlaceSelected(simplifiedPlace);
+  } catch (error) {
+    console.error('Error handling place selection:', error);
+  }
+};
+
+const handleInputFocus = () => {
+  if (inputRef.current) {
+    // Trigger a small input change to show suggestions
+    const inputEvent = new Event('input', { bubbles: true });
+    inputRef.current.dispatchEvent(inputEvent);
+  }
+};
+
+useEffect(() => {
+  const handleClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.pac-container')) {
+      e.stopPropagation();
+      e.preventDefault();
     }
   };
+  
+  document.addEventListener('click', handleClick, true);
+  return () => document.removeEventListener('click', handleClick, true);
+}, []);
 
-  // Touch event handlers
-  const handleTouch = (e: React.TouchEvent) => {
-    e.stopPropagation();
-  };
-
-  return (
-    <div 
-      className={`relative ${className}`}
-      onClick={stopPropagation}
-      onMouseDown={stopPropagation}
-      onMouseUp={stopPropagation}
-      onTouchStart={handleTouch}
-      onTouchEnd={handleTouch}
-    >
-      <div 
-        className="relative"
-        onClick={stopPropagation}
-        onMouseDown={stopPropagation}
-      >
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder={placeholder}
-          onClick={stopPropagation}
-          onMouseDown={stopPropagation}
-          onMouseUp={stopPropagation}
-          onTouchStart={handleTouch}
-          onTouchEnd={handleTouch}
-          onFocus={() => {
-            if (inputRef.current) {
-              inputRef.current.value = '';
-              const event = new Event('input', { bubbles: false });
-              inputRef.current.dispatchEvent(event);
-            }
+return (
+  <div 
+    className="relative w-full" 
+    onClick={(e) => e.stopPropagation()}
+    onMouseDown={(e) => e.stopPropagation()}
+  >
+    <div className="relative">
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onFocus={() => {
+          if (inputRef.current) {
+            inputRef.current.value = '';
+            const event = new Event('input', { bubbles: true });
+            inputRef.current.dispatchEvent(event);
+          }
+        }}
+        className={`w-full rounded-md border border-gray-300 pl-10 pr-4 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
+      />
+      <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
           }}
-          className={`w-full rounded-md border border-gray-300 pl-10 pr-8 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
+          className={`w-full rounded-md border border-gray-300 pl-10 pr-4 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 ${className}`}
         />
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
           <svg
