@@ -1,6 +1,5 @@
 import { WebSocketServer } from 'ws';
 import { NextResponse } from 'next/server';
-import { NextApiRequest } from 'next';
 
 // This is a workaround for Next.js 13+ app directory WebSocket support
 // In a production environment, you'd want to use a separate WebSocket server
@@ -13,7 +12,7 @@ const clients = new Set<WebSocket>();
 // In a real application, you'd want to handle this in a separate server file
 let wss: WebSocketServer | null = null;
 
-export async function GET(req: Request) {
+export async function GET() {
   if (!wss) {
     // This is a workaround since we can't directly access the HTTP server in Next.js 13+
     // In a real app, you'd set this up in a separate server file
@@ -73,11 +72,4 @@ if (process.env.NODE_ENV === 'development') {
   });
   
   console.log('WebSocket server started');
-}
-*/
-
-export default function handler(req: NextApiRequest, res: any) {
-  // This is a placeholder for the WebSocket upgrade handler
-  // In a real application, you'd handle the WebSocket upgrade here
-  res.status(200).json({ message: 'WebSocket endpoint' });
 }
