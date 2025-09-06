@@ -1,4 +1,3 @@
-import { WebSocketServer } from 'ws';
 import { NextResponse } from 'next/server';
 
 // In-memory store for WebSocket connections
@@ -55,13 +54,19 @@ if (process.env.NODE_ENV === 'development') {
         broadcastMessage(data);
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
+export const dynamic = 'force-dynamic';
+
+export async function GET() {
+  return new NextResponse(
+    JSON.stringify({ 
+      status: 'WebSocket endpoint',
+      message: 'This is a WebSocket endpoint. For WebSocket functionality, please use a WebSocket client to connect to this endpoint.'
+    }),
+    { 
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
       }
-    });
-    
-    ws.on('close', () => {
-      clients.delete(ws);
-    });
-  });
-  
-  console.log('WebSocket server started');
+    }
+  );
 }
