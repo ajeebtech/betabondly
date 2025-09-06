@@ -1,10 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { NextResponse } from 'next/server';
 
-// This is a workaround for Next.js 13+ app directory WebSocket support
-// In a production environment, you'd want to use a separate WebSocket server
-// or a service like Pusher, Socket.io with a custom server, or similar
-
 // In-memory store for WebSocket connections
 const clients = new Set<WebSocket>();
 
@@ -42,12 +38,8 @@ export function broadcastMessage(message: any) {
 // 2. Use a service like Pusher, Ably, or Socket.io
 // 3. Or deploy a separate WebSocket server on a different port
 
-// Since we're using the Cloud Run server you provided, we'll primarily use that for WebSocket communication
-// This file is just a placeholder for local development
-
 // For local development, you can uncomment the following code to set up a basic WebSocket server
 // However, note that this won't work in a serverless environment like Vercel
-/*
 if (process.env.NODE_ENV === 'development') {
   const WebSocket = require('ws');
   
