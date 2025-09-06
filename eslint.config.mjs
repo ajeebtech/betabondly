@@ -1,16 +1,17 @@
-import nextPlugin from "@next/eslint-plugin-next";
-
-export default [
-  {
-    ignores: ["node_modules", ".next", "dist"],
-  },
-  {
-    files: ["**/*.{js,jsx,ts,tsx}"],
-    plugins: {
-      "@next/next": nextPlugin,
+module.exports = {
+  parser: "@typescript-eslint/parser", // if you're using TypeScript
+  plugins: ["@typescript-eslint"],
+  extends: [
+    "next/core-web-vitals", // for Next.js projects
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+  ],
+  overrides: [
+    {
+      files: ["*.js", "*.jsx", "*.ts", "*.tsx"],
+      rules: {
+        // your rules here
+      },
     },
-    rules: {
-      ...nextPlugin.configs["core-web-vitals"].rules,
-    },
-  },
-];
+  ],
+};
