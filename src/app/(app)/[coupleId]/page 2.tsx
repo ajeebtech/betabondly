@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { CalendarDrawer } from "@/components/CalendarDrawer"
 import { format } from "date-fns"
 import { Textarea as HeroTextarea } from "@heroui/react"
+import { Calendar as CalendarIcon } from "lucide-react"
 import SidebarDemo from "@/components/sidebar-demo";
 
 export default function CoupleDashboard() {
@@ -14,6 +15,7 @@ export default function CoupleDashboard() {
   const [postContent, setPostContent] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   
   // Simulate data loading
   useEffect(() => {
@@ -180,10 +182,22 @@ export default function CoupleDashboard() {
       </main>
       
       {/* Calendar Drawer Trigger */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
+        <Button 
+          onClick={() => setIsDrawerOpen(true)}
+          size="icon"
+          className="rounded-full w-12 h-12 shadow-lg"
+        >
+          <CalendarIcon className="h-5 w-5" />
+        </Button>
         <CalendarDrawer 
           date={date}
-          onSelect={setDate}
+          onDateSelect={(newDate) => {
+            setDate(newDate);
+            setIsDrawerOpen(false);
+          }}
+          open={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
           className=""
         />
       </div>
