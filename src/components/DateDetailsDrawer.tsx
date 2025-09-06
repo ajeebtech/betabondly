@@ -28,6 +28,22 @@ import { LocationSearch } from "./LocationSearch"
 import { Badge } from "@/components/ui/badge"
 import dynamic from 'next/dynamic';
 
+interface RouteResult {
+  route: any;
+  selectedPlaces: Array<{
+    place_id: string;
+    name: string;
+    formatted_address: string;
+    geometry: {
+      location: {
+        lat: number;
+        lng: number;
+      };
+    };
+    [key: string]: any;
+  }>;
+}
+
 // Dynamically import the NearbyPlaces component to avoid SSR issues with Google Maps
 const NearbyPlaces = dynamic(() => import('@/components/NearbyPlaces'), {
   ssr: false,
@@ -38,9 +54,75 @@ const NearbyPlaces = dynamic(() => import('@/components/NearbyPlaces'), {
   ),
 });
 
+// This tells TypeScript that we're using the Google Maps API
+declare namespace google.maps {
+  class LatLng {
+    constructor(lat: number, lng: number);
+    lat(): number;
+    lng(): number;
+  }
+  
+  class LatLngBounds {
+    constructor(sw?: LatLng, ne?: LatLng);
+    extend(latLng: LatLng): void;
+    getCenter(): LatLng;
+    getNorthEast(): LatLng;
+    getSouthWest(): LatLng;
+  }
+  
+  class Map {
+    constructor(element: HTMLElement, options?: any);
+    setCenter(latLng: { lat: number; lng: number } | LatLng): void;
+    getCenter(): LatLng;
+    setZoom(zoom: number): void;
+    fitBounds(bounds: LatLngBounds): void;
+  }
+  
+  class Marker {
+    constructor(options?: any);
+    setMap(map: any): void;
+  }
+  
+  class DirectionsService {
+    route(request: any, callback: (result: any, status: any) => void): void;
+  }
+  
+  class DirectionsRenderer {
+    constructor(options?: any);
+    setMap(map: any): void;
+    getMap(): Map;
+    setDirections(result: any): void;
+  }
+  
+  class TravelMode {
+    static DRIVING: string;
+    static WALKING: string;
+    static BICYCLING: string;
+    static TRANSIT: string;
+  }
+  
+  namespace places {
+    class PlacesService {
+      constructor(attrContainer: HTMLElement | any);
+      nearbySearch(request: any, callback: (results: any[], status: any) => void): void;
+    }
+    
+    enum PlacesServiceStatus {
+      OK = 'OK',
+      ZERO_RESULTS = 'ZERO_RESULTS',
+      ERROR = 'ERROR',
+      INVALID_REQUEST = 'INVALID_REQUEST',
+      OVER_QUERY_LIMIT = 'OVER_QUERY_LIMIT',
+      REQUEST_DENIED = 'REQUEST_DENIED',
+      UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+    }
+  }
+}
+
+// Extend the global Window interface
 declare global {
   interface Window {
-    google: any;
+    google: any; // Using any to avoid complex type definitions
     initMap?: () => void;
   }
 }
@@ -103,6 +185,27 @@ export function DateDetailsDrawer({
   const [startingPoint, setStartingPoint] = useState<LocationPoint>({ address: '', place: null });
   const [destination, setDestination] = useState<LocationPoint>({ address: '', place: null });
   const [waypoints, setWaypoints] = useState<LocationPoint[]>([]);
+  
+  // Reset all form fields
+  const resetForm = () => {
+    setStartingPoint({ address: '', place: null });
+    setDestination({ address: '', place: null });
+    setWaypoints([]);
+    onBudgetChange('');
+    onDistanceChange('');
+    setShowSuccess(false);
+    setShowError(false);
+    setErrorMessage('');
+    
+    // Clear the map
+    if (directionsRenderer.current) {
+      directionsRenderer.current.setDirections({ routes: [] });
+    }
+    
+    // Clear markers
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+  };
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
@@ -487,31 +590,50 @@ export function DateDetailsDrawer({
     // Reset any other relevant state here
   };
 
+  // Handle drawer state changes
   const handleOpenChange = (isOpen: boolean) => {
-    onOpenChange(isOpen);
     if (!isOpen) {
-      // Reset all states when closing
-      resetDrawer();
-    } else {
-      // Reset states when opening as well to ensure a fresh start
-      resetDrawer();
+      // Reset form when closing the drawer
+      resetForm();
     }
+    onOpenChange(isOpen);
   };
+  
+  // Handle form submission
+  const handleSubmit = () => {
+    if (!startingPoint.address || !destination.address) {
+      setShowError(true);
+      setErrorMessage('Please fill in all required fields');
+      return;
+    }
+    
+    onConfirm({
+      startingPoint: startingPoint.address,
+      destination: destination.address,
+      waypoints: waypoints.map(wp => wp.address),
+      budget,
+      distance
+    });
+    
+    // Reset form after submission
+    resetForm();
+  };
+  
+  // Handle confirm button click - using handleSubmit directly
 
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
-      <DrawerContent 
-        className="h-[90vh]"
-        onClick={handleDrawerContentClick}
-      >
+      <DrawerContent className="h-[90vh] max-w-4xl mx-auto">
         <div className="flex flex-col h-full">
           <DrawerHeader>
-            <div className="flex justify-between items-start w-full">
+            <div className="flex justify-between items-center">
               <div>
                 <DrawerTitle>Plan Your Date</DrawerTitle>
-                <DrawerDescription>
-                  {selectedDate && `Date: ${format(selectedDate, 'EEEE, MMMM d, yyyy')}`}
-                </DrawerDescription>
+                {selectedDate && (
+                  <DrawerDescription>
+                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                  </DrawerDescription>
+                )}
               </div>
               <DrawerClose asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -578,21 +700,6 @@ export function DateDetailsDrawer({
                     </Button>
                   )}
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Budget</label>
-                <Select value={budget} onValueChange={onBudgetChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select budget" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="$">$ - Budget Friendly</SelectItem>
-                    <SelectItem value="$$">$$ - Moderate</SelectItem>
-                    <SelectItem value="$$$">$$$ - Expensive</SelectItem>
-                    <SelectItem value="$$$$">$$$$ - Very Expensive</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               
               <div>
@@ -691,14 +798,21 @@ export function DateDetailsDrawer({
                   <NearbyPlaces 
                     location={destinationCoords} 
                     radius={500}
-                    onPlaceSelect={(place) => {
-                      // Center the map on the selected place
-                      if (mapInstance.current) {
-                        mapInstance.current.setCenter({
-                          lat: place.geometry.location.lat,
-                          lng: place.geometry.location.lng
-                        });
-                        mapInstance.current.setZoom(17);
+                    onPlaceSelect={(result) => {
+                      // Handle the optimized route
+                      if (result.selectedPlaces.length > 0) {
+                        const firstPlace = result.selectedPlaces[0];
+                        if (mapInstance.current && firstPlace.geometry?.location) {
+                          mapInstance.current.setCenter({
+                            lat: firstPlace.geometry.location.lat,
+                            lng: firstPlace.geometry.location.lng
+                          });
+                          mapInstance.current.setZoom(15);
+                        }
+                        
+                        // Here you can also handle the route visualization
+                        // using result.route which contains the optimized route
+                        console.log('Optimized route:', result.route);
                       }
                     }}
                   />
@@ -709,14 +823,19 @@ export function DateDetailsDrawer({
           
           <DrawerFooter>
             <DrawerClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" onClick={() => resetForm()}>
+                Cancel
+              </Button>
             </DrawerClose>
-            <Button onClick={handleConfirm} disabled={!destination.place}>
+            <Button 
+              onClick={handleConfirm} 
+              disabled={!startingPoint.place || !destination.place}
+            >
               Confirm Date
             </Button>
           </DrawerFooter>
         </div>
       </DrawerContent>
     </Drawer>
-  )
+  );
 }

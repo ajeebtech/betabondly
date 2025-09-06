@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["@types/google.maps"],
     "target": "ES2020",
     "lib": [
       "dom",
