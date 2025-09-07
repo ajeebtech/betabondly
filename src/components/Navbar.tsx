@@ -28,10 +28,11 @@ const Navbar = () => {
                 color: '#e60076',
                 fontSize: '2rem',
                 lineHeight: 1,
-                letterSpacing: 'tighter',
+                letterSpacing: '-0.05em',
                 textShadow: [
-                  '1px 1px 3px rgba(0, 0, 0, 0.15)',
-                  '0 0 8px rgba(0, 0, 0, 0.1)'
+                  '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                  '0 0 10px rgba(0, 0, 0, 0.15)',
+                  '0 0 20px rgba(0, 0, 0, 0.1)'
                 ].join(', ')
               }}
             >
@@ -50,21 +51,6 @@ const Navbar = () => {
             <Users className="h-5 w-5" />
             <span className="text-base font-semibold">sign in</span>
           </Link>
-          <button 
-            type="button" 
-            className="whitespace-nowrap py-2.5 px-5 inline-flex justify-center items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent bg-pink-500 text-white hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all"
-            onClick={(e) => {
-              e.preventDefault();
-              const element = document.getElementById('waitlist');
-              if (element) element.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            join waitlist
-            <svg className="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14"/>
-              <path d="m12 5 7 7-7 7"/>
-            </svg>
-          </button>
 
           <div className="lg:hidden">
             <button 

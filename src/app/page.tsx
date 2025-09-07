@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { HowItWorks } from "@/components/HowItWorks";
 import { GrainGradient } from '@paper-design/shaders-react';
+import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 
 // Animation variants
 const fadeUp = {
@@ -109,101 +110,423 @@ export default function Home() {
           pt="80px"
           px={4}
         >
-          <VStack
+          <Box
             as={motion.div}
             initial="hidden"
             animate="show"
             variants={stagger}
-            spacing={8}
             w="100%"
-            maxW="3xl"
-            mx="auto"
-            textAlign="center"
-            justifyContent="center"
           >
-            <Box position="relative" zIndex={10} w="full">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center w-full max-w-6xl mx-auto">
+              {/* Left column: tagline */}
+              <div className="md:col-span-5">
+                <Text 
+                  as={motion.p} 
+                  variants={fadeUp} 
+                  fontSize={{ base: '3xl', md: '5xl', lg: '6xl' }} 
+                  fontWeight="normal"
+                  color="gray.900" // spans will override
+                  opacity={1}
+                  className="leading-tight tracking-tight"
+                  maxW="36rem"
+                  textAlign={{ base: 'center', md: 'left' }}
+                  mt={{ base: 0, md: -6, lg: -10 }}
+                >
+                  <span className="block text-gray-600 font-normal">a little corner of the internet,</span>
+                  <span className="block mt-1 text-gray-900 font-bold">
+                    just for <span className="font-bold" style={{ color: '#e60076' }}>two</span>.
+                  </span>
+                </Text>
+              </div>
+
+              {/* Right column: main hero content */}
+              <div className="md:col-span-7 -mt-6 md:-mt-12 lg:-mt-16 xl:-mt-20">
+                <Box position="relative" zIndex={10} w="full">
+                  <motion.div 
+                    variants={fadeUp}
+                    className="flex justify-center md:justify-start w-full"
+                  >
+                    <AnimatedGradientBadge text=" early access • be the first" />
+                  </motion.div>
+                  <Text
+                    as={motion.p}
+                    variants={fadeUp}
+                    fontSize={{ base: '4.5rem', sm: '6rem', md: '8rem' }}
+                    fontWeight="bold"
+                    color="#e60076"
+                    lineHeight={1}
+                    letterSpacing="tighter"
+                    textShadow={[
+                      '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                      '0 0 10px rgba(0, 0, 0, 0.15)',
+                      '0 0 20px rgba(0, 0, 0, 0.1)'
+                    ].join(', ')}                
+                    textAlign={{ base: 'center', md: 'left' }}
+                  >
+                    bondly.
+                  </Text>
+                </Box>
+          {/* Top-right waitlist form (desktop/tablet) */}
+          <Box 
+            className="hidden md:block"
+            position="absolute"
+            right={{ base: 2, md: 6, lg: 10 }}
+            top={{ base: 2, md: 6, lg: 8 }}
+            zIndex={2}
+          >
+            <form className="hs-form" onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+              const submitButton = form.querySelector('button[type=\"submit\"]') as HTMLButtonElement;
+              
+              // Basic email validation
+              if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+              }
+              
+              try {
+                // Disable button and show loading state
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Joining...';
+                
+                const response = await fetch('/api/waitlist', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                  throw new Error(data.error || 'Something went wrong');
+                }
+                
+                setShowSuccess(true);
+                setShowError(false);
+                form.reset();
+                // Hide success message after 5 seconds
+                setTimeout(() => setShowSuccess(false), 5000);
+              } catch (error: any) {
+                console.error('Error:', error);
+                setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
+                setShowError(true);
+                // Hide error message after 5 seconds
+                setTimeout(() => setShowError(false), 5000);
+              } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'join waitlist <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+              }
+            }}>
+              <div className="flex flex-col items-center gap-2 sm:flex-row border border-gray-200 rounded-lg p-1 bg-white shadow-sm">
+                <div className="w-full">
+                  <label htmlFor="email" className="sr-only">Email</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-20 pl-4">
+                      <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className="text-gray-400">
+                        <path d="M1 2C0.447715 2 0 2.44772 0 3V12C0 12.5523 0.447715 13 1 13H14C14.5523 13 15 12.5523 15 12V3C15 2.44772 14.5523 2 14 2H1ZM1 3L14 3V3.92494C13.9174 3.92486 13.8338 3.94751 13.7589 3.99505L7.5 7.96703L1.24112 3.99505C1.16621 3.94751 1.0826 3.92486 1 3.92494V3ZM1 4.90797V12H14V4.90797L7.74112 8.87995C7.59394 8.97335 7.40606 8.97335 7.25888 8.87995L1 4.90797Z" fillRule="evenodd" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      name="email" 
+                      className="hs-input py-3 pl-10 pr-4 block w-full sm:w-72 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
+                      placeholder="Enter your email" 
+                      style={{ color: '#1a1a1a' }}
+                      required
+                    />
+                  </div>
+                </div>
+                <AnimatedSubscribeButton 
+                  type="submit"
+                  className="w-full sm:w-auto whitespace-nowrap py-3 px-6 text-sm font-semibold rounded-lg border border-transparent bg-[#e60076] text-white hover:bg-[#cc0066] focus:outline-none focus:ring-2 focus:ring-[#e60076] focus:ring-offset-2 transition-all"
+                  subscribeStatus={showSuccess}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget.form;
+                    if (!form) return;
+                    
+                    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+                    const submitButton = form.querySelector('button[type=\"submit\"]') as HTMLButtonElement;
+                    
+                    // Basic email validation
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                      setErrorMessage('Please enter a valid email address');
+                      setShowError(true);
+                      setTimeout(() => setShowError(false), 5000);
+                      return;
+                    }
+                    
+                    try {
+                      // Disable button and show loading state
+                      submitButton.disabled = true;
+                      
+                      const response = await fetch('/api/waitlist', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email }),
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (!response.ok) {
+                        throw new Error(data.error || 'Something went wrong');
+                      }
+                      
+                      setShowSuccess(true);
+                      setShowError(false);
+                      form.reset();
+                      // Hide success message after 5 seconds
+                      setTimeout(() => setShowSuccess(false), 5000);
+                    } catch (error: any) {
+                      console.error('Error:', error);
+                      setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
+                      setShowError(true);
+                      // Hide error message after 5 seconds
+                      setTimeout(() => setShowError(false), 5000);
+                    } finally {
+                      // Re-enable button
+                      submitButton.disabled = false;
+                    }
+                  }}
+                >
+                  <span className="group inline-flex items-center">
+                    join waitlist
+                    <ChevronRightIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                  <span className="group inline-flex items-center">
+                    <CheckIcon className="mr-1 size-4" />
+                    Joined!
+                  </span>
+                </AnimatedSubscribeButton>
+              </div>
+            </form>
+          </Box>
+
+                <HStack 
+                  as={motion.div} 
+                  variants={fadeUp} 
+                  spacing={6} 
+                  pt={4}
+                  flexWrap="wrap"
+                  justifyContent={{ base: 'center', md: 'flex-start' }}
+                >
+                  <form className="hs-form md:hidden" onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+                    const submitButton = form.querySelector('button[type=\"submit\"]') as HTMLButtonElement;
+                    
+                    // Basic email validation
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                      alert('Please enter a valid email address');
+                      return;
+                    }
+                    
+                    try {
+                      // Disable button and show loading state
+                      submitButton.disabled = true;
+                      submitButton.innerHTML = 'Joining...';
+                      
+                      const response = await fetch('/api/waitlist', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email }),
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (!response.ok) {
+                        throw new Error(data.error || 'Something went wrong');
+                      }
+                      
+                      setShowSuccess(true);
+                      setShowError(false);
+                      form.reset();
+                      // Hide success message after 5 seconds
+                      setTimeout(() => setShowSuccess(false), 5000);
+                    } catch (error: any) {
+                      console.error('Error:', error);
+                      setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
+                      setShowError(true);
+                      // Hide error message after 5 seconds
+                      setTimeout(() => setShowError(false), 5000);
+                    } finally {
+                      // Re-enable button
+                      submitButton.disabled = false;
+                      submitButton.innerHTML = 'join waitlist <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+                    }
+                  }}>
+                    <div className="flex flex-col items-center gap-2 sm:flex-row border border-gray-200 rounded-lg p-1 bg-white">
+                      <div className="w-full">
+                        <label htmlFor="email" className="sr-only">Email</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-20 pl-4">
+                            <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className="text-gray-400">
+                              <path d="M1 2C0.447715 2 0 2.44772 0 3V12C0 12.5523 0.447715 13 1 13H14C14.5523 13 15 12.5523 15 12V3C15 2.44772 14.5523 2 14 2H1ZM1 3L14 3V3.92494C13.9174 3.92486 13.8338 3.94751 13.7589 3.99505L7.5 7.96703L1.24112 3.99505C1.16621 3.94751 1.0826 3.92486 1 3.92494V3ZM1 4.90797V12H14V4.90797L7.74112 8.87995C7.59394 8.97335 7.40606 8.97335 7.25888 8.87995L1 4.90797Z" fillRule="evenodd" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            className="hs-input py-3 pl-10 pr-4 block w-full sm:w-72 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
+                            placeholder="Enter your email" 
+                            style={{ color: '#1a1a1a' }}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <AnimatedSubscribeButton 
+                        type="submit"
+                        className="w-full sm:w-auto whitespace-nowrap py-3 px-6 text-sm font-semibold rounded-lg border border-transparent bg-[#e60076] text-white hover:bg-[#cc0066] focus:outline-none focus:ring-2 focus:ring-[#e60076] focus:ring-offset-2 transition-all"
+                        subscribeStatus={showSuccess}
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          const form = e.currentTarget.form;
+                          if (!form) return;
+                          
+                          const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
+                          const submitButton = form.querySelector('button[type=\"submit\"]') as HTMLButtonElement;
+                          
+                          // Basic email validation
+                          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                            setErrorMessage('Please enter a valid email address');
+                            setShowError(true);
+                            setTimeout(() => setShowError(false), 5000);
+                            return;
+                          }
+                          
+                          try {
+                            // Disable button and show loading state
+                            submitButton.disabled = true;
+                            
+                            const response = await fetch('/api/waitlist', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ email }),
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (!response.ok) {
+                              throw new Error(data.error || 'Something went wrong');
+                            }
+                            
+                            setShowSuccess(true);
+                            setShowError(false);
+                            form.reset();
+                            // Hide success message after 5 seconds
+                            setTimeout(() => setShowSuccess(false), 5000);
+                          } catch (error: any) {
+                            console.error('Error:', error);
+                            setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
+                            setShowError(true);
+                            // Hide error message after 5 seconds
+                            setTimeout(() => setShowError(false), 5000);
+                          } finally {
+                            // Re-enable button
+                            submitButton.disabled = false;
+                          }
+                        }}
+                      >
+                        <span className="group inline-flex items-center">
+                          join waitlist
+                          <ChevronRightIcon className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </span>
+                        <span className="group inline-flex items-center">
+                          <CheckIcon className="mr-1 size-4" />
+                          Joined!
+                        </span>
+                      </AnimatedSubscribeButton>
+                    </div>
+                  </form>
+                </HStack>
+              </div>
+            </div>
+          </Box>
+          {/* Bottom-right mockup placeholder (replace with your asset) */}
+          <Box 
+            className="hidden md:block"
+            position="absolute"
+            right={{ base: 2, md: 10, lg: 16 }}
+            bottom={{ base: 2, md: 10, lg: 16 }}
+            zIndex={3}
+            pointerEvents="auto"
+          >
+            <motion.div
+              initial={{ opacity: 0, x: 60, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            >
               <motion.div 
-                variants={fadeUp}
-                className="flex justify-center w-full"
+                className="relative w-[420px] lg:w-[640px] h-[260px] lg:h-[400px]"
+                animate={{ y: [0, -8, 0], rotate: [0, -0.2, 0.2, 0] }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <AnimatedGradientBadge text=" Early Access • Limited Spots Available" />
+                <CardContainer containerClassName="py-0">
+                  <CardBody className="relative w-[420px] lg:w-[640px] h-[260px] lg:h-[400px] rounded-xl border border-black/5 bg-transparent">
+                    {/* Subtle outer outline to complete the window */}
+                    <CardItem translateZ={40} className="absolute inset-0 rounded-xl border border-black/10 shadow-[0_0_0_1px_rgba(0,0,0,0.02)_inset]" aria-hidden="true">
+                      <span className="sr-only">window outline</span>
+                    </CardItem>
+                    {/* Laptop frame */}
+                    <CardItem translateZ={60} className="absolute inset-0 rounded-xl bg-white/90 border border-black/5 shadow-2xl">
+                      {/* Top bar */}
+                      <div className="h-9 flex items-center gap-2 px-4 border-b border-black/5 bg-gray-50/80 rounded-t-xl">
+                        <span className="w-3 h-3 rounded-full bg-red-400/80"></span>
+                        <span className="w-3 h-3 rounded-full bg-yellow-400/80"></span>
+                        <span className="w-3 h-3 rounded-full bg-green-400/80"></span>
+                        <div className="ml-3 flex-1 h-6 rounded-md bg-gray-100 border border-black/5" />
+                      </div>
+                    </CardItem>
+                    {/* Screen area */}
+                    <CardItem translateZ={100} className="absolute inset-x-0 bottom-0 top-9 p-4 bg-white rounded-b-xl overflow-hidden">
+                      <div className="w-full h-full rounded-lg border border-black/5 bg-white">
+                        {/* Tabs + address bar (browser chrome) */}
+                        <div className="flex items-center gap-2 p-2 border-b border-black/5 bg-gray-50">
+                          <div className="flex gap-1">
+                            <div className="px-2 py-1 text-[10px] rounded bg-white border border-black/10 text-gray-600">bondly</div>
+                            <div className="px-2 py-1 text-[10px] rounded bg-gray-100 border border-black/10 text-gray-500">docs</div>
+                            <div className="px-2 py-1 text-[10px] rounded bg-gray-100 border border-black/10 text-gray-500 hidden sm:block">pricing</div>
+                          </div>
+                          <div className="ml-auto h-7 w-2/3 rounded-md bg-white border border-black/10 shadow-inner" />
+                        </div>
+                        {/* Page content (desktop wide) */}
+                        <div className="p-4 space-y-4">
+                          <div className="h-28 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 border border-black/5" />
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="col-span-2 h-24 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 border border-black/5" />
+                            <div className="h-24 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 border border-black/5" />
+                            <div className="h-20 rounded-lg bg-white border border-black/5 shadow-sm" />
+                            <div className="h-20 rounded-lg bg-white border border-black/5 shadow-sm" />
+                            <div className="h-20 rounded-lg bg-white border border-black/5 shadow-sm" />
+                          </div>
+                        </div>
+                        {/* Soft glare */}
+                        <div className="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-tr from-white/40 to-transparent" />
+                      </div>
+                    </CardItem>
+                    {/* Laptop base/keyboard hint */}
+                    <CardItem translateZ={20} className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[85%] h-4 rounded-b-xl bg-gray-200/90 border border-black/5">
+                      <span className="sr-only">laptop base</span>
+                    </CardItem>
+                  </CardBody>
+                </CardContainer>
               </motion.div>
-              <Text
-                as={motion.p}
-                variants={fadeUp}
-                fontSize={{ base: '4.5rem', sm: '6rem', md: '8rem' }}
-                fontWeight="bold"
-                color="#e60076"
-                lineHeight={1}
-                letterSpacing="tighter"
-                textShadow={[
-                  '2px 2px 4px rgba(0, 0, 0, 0.2)',
-                  '0 0 10px rgba(0, 0, 0, 0.15)',
-                  '0 0 20px rgba(0, 0, 0, 0.1)'
-                ].join(', ')}                
-              >
-                bondly.
-              </Text>
-            </Box>
-            
-            <Text 
-              as={motion.p} 
-              variants={fadeUp} 
-              fontSize={{ base: 'xl', md: '2xl' }} 
-              color="gray.600"
-              maxW="2xl"
-              mx="auto"
-              px={4}
-            >
-              your little corner of the internet, just for two.
-            </Text>
-            
-            <HStack 
-              as={motion.div} 
-              variants={fadeUp} 
-              spacing={6} 
-              pt={4}
-              flexWrap="wrap"
-              justifyContent="center"
-            >
-              <Button 
-                as="a"
-                href="#waitlist"
-                colorScheme="red" 
-                size="lg" 
-                bg="#e60076" 
-                _hover={{ bg: '#be123c', textDecoration: 'none' }} 
-                color="white"
-                onClick={(e) => {
-                  e.preventDefault();
-                  const element = document.getElementById('waitlist');
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                px={8}
-                py={6}
-                fontSize="lg"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <svg width="20" height="20" viewBox="0 0 15 15" fill="currentColor" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                    <path d="M4.89346 2.35248C3.49195 2.35248 2.35248 3.49359 2.35248 4.90532C2.35248 6.38164 3.20954 7.9168 4.37255 9.33522C5.39396 10.581 6.59464 11.6702 7.50002 12.4778C8.4054 11.6702 9.60608 10.581 10.6275 9.33522C11.7905 7.9168 12.6476 6.38164 12.6476 4.90532C12.6476 3.49359 11.5081 2.35248 10.1066 2.35248C9.27059 2.35248 8.81894 2.64323 8.5397 2.95843C8.27877 3.25295 8.14623 3.58566 8.02501 3.88993C8.00391 3.9429 7.98315 3.99501 7.96211 4.04591C7.88482 4.23294 7.7024 4.35494 7.50002 4.35494C7.29765 4.35494 7.11523 4.23295 7.03793 4.04592C7.01689 3.99501 6.99612 3.94289 6.97502 3.8899C6.8538 3.58564 6.72126 3.25294 6.46034 2.95843C6.18109 2.64323 5.72945 2.35248 4.89346 2.35248ZM1.35248 4.90532C1.35248 2.94498 2.936 1.35248 4.89346 1.35248C6.0084 1.35248 6.73504 1.76049 7.20884 2.2953C7.32062 2.42147 7.41686 2.55382 7.50002 2.68545C7.58318 2.55382 7.67941 2.42147 7.79119 2.2953C8.265 1.76049 8.99164 1.35248 10.1066 1.35248C12.064 1.35248 13.6476 2.94498 13.6476 4.90532C13.6476 6.74041 12.6013 8.50508 11.4008 9.96927C10.2636 11.3562 8.92194 12.5508 8.00601 13.3664C7.94645 13.4194 7.88869 13.4709 7.83291 13.5206C7.64324 13.6899 7.3568 13.6899 7.16713 13.5206C7.11135 13.4709 7.05359 13.4194 6.99403 13.3664C6.0781 12.5508 4.73641 11.3562 3.59926 9.96927C2.39872 8.50508 1.35248 6.74041 1.35248 4.90532Z" fillRule="evenodd" clipRule="evenodd"></path>
-                  </svg>
-                  <span>join the waitlist</span>
-                </span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                colorScheme="red"
-                color="gray.700"
-                _hover={{ bg: '#fef2f2' }}
-                borderColor="#e11d48"
-              >
-                privacy policy
-              </Button>
-            </HStack>
-          </VStack>
+            </motion.div>
+          </Box>
         </Container>
       </Box>
       
