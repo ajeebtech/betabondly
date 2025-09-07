@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Users } from 'lucide-react';
 
 const Navbar = () => {
@@ -22,22 +23,32 @@ const Navbar = () => {
             className="flex-none rounded-xl text-xl inline-block font-semibold focus:outline-hidden focus:opacity-80" 
             aria-label="Bondly"
           >
-            <span 
-              className="font-bold"
-              style={{
-                color: '#e60076',
-                fontSize: '2rem',
-                lineHeight: 1,
-                letterSpacing: '-0.05em',
-                textShadow: [
-                  '2px 2px 4px rgba(0, 0, 0, 0.2)',
-                  '0 0 10px rgba(0, 0, 0, 0.15)',
-                  '0 0 20px rgba(0, 0, 0, 0.1)'
-                ].join(', ')
-              }}
-            >
-              bondly.
-            </span>
+            <div className="flex items-center">
+              <Image 
+                src="/images/pinkbonddd.png" 
+                alt="Bondly Logo" 
+                width={40} 
+                height={40} 
+                className="mr-1/4"
+                priority
+              />
+              <span 
+                className="font-bold"
+                style={{
+                  color: '#e60076',
+                  fontSize: '2rem',
+                  lineHeight: 1,
+                  letterSpacing: '-0.05em',
+                  textShadow: [
+                    '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                    '0 0 10px rgba(0, 0, 0, 0.15)',
+                    '0 0 20px rgba(0, 0, 0, 0.1)'
+                  ].join(', ')
+                }}
+              >
+                ondly.
+              </span>
+            </div>
           </Link>
         </div>
 

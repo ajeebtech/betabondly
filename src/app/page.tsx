@@ -132,9 +132,9 @@ export default function Home() {
                   textAlign={{ base: 'center', md: 'left' }}
                   mt={{ base: 0, md: -6, lg: -10 }}
                 >
-                  <span className="block text-gray-600 font-normal">a little corner of the internet,</span>
+                  <span className="block text-gray-600 font-normal">your little corner of the internet,</span>
                   <span className="block mt-1 text-gray-900 font-bold">
-                    just for <span className="font-bold" style={{ color: '#e60076' }}>two</span>.
+                    only for <span className="font-bold" style={{ color: '#e60076' }}>two</span>.
                   </span>
                 </Text>
               </div>
@@ -142,12 +142,6 @@ export default function Home() {
               {/* Right column: main hero content */}
               <div className="md:col-span-7 -mt-6 md:-mt-12 lg:-mt-16 xl:-mt-20">
                 <Box position="relative" zIndex={10} w="full">
-                  <motion.div 
-                    variants={fadeUp}
-                    className="flex justify-center md:justify-start w-full"
-                  >
-                    <AnimatedGradientBadge text=" early access • be the first" />
-                  </motion.div>
                   <Text
                     as={motion.p}
                     variants={fadeUp}
@@ -222,24 +216,29 @@ export default function Home() {
                 submitButton.innerHTML = 'join waitlist <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
               }
             }}>
-              <div className="flex flex-col items-center gap-2 sm:flex-row border border-gray-200 rounded-lg p-1 bg-white shadow-sm">
-                <div className="w-full">
-                  <label htmlFor="email" className="sr-only">Email</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-20 pl-4">
-                      <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className="text-gray-400">
-                        <path d="M1 2C0.447715 2 0 2.44772 0 3V12C0 12.5523 0.447715 13 1 13H14C14.5523 13 15 12.5523 15 12V3C15 2.44772 14.5523 2 14 2H1ZM1 3L14 3V3.92494C13.9174 3.92486 13.8338 3.94751 13.7589 3.99505L7.5 7.96703L1.24112 3.99505C1.16621 3.94751 1.0826 3.92486 1 3.92494V3ZM1 4.90797V12H14V4.90797L7.74112 8.87995C7.59394 8.97335 7.40606 8.97335 7.25888 8.87995L1 4.90797Z" fillRule="evenodd" clipRule="evenodd" />
-                      </svg>
+              <div className="flex flex-col items-center gap-2 sm:flex-row">
+                <div className="hidden sm:block">
+                  <AnimatedGradientBadge text="early access • be the first" />
+                </div>
+                <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-lg p-1 bg-white shadow-sm">
+                  <div className="w-full">
+                    <label htmlFor="email" className="sr-only">Email</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none z-20 pl-4">
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="currentColor" className="text-gray-400">
+                          <path d="M1 2C0.447715 2 0 2.44772 0 3V12C0 12.5523 0.447715 13 1 13H14C14.5523 13 15 12.5523 15 12V3C15 2.44772 14.5523 2 14 2H1ZM1 3L14 3V3.92494C13.9174 3.92486 13.8338 3.94751 13.7589 3.99505L7.5 7.96703L1.24112 3.99505C1.16621 3.94751 1.0826 3.92486 1 3.92494V3ZM1 4.90797V12H14V4.90797L7.74112 8.87995C7.59394 8.97335 7.40606 8.97335 7.25888 8.87995L1 4.90797Z" fillRule="evenodd" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        className="hs-input py-3 pl-10 pr-4 block w-full sm:w-72 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
+                        placeholder="Enter your email" 
+                        style={{ color: '#1a1a1a' }}
+                        required
+                      />
                     </div>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      name="email" 
-                      className="hs-input py-3 pl-10 pr-4 block w-full sm:w-72 border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
-                      placeholder="Enter your email" 
-                      style={{ color: '#1a1a1a' }}
-                      required
-                    />
                   </div>
                 </div>
                 <AnimatedSubscribeButton 
