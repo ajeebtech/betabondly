@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabaseClient"
-import { randomUUID } from "crypto"
+import { createCouple } from "@/lib/services/coupleService"
 
 export async function POST(req: Request) {
   const { name, userId } = await req.json()
@@ -12,15 +11,11 @@ export async function POST(req: Request) {
   if (!name) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 })
   }
-  
-  const slug = name.toLowerCase().replace(/\s+/g, "-") + "-" + Math.floor(Math.random() * 1000)
-
-  const { data, error } = await supabase
-    .from("couples")
-    .insert([{ id: randomUUID(), slug, name, created_by: userId }])
-    .select()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-
-  return NextResponse.json({ couple: data[0] })
+  try {
+    const coupleId = await createCouple(userId)
+    // For now, return the created coupleId. If you need name/slug stored, we can extend the service.
+    return NextResponse.json({ coupleId })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to create couple" }, { status: 500 })
+  }
 }

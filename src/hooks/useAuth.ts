@@ -8,6 +8,12 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+  }
+}
+
 export const useAuth = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,9 +33,13 @@ export const useAuth = () => {
   const setupRecaptcha = (containerId: string) => {
     if (typeof window === 'undefined') return;
     
-    window.recaptchaVerifier = new RecaptchaVerifier(containerId, {
-      size: 'invisible',
-    }, auth);
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      containerId,
+      {
+        size: 'invisible',
+      }
+    );
   };
 
   // Send OTP to phone number

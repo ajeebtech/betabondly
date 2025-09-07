@@ -54,70 +54,6 @@ const NearbyPlaces = dynamic(() => import('@/components/NearbyPlaces'), {
   ),
 });
 
-// This tells TypeScript that we're using the Google Maps API
-declare namespace google.maps {
-  class LatLng {
-    constructor(lat: number, lng: number);
-    lat(): number;
-    lng(): number;
-  }
-  
-  class LatLngBounds {
-    constructor(sw?: LatLng, ne?: LatLng);
-    extend(latLng: LatLng): void;
-    getCenter(): LatLng;
-    getNorthEast(): LatLng;
-    getSouthWest(): LatLng;
-  }
-  
-  class Map {
-    constructor(element: HTMLElement, options?: any);
-    setCenter(latLng: { lat: number; lng: number } | LatLng): void;
-    getCenter(): LatLng;
-    setZoom(zoom: number): void;
-    fitBounds(bounds: LatLngBounds): void;
-  }
-  
-  class Marker {
-    constructor(options?: any);
-    setMap(map: any): void;
-  }
-  
-  class DirectionsService {
-    route(request: any, callback: (result: any, status: any) => void): void;
-  }
-  
-  class DirectionsRenderer {
-    constructor(options?: any);
-    setMap(map: any): void;
-    getMap(): Map;
-    setDirections(result: any): void;
-  }
-  
-  class TravelMode {
-    static DRIVING: string;
-    static WALKING: string;
-    static BICYCLING: string;
-    static TRANSIT: string;
-  }
-  
-  namespace places {
-    class PlacesService {
-      constructor(attrContainer: HTMLElement | any);
-      nearbySearch(request: any, callback: (results: any[], status: any) => void): void;
-    }
-    
-    enum PlacesServiceStatus {
-      OK = 'OK',
-      ZERO_RESULTS = 'ZERO_RESULTS',
-      ERROR = 'ERROR',
-      INVALID_REQUEST = 'INVALID_REQUEST',
-      OVER_QUERY_LIMIT = 'OVER_QUERY_LIMIT',
-      REQUEST_DENIED = 'REQUEST_DENIED',
-      UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-    }
-  }
-}
 
 // Extend the global Window interface
 declare global {
@@ -199,7 +135,7 @@ export function DateDetailsDrawer({
     
     // Clear the map
     if (directionsRenderer.current) {
-      directionsRenderer.current.setDirections({ routes: [] });
+      directionsRenderer.current.setDirections(null);
     }
     
     // Clear markers
@@ -436,7 +372,7 @@ export function DateDetailsDrawer({
             // Fit the map to the bounds of the route
             const bounds = new window.google.maps.LatLngBounds();
             if (result.routes[0]?.legs) {
-              result.routes[0].legs.forEach(leg => {
+              result.routes[0].legs.forEach((leg: google.maps.DirectionsLeg) => {
                 if (leg.start_location) bounds.extend(leg.start_location);
                 if (leg.end_location) bounds.extend(leg.end_location);
               });
@@ -553,7 +489,7 @@ export function DateDetailsDrawer({
               // Fit the map to the bounds of the route
               try {
                 const bounds = new window.google.maps.LatLngBounds();
-                result.routes[0].legs.forEach(leg => {
+                result.routes[0].legs.forEach((leg: google.maps.DirectionsLeg) => {
                   if (leg.start_location) bounds.extend(leg.start_location);
                   if (leg.end_location) bounds.extend(leg.end_location);
                 });

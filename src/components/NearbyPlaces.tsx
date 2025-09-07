@@ -99,11 +99,6 @@ const PLACE_FILTERS: PlaceFilter[] = [
   { key: 'takeout', label: 'Takeout Available', value: 'takeout' },
 ];
 
-interface RouteResult {
-  route: any;
-  selectedPlaces: PlaceResult[];
-}
-
 interface Location {
   lat: number;
   lng: number;
@@ -112,7 +107,7 @@ interface Location {
 interface NearbyPlacesProps {
   location: Location | null;
   radius?: number;
-  onPlaceSelect?: (result: RouteResult) => void;
+  onPlaceSelect: (result: { selectedPlaces: PlaceResult[]; route: any }) => void;
 }
 
 interface SelectedPlace extends PlaceResult {

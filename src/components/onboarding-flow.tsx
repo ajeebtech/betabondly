@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle, Phone, User, UserCircle, ArrowRight, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { PhoneInput } from "@/components/ui/phone-input"
+import PhoneInput from "@/components/ui/phone-input"
 
 type Step = "name" | "phone" | "verify" | "profile"
 

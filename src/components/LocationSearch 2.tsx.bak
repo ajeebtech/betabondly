@@ -1,6 +1,10 @@
 'use client';
+export { LocationSearch as default } from './LocationSearch';
 
-import { useEffect, useRef, useCallback } from 'react';
+/*
+// Cleaned-up LocationSearch component with all logic and refs/hooks inside the function.
+
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 declare global {
   interface Window {
@@ -30,94 +34,94 @@ interface LocationSearchProps {
   className?: string;
 }
 
-export function LocationSearch({ onPlaceSelected, placeholder = 'Search for places...', className = '' }: LocationSearchProps) {
+export function LocationSearch({
+  onPlaceSelected,
+  placeholder = 'Search for places...',
+  className = '',
+}: LocationSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+  const autocompleteRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
   const hiddenMapDivRef = useRef<HTMLDivElement | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
-  
+  const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
+
   // Initialize Google Places Autocomplete
   const initializeAutocomplete = useCallback(() => {
     if (!inputRef.current || !window.google?.maps?.places) {
       return;
     }
-
     // Create a hidden map div if it doesn't exist
     if (!hiddenMapDivRef.current) {
       const hiddenMapDiv = document.createElement('div');
       hiddenMapDiv.style.display = 'none';
       document.body.appendChild(hiddenMapDiv);
       hiddenMapDivRef.current = hiddenMapDiv;
-      
-      // Create a map instance (required for Autocomplete)
       mapRef.current = new window.google.maps.Map(hiddenMapDiv, {
-        center: { lat: 28.6139, lng: 77.209 }, // Default to New Delhi
+        center: { lat: 28.6139, lng: 77.209 },
         zoom: 13,
       });
     }
-
     // Clean up existing autocomplete
     if (autocompleteRef.current) {
       window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      autocompleteRef.current = null;
     }
-
-    // Create new autocomplete instance
     autocompleteRef.current = new window.google.maps.places.Autocomplete(
       inputRef.current,
       {
         types: ['geocode', 'establishment'],
         componentRestrictions: { country: 'in' },
-        fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'types'],
+        fields: [
+          'address_components',
+          'formatted_address',
+          'geometry',
+          'name',
+          'place_id',
+          'types',
+        ],
       }
     );
 
-    // Add place changed listener
-    const placeChangedHandler = () => {
+    // Place changed handler
+    const handlePlaceChanged = () => {
       if (!autocompleteRef.current) return;
-      
       const place = autocompleteRef.current.getPlace();
-      if (place.geometry?.location) {
-        const location = place.geometry.location;
-        const selectedPlace: Place = {
+      if (place && place.geometry && place.geometry.location) {
+        const selected: Place = {
           name: place.name,
           formatted_address: place.formatted_address,
           geometry: {
             location: {
-              lat: () => location.lat(),
-              lng: () => location.lng()
-            }
+              lat: () => place.geometry.location.lat(),
+              lng: () => place.geometry.location.lng(),
+            },
           },
           place_id: place.place_id,
-          types: place.types
+          types: place.types,
         };
-        
-        setSelectedPlace(selectedPlace);
-        onPlaceSelected(selectedPlace);
+        setSelectedPlace(selected);
+        onPlaceSelected(selected);
       }
     };
+    autocompleteRef.current.addListener('place_changed', handlePlaceChanged);
 
-    autocompleteRef.current.addListener('place_changed', placeChangedHandler);
-
-    // Handle keyboard events
+    // Prevent form submission on Enter
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && document.activeElement === inputRef.current) {
         e.preventDefault();
         e.stopPropagation();
       }
     };
-
     inputRef.current.addEventListener('keydown', handleKeyDown);
 
-    // Set up cleanup function
+    // Cleanup
     cleanupRef.current = () => {
       if (autocompleteRef.current) {
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
       inputRef.current?.removeEventListener('keydown', handleKeyDown);
     };
-
     return cleanupRef.current;
   }, [onPlaceSelected]);
 
@@ -127,20 +131,15 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       initializeAutocomplete();
       return;
     }
-
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
     script.async = true;
     script.defer = true;
-    
     window.initMap = initializeAutocomplete;
-    
     script.onerror = (error) => {
       console.error('Error loading Google Maps script:', error);
     };
-    
     document.head.appendChild(script);
-
     return () => {
       if (window.google?.maps?.event) {
         if (autocompleteRef.current) {
@@ -153,16 +152,69 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
       window.initMap = undefined;
     };
   }, [initializeAutocomplete]);
-  
-  // Handle clicks on the input to prevent event propagation
-  const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-  
-  // Handle mousedown on the input to prevent event propagation
-  const handleInputMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+
+  // Dropdown styling and event propagation prevention
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .pac-container {
+        z-index: 10000 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+        margin-top: 0.5rem !important;
+        font-family: inherit !important;
+        background-color: white !important;
+        pointer-events: auto !important;
+      }
+      .pac-item {
+        padding: 0.75rem 1rem !important;
+        cursor: pointer !important;
+        border-top: 1px solid #e5e7eb !important;
+        transition: background-color 0.2s !important;
+        font-size: 0.875rem !important;
+        color: #374151 !important;
+        pointer-events: auto !important;
+      }
+      .pac-item:first-child {
+        border-top: none !important;
+      }
+      .pac-item:hover {
+        background-color: #f3f4f6 !important;
+      }
+      .pac-item-query {
+        font-size: 0.875rem !important;
+        color: #111827 !important;
+        padding-right: 3px;
+      }
+      .pac-icon {
+        display: none !important;
+      }
+      .pac-matched {
+        font-weight: 500 !important;
+        color: #111827 !important;
+      }`;
+    document.head.appendChild(style);
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest('.pac-container')) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+    const handleDocumentMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest('.pac-container')) {
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('click', handleDocumentClick, true);
+    document.addEventListener('mousedown', handleDocumentMouseDown, true);
+    return () => {
+      document.head.removeChild(style);
+      document.removeEventListener('click', handleDocumentClick, true);
+      document.removeEventListener('mousedown', handleDocumentMouseDown, true);
+    };
+  }, []);
 
   // Clean up on unmount
   useEffect(() => {
@@ -176,52 +228,65 @@ export function LocationSearch({ onPlaceSelected, placeholder = 'Search for plac
     };
   }, []);
 
+  // Handle input focus to show suggestions
+  const handleInputFocus = () => {
+    if (inputRef.current) {
+      const inputEvent = new Event('input', { bubbles: true });
+      inputRef.current.dispatchEvent(inputEvent);
+    }
+  };
+
+  // Prevent drawer closing and event propagation
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  const handleInputMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className={`relative ${className}`}>
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={placeholder}
-        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        onClick={handleInputClick}
-        onMouseDown={handleInputMouseDown}
-      />
+    <div
+      className={`relative w-full ${className}`}
+      onClick={handleInputClick}
+      onMouseDown={handleInputMouseDown}
+    >
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          onClick={handleInputClick}
+          onMouseDown={handleInputMouseDown}
+          onFocus={handleInputFocus}
+          className="w-full rounded-md border border-gray-300 pl-10 pr-4 py-2 focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
+        />
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </div>
+      </div>
+      {selectedPlace && (
+        <div className="mt-2 text-sm text-gray-600">
+          Selected: {selectedPlace.name || selectedPlace.formatted_address}
+        </div>
+      )}
     </div>
   );
 }
 
-export default LocationSearch;
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .pac-container {
-        z-index: 10000 !important;
-        border-radius: 0.5rem !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-        margin-top: 0.5rem !important;
-        font-family: inherit !important;
-        background-color: white !important;
-        pointer-events: auto !important;
-      }
-      
-      .pac-item {
-        padding: 0.75rem 1rem !important;
-        cursor: pointer !important;
-        border-top: 1px solid #e5e7eb !important;
-        transition: background-color 0.2s !important;
-        font-size: 0.875rem !important;
-        color: #374151 !important;
-        pointer-events: auto !important;
-      }
-      
-      .pac-item:first-child {
-        border-top: none !important;
-      }
-      
-      .pac-item:hover {
-        background-color: #f3f4f6 !important;
-      }
-      
+// Load Google Maps script with error handling
       .pac-item-query {
         font-size: 0.875rem !important;
         color: #111827 !important;

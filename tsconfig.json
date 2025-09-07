@@ -1,12 +1,7 @@
 {
   "compilerOptions": {
-    "types": ["@types/google.maps"],
     "target": "ES2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -22,12 +17,10 @@
       "@/*": ["./src/*"]
     },
     "plugins": [
-      {
-        "name": "next"
-      }
+      { "name": "next" }
     ],
     "incremental": true,
-    "types": ["node", "react", "react-dom"]
+    "types": ["google.maps", "node", "react", "react-dom"]
   },
   "include": [
     "next-env.d.ts",
@@ -36,7 +29,5 @@
     "**/*.d.ts",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

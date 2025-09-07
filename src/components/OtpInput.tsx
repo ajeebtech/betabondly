@@ -96,7 +96,9 @@ const OtpInput = ({
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
           onPaste={index === 0 ? handlePaste : undefined} // Only handle paste on first input
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => {
+            inputRefs.current[index] = el
+          }}
           disabled={disabled}
           className={`w-12 h-16 text-2xl text-center border rounded-md focus:border-pink-500 focus:ring-2 focus:ring-pink-200 outline-none transition-colors ${
             disabled ? 'bg-gray-100' : 'bg-white'

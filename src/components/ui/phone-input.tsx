@@ -139,7 +139,7 @@ const CountrySelectOption = ({
   }
 
   return (
-    <CommandItem className="gap-2" onSelect={handleSelect}>
+    <CommandItem value={countryName} className="gap-2" onSelect={handleSelect}>
       <FlagComponent country={country} countryName={countryName} />
       <span className="flex-1 text-sm">{countryName}</span>
       <span className="text-sm text-foreground/50">{`+${RPNInput.getCountryCallingCode(country)}`}</span>

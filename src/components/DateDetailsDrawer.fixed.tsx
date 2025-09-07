@@ -121,7 +121,7 @@ export function DateDetailsDrawer({
     setErrorMessage('');
     
     if (directionsRenderer.current) {
-      directionsRenderer.current.setDirections({ routes: [] });
+      directionsRenderer.current.setDirections(null);
     }
     
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -389,23 +389,34 @@ export function DateDetailsDrawer({
               {/* Nearby Places Section */}
               {destination.place?.geometry?.location && (
                 <div className="mt-4 border-t pt-4">
-                  <NearbyPlaces 
+                  <NearbyPlaces
                     location={{
-                      lat: typeof destination.place.geometry.location.lat === 'function' 
-                        ? destination.place.geometry.location.lat() 
+                      lat: typeof destination.place.geometry.location.lat === 'function'
+                        ? destination.place.geometry.location.lat()
                         : destination.place.geometry.location.lat,
                       lng: typeof destination.place.geometry.location.lng === 'function'
                         ? destination.place.geometry.location.lng()
                         : destination.place.geometry.location.lng
-                    }} 
+                    }}
                     radius={500}
-                    onPlaceSelect={(place) => {
-                      if (mapInstance.current && place.geometry?.location) {
-                        const location = place.geometry.location;
-                        const lat = typeof location.lat === 'function' ? location.lat() : location.lat;
-                        const lng = typeof location.lng === 'function' ? location.lng() : location.lng;
-                        mapInstance.current.setCenter({ lat, lng });
-                        mapInstance.current.setZoom(17);
+                    onPlaceSelect={(
+                      result: { selectedPlaces: Place[]; route?: any }
+                    ) => {
+                      if (result.selectedPlaces.length > 0) {
+                        const firstPlace = result.selectedPlaces[0];
+                        if (mapInstance.current && firstPlace.geometry?.location) {
+                          const location = firstPlace.geometry.location;
+                          const lat =
+                            typeof location.lat === 'function'
+                              ? location.lat()
+                              : location.lat;
+                          const lng =
+                            typeof location.lng === 'function'
+                              ? location.lng()
+                              : location.lng;
+                          mapInstance.current.setCenter({ lat: Number(lat), lng: Number(lng) });
+                          mapInstance.current.setZoom(17);
+                        }
                       }
                     }}
                   />
