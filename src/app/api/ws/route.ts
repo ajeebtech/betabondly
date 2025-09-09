@@ -53,7 +53,7 @@ if (process.env.NODE_ENV === 'development') {
         // Broadcast the message to all clients
         broadcastMessage(data);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('Error parsing WebSocket message:', error);npm cache clean --force
 export const dynamic = 'force-dynamic';
 
 export async function GET() {

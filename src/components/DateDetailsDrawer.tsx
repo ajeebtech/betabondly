@@ -26,7 +26,16 @@ import {
 } from "@/components/ui/select"
 import { LocationSearch } from "./LocationSearch"
 import { Badge } from "@/components/ui/badge"
-import dynamic from 'next/dynamic';
+import dynamic from 'next/dynamic'
+
+interface NearbyPlacesProps {
+  location: {
+    lat: number;
+    lng: number;
+  };
+  radius?: number;
+  onPlaceSelect: (result: { selectedPlaces: any[]; route: any }) => void;
+}
 
 interface RouteResult {
   route: any;
@@ -45,14 +54,17 @@ interface RouteResult {
 }
 
 // Dynamically import the NearbyPlaces component to avoid SSR issues with Google Maps
-const NearbyPlaces = dynamic(() => import('@/components/NearbyPlaces'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-    </div>
-  ),
-});
+const NearbyPlaces = dynamic<NearbyPlacesProps>(
+  () => import('@/components/NearbyPlaces').then(mod => mod.default as any),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+      </div>
+    ),
+  }
+);
 
 
 // Extend the global Window interface
@@ -135,7 +147,7 @@ export function DateDetailsDrawer({
     
     // Clear the map
     if (directionsRenderer.current) {
-      directionsRenderer.current.setDirections(null);
+      directionsRenderer.current.setMap(null);
     }
     
     // Clear markers
