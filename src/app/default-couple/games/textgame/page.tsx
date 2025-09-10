@@ -186,7 +186,7 @@ export default function TextGame() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="flex flex-col h-full">
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-center">Text Adventure Game</h1>
         <div className="text-center text-sm text-gray-500">

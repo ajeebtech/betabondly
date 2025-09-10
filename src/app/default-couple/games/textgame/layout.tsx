@@ -24,12 +24,15 @@ export default function TextGameLayout({
   }, []);
 
   return (
-    <div className="flex min-h-screen">
-      <div className="w-16">
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="fixed inset-y-0 left-0 z-50">
         <SidebarDemo />
       </div>
-      <div className="flex-1 flex justify-center items-start p-4">
-        <div className="w-full max-w-4xl">
+      
+      {/* Main content container */}
+      <div className="flex-1 pl-16 md:pl-20">
+        <div className="w-full max-w-4xl mx-auto px-4">
           {children}
         </div>
       </div>
