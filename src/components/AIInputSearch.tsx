@@ -1,9 +1,8 @@
 "use client";
 
-import { Globe, Paperclip, Send } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Paperclip, Send } from "lucide-react";
+import { useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const useAutoResizeTextarea = (options: { minHeight: number; maxHeight: number }) => {
@@ -29,15 +28,17 @@ const useAutoResizeTextarea = (options: { minHeight: number; maxHeight: number }
 export default function AIInputSearch() {
   const [value, setValue] = useState("");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
-    minHeight: 90,  // Increased height for better readability
-    maxHeight: 350,  // Increased max height to accommodate larger text
+    minHeight: 100,
+    maxHeight: 300,
   });
-  const [showSearch, setShowSearch] = useState(true);
   const [isFocused, setIsFocused] = useState(false);
 
   const handleSubmit = () => {
+    if (!value.trim()) return;
+    // Handle submission here
+    console.log("Submitted:", value);
     setValue("");
-    adjustHeight(true); 
+    adjustHeight(true);
   };
 
   const handleFocus = () => {
@@ -55,16 +56,16 @@ export default function AIInputSearch() {
   };
 
   return (
-    <div className="w-full py-4">
-      <div className="relative max-w-xl w-full mx-auto">
+    <div className="w-full">
+      <div className="relative w-full">
         <div
           role="textbox"
           tabIndex={0}
           aria-label="Search input container"
           className={cn(
-            "relative flex flex-col rounded-xl transition-all duration-200 w-full text-left cursor-text",
-            "ring-1 ring-black/10 dark:ring-white/10",
-            isFocused && "ring-black/20 dark:ring-white/20"
+            "relative flex flex-col bg-white rounded-xl shadow-sm overflow-hidden w-full text-left cursor-text",
+            "border border-gray-200",
+            isFocused && "ring-2 ring-pink-500 ring-offset-1"
           )}
           onClick={handleContainerClick}
           onKeyDown={(e) => {
@@ -73,12 +74,12 @@ export default function AIInputSearch() {
             }
           }}
         >
-          <div className="overflow-y-auto max-h-[200px]">
+          <div className="overflow-y-auto max-h-[200px] p-4">
             <Textarea
               id="ai-input-04"
               value={value}
-              placeholder="say whatever"
-              className="w-full min-h-[90px] rounded-xl rounded-b-none px-4 py-2 bg-white border border-gray-200 text-gray-900 text-xl placeholder:text-gray-400 resize-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 leading-relaxed shadow-sm"
+              placeholder="What's on your mind?"
+              className="w-full min-h-[100px] border-0 p-0 text-gray-900 text-base placeholder:text-gray-400 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 leading-relaxed"
               ref={textareaRef}
               onFocus={handleFocus}
               onBlur={handleBlur}
@@ -95,87 +96,37 @@ export default function AIInputSearch() {
             />
           </div>
 
-          <div className="h-12 bg-white border-t border-gray-200 rounded-b-xl">
-            <div className="absolute left-3 bottom-3 flex items-center gap-2">
-              <label className="cursor-pointer rounded-lg p-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-                <input type="file" className="hidden" />
-                <Paperclip className="w-4 h-4 text-gray-500 hover:text-gray-700 transition-colors" />
-              </label>
-              <button
+          <div className="h-12 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <button 
                 type="button"
-                onClick={() => {
-                  setShowSearch(!showSearch);
+                className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Handle attachment click
                 }}
-                className={cn(
-                  "rounded-full transition-all flex items-center gap-2 px-1.5 py-1 border h-8 cursor-pointer",
-                  showSearch
-                    ? "bg-sky-500/15 border-sky-400 text-sky-600"
-                    : "bg-gray-100 border-gray-200 text-gray-500 hover:text-gray-700"
-                )}
               >
-                <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                  <motion.div
-                    animate={{
-                      rotate: showSearch ? 180 : 0,
-                      scale: showSearch ? 1.1 : 1,
-                    }}
-                    whileHover={{
-                      rotate: showSearch ? 180 : 15,
-                      scale: 1.1,
-                      transition: {
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 10,
-                      },
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 25,
-                    }}
-                  >
-                    <Globe
-                      className={cn(
-                        "w-4 h-4",
-                        showSearch
-                          ? "text-sky-500"
-                          : "text-inherit"
-                      )}
-                    />
-                  </motion.div>
-                </div>
-                <AnimatePresence>
-                  {showSearch && (
-                    <motion.span
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{
-                        width: "auto",
-                        opacity: 1,
-                      }}
-                      exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-sm overflow-hidden whitespace-nowrap text-sky-500 shrink-0"
-                    >
-                      Search
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                <Paperclip className="w-4 h-4" />
               </button>
             </div>
-            <div className="absolute right-3 bottom-3">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className={cn(
-                  "rounded-lg p-2 transition-colors",
-                  value
-                    ? "bg-sky-500/15 text-sky-600"
-                    : "bg-gray-100 text-gray-400 hover:text-gray-600 cursor-pointer"
-                )}
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+            
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSubmit();
+              }}
+              disabled={!value.trim()}
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2",
+                value.trim()
+                  ? "bg-pink-500 text-white hover:bg-pink-600"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              )}
+            >
+              <span>Post</span>
+              <Send className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
