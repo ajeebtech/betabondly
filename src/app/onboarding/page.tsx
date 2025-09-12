@@ -3,8 +3,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithPhoneNumber, updateProfile, updateEmail, User as FirebaseUser } from 'firebase/auth';
-import { auth, RecaptchaVerifier } from '@/lib/firebase';
+import { 
+  RecaptchaVerifier,
+  updateProfile, 
+  updateEmail, 
+  User as FirebaseUser, 
+  signInWithCredential,
+  PhoneAuthProvider,
+  signInWithPhoneNumber
+} from 'firebase/auth';
+import { auth, initRecaptcha } from '@/lib/firebase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,11 +43,8 @@ export default function OnboardingPage() {
   const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
   const router = useRouter();
 
-  // Initialize reCAPTCHA verifier when component mounts
+  // Cleanup reCAPTCHA verifier when component unmounts
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Cleanup function
     return () => {
       if (recaptchaVerifier.current) {
         try {
@@ -47,6 +52,7 @@ export default function OnboardingPage() {
         } catch (e) {
           console.error('Error cleaning up reCAPTCHA:', e);
         }
+        recaptchaVerifier.current = null;
       }
     };
   }, []);
@@ -69,93 +75,82 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Format phone number with Indian country code
       const formattedPhoneNumber = `+91${phoneNumber}`;
-      
-      console.log('Preparing to send code to:', formattedPhoneNumber);
+
+      // Initialize reCAPTCHA if not already done
+      if (!recaptchaVerifier.current) {
+        try {
+          recaptchaVerifier.current = initRecaptcha('recaptcha-container');
+          console.log('reCAPTCHA verifier initialized in handleSendCode');
+        } catch (error) {
+          console.error('Failed to initialize reCAPTCHA:', error);
+          setError('Security verification failed to initialize. Please refresh the page.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log('Sending verification code to:', formattedPhoneNumber);
       
       try {
-        // Clear existing reCAPTCHA if any
-        if (recaptchaVerifier.current) {
-          recaptchaVerifier.current.clear();
+        // Verify reCAPTCHA is ready
+        if (!recaptchaVerifier.current) {
+          throw new Error('reCAPTCHA verifier not initialized');
         }
         
-        console.log('Creating new reCAPTCHA verifier...');
-        recaptchaVerifier.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          size: 'invisible',
-          callback: (response: any) => {
-            console.log('reCAPTCHA verified:', response);
-          },
-          'expired-callback': () => {
-            console.log('reCAPTCHA expired');
-            setError('Verification expired. Please try again.');
-          }
-        });
+        console.log('Initiating phone number verification...');
         
-        // Verify reCAPTCHA first
-        console.log('Verifying reCAPTCHA...');
-        const recaptchaToken = await recaptchaVerifier.current.verify();
-        console.log('reCAPTCHA token received:', recaptchaToken);
-        
-        console.log('Sending verification code...');
+        // Execute the reCAPTCHA and send verification code
         const confirmation = await signInWithPhoneNumber(
           auth,
           formattedPhoneNumber,
           recaptchaVerifier.current
         );
-        
-        console.log('Confirmation result:', confirmation);
+          
+        console.log('Confirmation result received:', confirmation);
         setConfirmationResult(confirmation);
         setStep('verify');
-      } catch (recaptchaError: any) {
-        console.error('reCAPTCHA verification failed:', {
-          code: recaptchaError.code,
-          message: recaptchaError.message,
-          stack: recaptchaError.stack
+      } catch (error: any) {
+        console.error('Error during phone verification:', {
+          name: error.name,
+          code: error.code,
+          message: error.message,
+          stack: error.stack,
+          fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
         });
         
-        if (recaptchaError.code === 'auth/too-many-requests') {
-          throw new Error('Too many attempts. Please wait a few minutes before trying again.');
-        } else if (recaptchaError.code === 'auth/invalid-app-credential') {
-          throw new Error('Invalid app configuration. Please contact support.');
+        // Reset reCAPTCHA on failure to allow retry
+        if (recaptchaVerifier.current) {
+          try {
+            recaptchaVerifier.current.clear();
+          } catch (e) {
+            console.warn('Error clearing reCAPTCHA after failure:', e);
+          }
+          recaptchaVerifier.current = null;
+        }
+        
+        // Handle specific error cases with user-friendly messages
+        if (error.code === 'auth/too-many-requests') {
+          setError('Too many attempts. Please wait a few minutes before trying again.');
+        } else if (error.code === 'auth/invalid-phone-number') {
+          setError('Invalid phone number format. Please enter a valid number.');
+        } else if (error.code === 'auth/invalid-app-credential') {
+          setError('Invalid app configuration. Please contact support.');
+        } else if (error.code === 'auth/captcha-check-failed') {
+          setError('Security check failed. Please refresh the page and try again.');
+        } else if (error.code === 'auth/quota-exceeded') {
+          setError('SMS quota exceeded. Please try again later or contact support.');
+        } else if (error.code === 'auth/missing-phone-number') {
+          setError('Please enter a phone number.');
+        } else if (error.code === 'auth/operation-not-allowed') {
+          setError('Phone authentication is not enabled. Please contact support.');
         } else {
-          throw new Error('Security verification failed. Please refresh the page and try again.');
+          setError(`Verification failed: ${error.message || 'Please try again.'}`);
         }
       }
-    } catch (err: any) {
-      console.error('Error in handleSendCode:', {
-        name: err.name,
-        code: err.code,
-        message: err.message,
-        stack: err.stack,
-        fullError: JSON.stringify(err, Object.getOwnPropertyNames(err))
-      });
-      
-      let errorMessage = 'Failed to send verification code. Please try again.';
-      
-      // Handle specific error cases
-      switch (err.code) {
-        case 'auth/invalid-phone-number':
-          errorMessage = 'Invalid phone number format. Please enter a valid Indian phone number.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many attempts. Please wait 30 minutes before trying again.';
-          break;
-        case 'auth/quota-exceeded':
-          errorMessage = 'SMS quota exceeded. Please try again later or contact support.';
-          break;
-        case 'auth/missing-app-credential':
-        case 'auth/invalid-app-credential':
-          errorMessage = 'Security check failed. Please refresh the page and try again.';
-          break;
-        case 'auth/captcha-check-failed':
-          errorMessage = 'Security check failed. Please refresh the page and try again.';
-          break;
-        default:
-          console.error('Unhandled error code:', err.code);
-      }
-      
-      setError(errorMessage);
+    } catch (err) {
+      console.error('Unexpected error in handleSendCode:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

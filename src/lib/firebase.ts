@@ -1,7 +1,22 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier } from 'firebase/auth';
+import { 
+  getAuth, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
+  GoogleAuthProvider
+} from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+
+declare global {
+  interface Window {
+    recaptchaVerifier: any;
+    confirmationResult: any;
+  }
+}
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,16 +29,69 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-  console.log('Firebase initialized successfully');
-} else {
-  app = getApp();
-}
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const auth = getAuth(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { auth, storage, RecaptchaVerifier };
+// Initialize reCAPTCHA
+const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVerifier => {
+  if (typeof window === 'undefined') {
+    throw new Error('Cannot initialize reCAPTCHA on server side');
+  }
+
+  try {
+    // Clear existing reCAPTCHA if any
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (clearError) {
+        console.warn('Error clearing existing reCAPTCHA:', clearError);
+      }
+    }
+    
+    console.log('Initializing reCAPTCHA with container:', containerId);
+    
+    // Create new reCAPTCHA verifier
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      size: 'invisible',
+      callback: () => {
+        console.log('reCAPTCHA verified successfully');
+      },
+      'expired-callback': () => {
+        console.log('reCAPTCHA expired');
+      },
+      'error-callback': (error: any) => {
+        console.error('reCAPTCHA error:', error);
+      }
+    });
+    
+    console.log('reCAPTCHA verifier created successfully');
+    return window.recaptchaVerifier;
+    
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to initialize reCAPTCHA:', {
+      error: errorMessage,
+      authDomain: firebaseConfig.authDomain,
+      projectId: firebaseConfig.projectId
+    });
+    throw new Error(`Failed to initialize security check: ${errorMessage}`);
+  }
+};
+
+export { 
+  auth, 
+  db,
+  storage,
+  googleProvider,
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  PhoneAuthProvider, 
+  signInWithCredential,
+  initRecaptcha 
+};
+
 export default app;
