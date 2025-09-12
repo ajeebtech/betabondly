@@ -24,25 +24,63 @@ type Message = {
   timestamp: number;
 };
 
+// Game master messages for different states
+const waitingMessages = [
+  'The game master is preparing your adventure...',
+  'Gathering magical energies...',
+  'The story is being written as we speak...',
+  'Setting the stage for your journey...',
+  'The game master is watching closely...',
+  'Your adventure is being crafted...',
+  'The story is taking shape...'
+];
+
 export default function TextGame() {
+  // State hooks
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [currentTurn, setCurrentTurn] = useState<'player1' | 'player2' | null>(null);
   const [playerRole, setPlayerRole] = useState<'player1' | 'player2' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAITyping, setIsAITyping] = useState(false);
-  const searchParams = useSearchParams();
+  const [gameStarted, setGameStarted] = useState(false);
+  const lastGameMasterMessageId = useRef<string | null>(null);
   
+  // Refs and other hooks
+  const searchParams = useSearchParams();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollInterval = useRef<NodeJS.Timeout>();
+  const coupleId = 'default-couple';
+  
+  // Check if we should generate a response from the game master
+  const shouldGenerateResponse = useCallback((msgs: Message[]) => {
+    // Only start after both players have sent at least one message
+    const player1Messages = msgs.filter(msg => msg.sender === 'player1').length;
+    const player2Messages = msgs.filter(msg => msg.sender === 'player2').length;
+    
+    // Only generate response if both players have sent at least one message
+    // and the last message was from a player (not the game master)
+    return player1Messages > 0 && 
+           player2Messages > 0 && 
+           msgs.length > 0 && 
+           msgs[msgs.length - 1].sender !== 'gameMaster';
+  }, []);
+
   // Generate a response from the game master AI
   const generateGameMasterResponse = useCallback(async (conversation: Message[]) => {
-    if (!conversation.length) return null;
+    console.log('Generating game master response...');
+    if (!conversation.length || !shouldGenerateResponse(conversation)) {
+      console.log('Not generating response - no conversation or should not generate');
+      return null;
+    }
     
     try {
+      console.log('Setting AI typing to true');
       setIsAITyping(true);
       
       // Format conversation for the model
       const chatHistory = conversation.map(msg => ({
-        role: msg.sender === 'player1' ? 'user' : 'model',
+        role: msg.sender === 'gameMaster' ? 'model' : 'user',
         parts: [{ text: msg.text }]
       }));
       
@@ -51,7 +89,7 @@ export default function TextGame() {
         Provide brief, engaging responses that move the story forward. 
         Be creative and adapt to the players' choices.`;
       
-      // Start a chat session
+      // Start a chat session with the full conversation history
       const chat = model.startChat({
         history: [
           {
@@ -66,95 +104,153 @@ export default function TextGame() {
         ]
       });
       
-      // Get the last message for context
-      const lastMessage = conversation[conversation.length - 1].text;
-      const result = await chat.sendMessage(lastMessage);
+      // Get the summary of the conversation so far
+      const conversationSummary = conversation
+        .map(msg => `${msg.sender}: ${msg.text}`)
+        .join('\n');
+      
+      const prompt = `Here's the conversation so far. Please respond as the game master, 
+        considering both players' inputs and moving the story forward:\n\n${conversationSummary}`;
+      
+      console.log('Sending prompt to AI:', prompt);
+      const result = await chat.sendMessage(prompt);
       const response = await result.response;
-      return response.text();
+      const responseText = response.text();
+      console.log('AI response:', responseText);
+      return responseText;
     } catch (error) {
       console.error('Error generating AI response:', error);
       return 'The game master is thinking...';
     } finally {
+      console.log('Setting AI typing to false');
       setIsAITyping(false);
     }
+  }, [model, shouldGenerateResponse]);
+
+  // Start game function - just mark game as started, no initial messages
+  const startGame = useCallback(() => {
+    setGameStarted(true);
+    setCurrentTurn('player1');
   }, []);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollInterval = useRef<NodeJS.Timeout>();
-  const coupleId = 'default-couple'; // You can make this dynamic based on the URL or user context
 
   // Render the game master's message with AITextLoading
   const renderGameMasterMessage = () => {
-    const gameMasterMessages = messages.filter(msg => msg.sender === 'gameMaster');
-    const lastMessage = gameMasterMessages[gameMasterMessages.length - 1];
+    console.log('Rendering game master message. isAITyping:', isAITyping);
+    console.log('All messages:', messages);
     
-    return (
-      <div className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg mb-4 border border-gray-200 dark:border-gray-700">
-        <div className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 dark:from-gray-300 dark:via-gray-400 dark:to-gray-300 mb-2">
-          Game Master
+    // Get all game master messages in chronological order
+    const gameMasterMessages = messages.filter(msg => msg.sender === 'gameMaster');
+    const lastGameMasterMessage = gameMasterMessages[gameMasterMessages.length - 1];
+    
+    console.log('Last game master message:', lastGameMasterMessage);
+    
+    // If we have a game master message, always show it
+    if (lastGameMasterMessage) {
+      console.log('Showing game master message:', lastGameMasterMessage.text);
+      return (
+        <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master</div>
+          <div className="text-gray-800 dark:text-gray-200 text-base">
+            {lastGameMasterMessage.text}
+          </div>
         </div>
-        {isAITyping ? (
+      );
+    }
+    
+    // If AI is typing but we don't have a message yet, show loading
+    if (isAITyping) {
+      console.log('AI is typing, showing loading state');
+      return (
+        <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master is thinking...</div>
           <AITextLoading 
-            texts={[
-              "Crafting your adventure...",
-              "Weaving the story...",
-              "Summoning magic...",
-              "Consulting the ancient tomes..."
-            ]}
-            className="text-2xl"
+            texts={waitingMessages}
+            className="text-gray-800 dark:text-gray-200 text-base"
           />
-        ) : lastMessage ? (
-          <div className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-gray-100 dark:via-gray-300 dark:to-gray-100 text-lg">
-            {lastMessage.text}
-          </div>
-        ) : (
-          <div className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 via-gray-500 to-gray-400 dark:from-gray-500 dark:via-gray-400 dark:to-gray-500">
-            The game master is waiting to begin your adventure...
-          </div>
-        )}
+        </div>
+      );
+    }
+    
+    // Otherwise, show loading animation with waiting messages
+    return (
+      <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master is thinking...</div>
+        <AITextLoading 
+          texts={waitingMessages}
+          className="text-gray-800 dark:text-gray-200 text-base"
+        />
       </div>
     );
   };
 
   // Fetch messages from the API
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (forceUpdate = false) => {
     try {
-      const response = await fetch(`/api/couple-messages?coupleId=${coupleId}`);
+      // Add cache-busting parameter to prevent stale data
+      const response = await fetch(`/api/couple-messages?coupleId=${coupleId}&_t=${Date.now()}`);
       if (!response.ok) throw new Error('Failed to fetch messages');
-      const data = await response.json();
-      setMessages(data);
+      const newMessages = await response.json();
       
-      // Set the next turn based on the last message or default to player1 if no messages
-      if (data.length > 0) {
-        const lastMessage = data[data.length - 1];
-        const nextTurn = lastMessage.sender === 'player1' ? 'player2' : 'player1';
-        setCurrentTurn(nextTurn);
+      // Only update if messages have actually changed or if forced
+      setMessages(prevMessages => {
+        // If no messages yet, always update
+        if (prevMessages.length === 0) return newMessages;
         
-        // Generate game master response after both players have spoken
-        if (data.length >= 2) {
-          const aiResponse = await generateGameMasterResponse(data);
+        // Check if messages are different
+        const prevIds = new Set(prevMessages.map(m => m.id));
+        const hasNewMessages = newMessages.some((msg: Message) => !prevIds.has(msg.id));
+        const hasDifferentLength = newMessages.length !== prevMessages.length;
+        
+        if (forceUpdate || hasNewMessages || hasDifferentLength) {
+          console.log('Updating messages with new data');
+          return newMessages;
+        }
+        
+        console.log('Skipping message update - no changes detected');
+        return prevMessages;
+      });
+      
+      // Handle initial turn setup if needed
+      if (currentTurn === null) {
+        setCurrentTurn('player1');
+        return;
+      }
+      
+      // Check if we should generate a game master response
+      const shouldRespond = shouldGenerateResponse(newMessages);
+      if (shouldRespond && !isAITyping) {
+        console.log('Generating game master response...');
+        setIsAITyping(true);
+        
+        try {
+          const aiResponse = await generateGameMasterResponse(newMessages);
           if (aiResponse) {
-            // Add game master message to the conversation
-            const newMessage: Message = {
-              id: Date.now().toString(),
+            const gameMasterMessage: Message = {
+              id: `gm-${Date.now()}`,
               text: aiResponse,
               sender: 'gameMaster',
               timestamp: Date.now()
             };
             
-            // Save to the database
-            await fetch(`/api/couple-messages?coupleId=${coupleId}`, {
+            // Save to database
+            const saveResponse = await fetch(`/api/couple-messages?coupleId=${coupleId}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newMessage)
+              body: JSON.stringify(gameMasterMessage)
             });
             
-            // Update local state
-            setMessages(prev => [...prev, newMessage]);
+            if (saveResponse.ok) {
+              // Update local state with the saved message
+              const savedMessage = await saveResponse.json();
+              setMessages(prev => [...prev, savedMessage]);
+              setCurrentTurn('player1');
+            }
           }
+        } catch (error) {
+          console.error('Error generating game master response:', error);
+        } finally {
+          setIsAITyping(false);
         }
-      } else if (currentTurn === null) {
-        // Only set initial turn if it hasn't been set yet
-        setCurrentTurn('player1');
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -198,26 +294,39 @@ export default function TextGame() {
   // Send a new message
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!inputText.trim() || !playerRole || playerRole !== currentTurn) return;
-    
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: playerRole,
-      timestamp: Date.now()
-    };
+    if (!inputText.trim() || !playerRole || isLoading) return;
     
     try {
       setIsLoading(true);
       
-      // Save to the database
-      const response = await fetch(`/api/couple-messages?player=${playerRole}`, {
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        text: inputText,
+        sender: playerRole,
+        timestamp: Date.now()
+      };
+      
+      // Update local state optimistically
+      setMessages(prev => [...prev, newMessage]);
+      setInputText('');
+      
+      // Only switch turns if we're not waiting for the game master
+      const updatedMessages = [...messages, newMessage];
+      if (!shouldGenerateResponse(updatedMessages)) {
+        setCurrentTurn(prev => prev === 'player1' ? 'player2' : 'player1');
+      } else {
+        // If both players have responded, set turn to game master
+        setCurrentTurn(null);
+      }
+      
+      // Send to API
+      const response = await fetch(`/api/couple-messages?coupleId=${coupleId}&player=${playerRole}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: inputText,
-          coupleId: coupleId
+          ...newMessage,
+          coupleId,
+          sender: playerRole
         })
       });
       
@@ -226,16 +335,27 @@ export default function TextGame() {
         throw new Error(errorData.error || 'Failed to send message');
       }
       
-      // Update local state
-      setMessages(prev => [...prev, newMessage]);
-      setInputText('');
-      setCurrentTurn(prev => prev === 'player1' ? 'player2' : 'player1');
+      // Get the saved message from the server
+      const savedMessage = await response.json();
       
-      // Fetch messages to update the conversation and trigger AI response
-      await fetchMessages();
+      // Update the local state with the server's version of the message
+      setMessages(prev => {
+        const index = prev.findIndex(m => m.id === newMessage.id);
+        if (index !== -1) {
+          const updated = [...prev];
+          updated[index] = savedMessage;
+          return updated;
+        }
+        return [...prev, savedMessage];
+      });
+      
+      // Refresh messages to ensure consistency
+      await fetchMessages(true);
     } catch (error) {
       console.error('Error sending message:', error);
       alert(error instanceof Error ? error.message : 'Failed to send message');
+      // Revert optimistic update on error
+      setMessages(messages);
     } finally {
       setIsLoading(false);
     }
@@ -296,17 +416,46 @@ export default function TextGame() {
     );
   }
 
-  // Initial game master message
-  const gameMasterMessages = [
-    'Welcome to the text adventure game! I\'ll be your guide.',
-    'The story is about to unfold...',
-    'The game master is observing the conversation...'
-  ];
+  if (!gameStarted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <h1 className="text-3xl font-bold mb-8">Text Adventure Game</h1>
+        <p className="text-lg mb-8 text-center max-w-md">
+          Embark on a collaborative storytelling adventure with a friend. 
+          Take turns responding to the game master's prompts and see where your story takes you!
+        </p>
+        <button
+          onClick={startGame}
+          className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        >
+          Start Adventure
+        </button>
+      </div>
+    );
+  }
+
+  // Get the current URL for the game master console
+  const getGameMasterUrl = () => {
+    if (typeof window === 'undefined') return '#';
+    const url = new URL(window.location.href);
+    url.pathname = url.pathname.replace(/\/[^/]*$/, '/game-master');
+    return url.toString();
+  };
 
   return (
     <div className="flex flex-col h-full">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold text-center">Text Adventure Game</h1>
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-2xl font-bold">Text Adventure Game</h1>
+          <a 
+            href={getGameMasterUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors"
+          >
+            Open Game Master Console
+          </a>
+        </div>
         <div className="text-center text-sm text-gray-500">
           You are: <span className="font-medium">{playerRole?.toUpperCase() || 'Not Selected'}</span>
           {currentTurn && (
@@ -332,7 +481,8 @@ export default function TextGame() {
         <div className="flex-1 flex overflow-hidden">
           {/* Combined Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {[...messages]
+            {messages
+              .filter(msg => msg.sender === 'player1' || msg.sender === 'player2')
               .sort((a, b) => a.timestamp - b.timestamp)
               .map((message) => (
                 <div 

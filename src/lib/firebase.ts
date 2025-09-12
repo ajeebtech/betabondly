@@ -1,6 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -22,5 +23,7 @@ if (!getApps().length) {
 }
 
 const auth = getAuth(app);
+const storage = getStorage(app);
 
-export { auth, RecaptchaVerifier };
+export { auth, storage, RecaptchaVerifier };
+export default app;
