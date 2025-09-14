@@ -32,10 +32,19 @@ export default function CoupleDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Notification Button */}
-      <button className="fixed top-4 right-4 h-12 w-12 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg z-[9999] hover:bg-pink-600 transition-colors">
-        <Bell className="h-6 w-6" />
-      </button>
+      {/* Notification Button with Tooltip */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button className="fixed top-4 right-4 h-12 w-12 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg z-[9999] hover:bg-pink-600 transition-colors">
+              <Bell className="h-6 w-6" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       {/* Sidebar */}
       <aside className="shrink-0 relative z-40">
         <div className="w-[300px] h-full bg-white">

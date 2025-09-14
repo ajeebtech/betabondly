@@ -112,7 +112,7 @@ export default function SidebarDemo() {
       icon: <SettingsIcon />,
     },
     {
-      label: "support",
+      label: "faqs",
       href: "#",
       icon: <SupportIcon />,
     },
