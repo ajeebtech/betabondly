@@ -4,6 +4,7 @@ import { Sidebar, SidebarBody, SidebarLink, SidebarPremiumButton } from "@/compo
 import {
   IconBrandTabler,
   IconUserBolt,
+  IconCamera,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -79,6 +80,13 @@ export default function SidebarDemo() {
       href: "#",
       icon: (
         <IconBrandTabler className="h-5 w-5 shrink-0 text-neutral-900" />
+      ),
+    },
+    {
+      label: "photobooth",
+      href: "/default-couple/photobooth",
+      icon: (
+        <IconCamera className="h-5 w-5 shrink-0 text-neutral-900" />
       ),
     },
     {

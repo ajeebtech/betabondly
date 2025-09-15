@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ComposeMessageDialog } from "@/components/ComposeMessageDialog"
+import { AddToCalendarDialog } from "@/components/AddToCalendarDialog"
 
 type DatePlan = {
   date: Date
@@ -136,14 +137,14 @@ export default function CoupleDashboard() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-8 gap-8">
           {/* Left Column - Posts */}
-          <div className="w-full lg:flex-1">
+          <div className="w-full lg:flex-1 max-w-[40rem] mx-auto">
             {/* AI Input Search */}
             <div className="w-full mb-8">
               <AIInputSearch />
             </div>
             
             {/* Scrollable Posts Container */}
-            <div className="w-full max-w-[28rem] mx-auto h-[calc(100vh-250px)] overflow-y-auto pr-2">
+            <div className="w-full h-[calc(100vh-250px)] overflow-y-auto pr-2">
               {/* First Post */}
               <div className="w-full bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-100">
                 {/* Post Header */}
@@ -318,24 +319,18 @@ export default function CoupleDashboard() {
         </div>
 
         {/* Right Column - Card Stack - Now positioned independently */}
-        <div className="fixed right-8 top-24 w-80 hidden lg:block">
-          <CardStack 
-            items={CARDS} 
-            className="w-full"
-            onSwipe={(id) => {
-              console.log(`Card ${id} swiped away`);
-            }}
-          />
-          <div className="mt-4 w-full">
-            <button 
-              onClick={() => {
-                console.log('Compose new calendar event');
+        <div className="fixed right-8 top-4 w-72 hidden lg:flex flex-col">
+          <div className="w-full flex justify-end pr-4 mb-2">
+            <AddToCalendarDialog />
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-3 mt-4">
+            <CardStack 
+              items={CARDS} 
+              className="w-full"
+              onSwipe={(id) => {
+                console.log(`Card ${id} swiped away`);
               }}
-              className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-pink-500 rounded-lg hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add to Calendar
-            </button>
+            />
           </div>
         </div>
         

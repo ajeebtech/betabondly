@@ -21,8 +21,8 @@ const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 export const CardStack = ({
   items,
-  offset = 10,
-  scaleFactor = 0.06,
+  offset = 6,  // Reduced from 10 to 6 for less vertical spacing
+  scaleFactor = 0.03,  // Reduced from 0.06 to 0.03 for less scaling
   className,
   onSwipe,
 }: {
@@ -65,6 +65,12 @@ export const CardStack = ({
               className="absolute flex h-60 w-60 flex-col justify-between rounded-2xl bg-white p-4 shadow-lg shadow-black/[0.1] dark:shadow-white/[0.05] md:h-80 md:w-96 cursor-pointer"
               style={{
                 transformOrigin: "top center",
+                boxShadow: `0 1px ${index * 2}px -1px rgba(0,0,0,0.1),
+                           0 2px ${index * 3}px -2px rgba(0,0,0,0.05)`,
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                left: 0,
+                right: 0,
               }}
               initial={false}
               animate={{
@@ -83,7 +89,7 @@ export const CardStack = ({
               onClick={() => handleCardClick(card.id)}
               whileHover={{
                 scale: 1.02,
-                boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+                boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.2), 0 10px 10px -5px rgb(0 0 0 / 0.1)",
                 zIndex: 100,
               }}
               whileTap={{
