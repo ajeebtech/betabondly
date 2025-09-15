@@ -1,5 +1,6 @@
 import { Inter, Indie_Flower } from 'next/font/google';
 import { Providers } from './providers';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const inter = Inter({
@@ -22,7 +23,7 @@ export const metadata = {
   description: 'Your application description',
 };
 
-import Navbar from '@/components/Navbar';
+import Navbar from '../components/Navbar';
 
 export default function RootLayout({
   children,
@@ -58,6 +59,7 @@ export default function RootLayout({
           <Navbar />
           <main>
             {children}
+            <Toaster position="top-center" richColors />
           </main>
         </Providers>
       </body>
