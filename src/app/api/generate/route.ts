@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" });
 
     // Convert base64 images to GoogleGenerativeAI.Part objects
     const imageParts = images.map((imageData: string) => ({
@@ -23,8 +23,7 @@ export async function POST(request: Request) {
       },
     }));
 
-    const prompt = `Combine these two images into a single, creative composition that blends both subjects naturally. 
-    The final image should maintain high quality and visual coherence.`;
+    const prompt = `Create a 4K HD polaroid-style snapshot of the uploaded individuals sharing a sweet, candid laugh. Add natural dim lighting, a hint of film grain, and the feel of an instant photo.`;
 
     const result = await model.generateContent({
       contents: [
