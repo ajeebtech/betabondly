@@ -256,7 +256,9 @@ export default function PhotoboothPage() {
       }
       
       const data = await response.json();
-      setGeneratedImage(data.image);
+      // Format the image URL with the correct data URL prefix and mimeType
+      const imageUrl = `data:${data.mimeType || 'image/jpeg'};base64,${data.image}`;
+      setGeneratedImage(imageUrl);
     } catch (error) {
       console.error('Error generating image:', error);
       // Handle error (e.g., show error message)
