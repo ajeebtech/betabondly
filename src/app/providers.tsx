@@ -3,6 +3,7 @@
 import { createContext, useContext, useState } from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import theme from '@/theme';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const AppContext = createContext<any>(null);
 
@@ -14,20 +15,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ChakraProvider theme={theme}>
-      <AppContext.Provider
-        value={{
-          isConnected,
-          setIsConnected,
-          userAddress,
-          setUserAddress,
-          isLoading,
-          setIsLoading,
-          error,
-          setError,
-        }}
-      >
-        {children}
-      </AppContext.Provider>
+      <AuthProvider>
+        <AppContext.Provider
+          value={{
+            isConnected,
+            setIsConnected,
+            userAddress,
+            setUserAddress,
+            isLoading,
+            setIsLoading,
+            error,
+            setError,
+          }}
+        >
+          {children}
+        </AppContext.Provider>
+      </AuthProvider>
     </ChakraProvider>
   );
 }

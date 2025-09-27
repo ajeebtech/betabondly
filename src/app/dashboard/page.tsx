@@ -2,8 +2,24 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/AuthContext"
+import { signOut } from "firebase/auth"
+import { auth } from "@/lib/firebase/config"
+import { useRouter } from "next/navigation"
+import ProtectedRoute from "@/components/auth/ProtectedRoute"
 
-export default function Dashboard() {
+function DashboardContent() {
+  const { user } = useAuth()
+  const router = useRouter()
+  
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      router.push('/auth/name')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
   const [postContent, setPostContent] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,8 +52,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
         <h1 className="text-xl font-semibold text-gray-900">Our Moments</h1>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-600">Welcome, {user?.displayName || 'User'}</span>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleLogout}
+          >
+            Sign Out
+          </Button>
+        </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-8 w-full">
@@ -107,5 +133,13 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function Dashboard() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   )
 }

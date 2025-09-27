@@ -18,8 +18,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { RecaptchaLoader } from "@/components/RecaptchaLoader";
 import { ArrowRight, ArrowLeft } from "lucide-react";
+import { GoogleCalendarSetup } from "@/components/GoogleCalendarSetup";
 
-type Step = 'name' | 'phone' | 'verify' | 'email';
+type Step = 'name' | 'phone' | 'verify' | 'google' | 'email';
 
 interface FormData {
   name: string;
@@ -90,21 +91,7 @@ export default function OnboardingPage() {
       throw error;
     }
     
-    // Check if reCAPTCHA is already loaded
-    if (!window.recaptcha) {
-      console.log('reCAPTCHA not loaded, waiting...');
-      await new Promise(resolve => {
-        const checkRecaptcha = () => {
-          if (window.recaptcha) {
-            console.log('reCAPTCHA loaded');
-            resolve(true);
-          } else {
-            setTimeout(checkRecaptcha, 100);
-          }
-        };
-        checkRecaptcha();
-      });
-    }
+    // No need to wait for a global reCAPTCHA object; Firebase RecaptchaVerifier will inject it as needed.
     
     // Clear existing reCAPTCHA if it exists
     if (recaptchaVerifier.current) {
@@ -142,6 +129,7 @@ export default function OnboardingPage() {
         'recaptcha-container', 
         {
           size: 'invisible',
+          // siteKey is optional for Firebase Phone Auth; if using Enterprise, ensure NEXT_PUBLIC_RECAPTCHA_SITE_KEY is set
           siteKey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
           callback: (response: any) => {
             console.log('✅ reCAPTCHA verified successfully:', response);
@@ -218,30 +206,12 @@ export default function OnboardingPage() {
 
       const formattedPhone = `+91${formData.phone}`;
       
-      console.log('Creating reCAPTCHA verifier...');
-      
-      // Create a new reCAPTCHA verifier instance
-      const verifier = new RecaptchaVerifier(
-        auth, 
-        'recaptcha-container', 
-        {
-          size: 'invisible',
-          callback: (response: any) => {
-            console.log('reCAPTCHA verified:', response);
-          },
-          'expired-callback': () => {
-            console.warn('reCAPTCHA expired');
-            setError('Verification expired. Please try again.');
-          },
-          'error-callback': (error: any) => {
-            console.error('reCAPTCHA error:', error);
-            setError('Failed to verify you\'re human. Please try again.');
-          }
-        }
-      );
-
-      // Store the verifier in the ref
-      recaptchaVerifier.current = verifier;
+      // Ensure a single reCAPTCHA verifier exists and reuse it
+      console.log('Ensuring reCAPTCHA verifier exists...');
+      if (!recaptchaVerifier.current) {
+        await initRecaptcha();
+      }
+      const verifier = recaptchaVerifier.current as RecaptchaVerifier;
       
       console.log('Sending OTP to:', formattedPhone, {
         timestamp: new Date().toISOString(),
@@ -272,7 +242,7 @@ export default function OnboardingPage() {
         
         // Clean up the verifier on error
         try {
-          if (verifier.clear) {
+          if ((verifier as any)?.clear) {
             verifier.clear();
           }
         } catch (cleanupError) {
@@ -376,7 +346,8 @@ export default function OnboardingPage() {
     try {
       const result = await confirmationResult.confirm(formData.verificationCode);
       if (result?.user) {
-        setStep('email');
+        // Move to Google Calendar setup after OTP verification
+        setStep('google');
       }
     } catch (err) {
       setError('Invalid code. Try again.');
@@ -400,6 +371,10 @@ export default function OnboardingPage() {
     }
   };
 
+  const steps = ['name', 'phone', 'verify', 'google', 'email'] as const;
+  const currentStepIndex = steps.indexOf(step);
+  const progress = ((currentStepIndex + 1) / steps.length) * 100;
+
   const nextStep = (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 'name' && formData.name.trim()) setStep('phone');
@@ -411,16 +386,12 @@ export default function OnboardingPage() {
   const prevStep = () => {
     if (step === 'phone') setStep('name');
     else if (step === 'verify') setStep('phone');
-    else if (step === 'email') setStep('verify');
+    else if (step === 'google') setStep('verify');
+    else if (step === 'email') setStep('google');
   };
-
-  const progress = { name: 25, phone: 50, verify: 75, email: 100 }[step];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      {/* Load reCAPTCHA script */}
-      <RecaptchaLoader />
-      
       {/* Hidden reCAPTCHA container - must be in the DOM but can be invisible */}
       <div id="recaptcha-container" className="invisible absolute"></div>
       
@@ -428,7 +399,7 @@ export default function OnboardingPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">Complete Your Profile</CardTitle>
           <CardDescription className="text-center">
-            Step {['name','phone','verify','email'].indexOf(step)+1} of 4
+            Step {currentStepIndex + 1} of {steps.length}
           </CardDescription>
           <Progress value={progress} className="h-2" />
         </CardHeader>
@@ -453,11 +424,53 @@ export default function OnboardingPage() {
               </div>
             )}
             {step === 'verify' && (
-              <div>
-                <Label>Verification Code</Label>
-                <Input value={formData.verificationCode}
-                  onChange={e => setFormData(prev => ({...prev, verificationCode: e.target.value.replace(/\D/g,'')}))}
-                  maxLength={6} required />
+              <Card className="w-full max-w-md">
+                <CardHeader>
+                  <CardTitle>Verify your phone</CardTitle>
+                  <CardDescription>Enter the 6-digit code sent to +91 {formData.phone}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleVerifyCode} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="verificationCode">Verification Code</Label>
+                      <Input
+                        id="verificationCode"
+                        name="verificationCode"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        value={formData.verificationCode}
+                        onChange={handleChange}
+                        placeholder="000000"
+                        className="text-center text-xl tracking-widest"
+                        disabled={loading}
+                        autoFocus
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Verifying...' : 'Verify'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setStep('phone')}
+                      disabled={loading}
+                    >
+                      Change Number
+                    </Button>
+                  </form>
+                  {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+                </CardContent>
+              </Card>
+            )}
+            {step === 'google' && (
+              <div className="w-full max-w-md">
+                <GoogleCalendarSetup 
+                  onSuccess={() => setStep('email')}
+                  onSkip={() => setStep('email')}
+                />
               </div>
             )}
             {step === 'email' && (
@@ -476,7 +489,6 @@ export default function OnboardingPage() {
               </Button>
             </div>
           </form>
-          <div id="recaptcha-container" className="mt-4" /> {/* visible container */}
         </CardContent>
       </Card>
     </div>
