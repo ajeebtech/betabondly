@@ -1,26 +1,63 @@
-'use client';
-
-import { Button } from '@chakra-ui/react';
 import Link from 'next/link';
+import * as NavigationMenu from '@radix-ui/react-navigation-menu';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
-export default function Header() {
+export function Header() {
   return (
-    <header className="border-b border-gray-200 dark:border-gray-700">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold">
-          UI Showcase
-        </Link>
-        <nav className="flex items-center space-x-6">
-          <Link href="#features" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            Features
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center -space-x-1 group">
+            <Image 
+              src="/images/pinkbonddd.png" 
+              alt="Bondly Logo" 
+              width={32} 
+              height={32} 
+              className="w-8 h-8 transition-transform group-hover:scale-110"
+              priority
+            />
+            <span className="text-xl font-bold tracking-tight -ml-0.5">ondly</span>
           </Link>
-          <Link href="#demo" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            Demo
-          </Link>
-          <Button colorScheme="blue">
-            Sign Up
+          <nav className="hidden md:flex items-center space-x-6">
+            <NavigationMenu.Root>
+              <NavigationMenu.List className="flex space-x-6">
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link
+                    href="#features"
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    Features
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link
+                    href="#how-it-works"
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    How it Works
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+                <NavigationMenu.Item>
+                  <NavigationMenu.Link
+                    href="#testimonials"
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    Testimonials
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+              </NavigationMenu.List>
+            </NavigationMenu.Root>
+          </nav>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/sign-in">Sign In</Link>
           </Button>
-        </nav>
+          <Button size="sm" asChild>
+            <Link href="#cta">Get Started</Link>
+          </Button>
+        </div>
       </div>
     </header>
   );

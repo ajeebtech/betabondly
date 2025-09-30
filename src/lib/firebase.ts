@@ -11,13 +11,15 @@ import {
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Extend the Window interface to include Firebase reCAPTCHA verifier
 declare global {
   interface Window {
-    recaptchaVerifier: any;
+    recaptchaVerifier: any; // Using any to match Firebase's expected type
     confirmationResult: any;
   }
 }
 
+// Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -30,7 +32,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
@@ -42,16 +43,17 @@ const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVe
     throw new Error('Cannot initialize reCAPTCHA on server side');
   }
 
-  try {
-    // Clear existing reCAPTCHA if any
-    if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (clearError) {
-        console.warn('Error clearing existing reCAPTCHA:', clearError);
-      }
+  // Clear existing reCAPTCHA if any
+  if (window.recaptchaVerifier) {
+    try {
+      window.recaptchaVerifier.clear();
+      window.recaptchaVerifier = null;
+    } catch (error) {
+      console.warn('Error clearing existing reCAPTCHA:', error);
     }
-    
+  }
+
+  try {
     console.log('Initializing reCAPTCHA with container:', containerId);
     
     // Create new reCAPTCHA verifier
@@ -62,12 +64,16 @@ const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVe
       },
       'expired-callback': () => {
         console.log('reCAPTCHA expired');
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        }
       },
-      'error-callback': (error: any) => {
+      'error-callback': (error: Error) => {
         console.error('reCAPTCHA error:', error);
       }
     });
-    
+
     console.log('reCAPTCHA verifier created successfully');
     return window.recaptchaVerifier;
     

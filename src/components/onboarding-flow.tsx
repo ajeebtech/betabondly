@@ -10,7 +10,7 @@ import { CheckCircle, Phone, User, UserCircle, ArrowRight, ArrowLeft } from "luc
 import { cn } from "@/lib/utils"
 import PhoneInput from "@/components/ui/phone-input"
 
-type Step = "name" | "phone" | "verify" | "profile"
+type Step = "name" | "phone" | "verify" | "profdile"
 
 interface OnboardingData {
   name: string

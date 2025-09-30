@@ -23,7 +23,8 @@ export const metadata = {
   description: 'Your application description',
 };
 
-import Navbar from '../components/Navbar';
+import { Header } from '@/components/Header';
+import { GrainGradient } from '@paper-design/shaders-react';
 
 export default function RootLayout({
   children,
@@ -53,14 +54,35 @@ export default function RootLayout({
         fontFamily: 'var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         minHeight: '100vh',
         margin: 0,
-        padding: 0
+        padding: 0,
+        position: 'relative'
       }} className={`${inter.variable} ${indieFlower.variable}`}>
+        <div className="fixed inset-0 -z-10">
+          <GrainGradient
+            style={{
+              width: '100vw',
+              height: '100vh',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+            }}
+            colors={["#ffffff", "#fef6ff", "#ffe6ff", "#ffffff"]}
+            colorBack="#ffffff"
+            softness={0.5}
+            intensity={0.5}
+            noise={0.15}
+            shape="corners"
+            speed={0.8}
+          />
+        </div>
         <Providers>
-          <Navbar />
-          <main>
-            {children}
-            <Toaster position="top-center" richColors />
-          </main>
+          <div className="relative z-10">
+            <Header />
+            <main>
+              {children}
+              <Toaster position="top-center" richColors />
+            </main>
+          </div>
         </Providers>
       </body>
     </html>

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { signInWithPhoneNumber } from 'firebase/auth';
+import { auth, initRecaptcha } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,27 +18,33 @@ export default function PhoneStep() {
   const { loading: authLoading } = useRequireNoAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const recaptchaVerifier = useRef<RecaptchaVerifier | null>(null);
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
 
-  if (authLoading) {
+  useEffect(() => {
+    // Initialize reCAPTCHA when component mounts
+    try {
+      initRecaptcha('recaptcha-container');
+      setRecaptchaReady(true);
+    } catch (error) {
+      console.error('Failed to initialize reCAPTCHA:', error);
+      setError('Failed to initialize security check. Please refresh the page and try again.');
+    }
+  }, []);
+
+  if (authLoading || !recaptchaReady) {
     return <LoadingSpinner />;
   }
 
+  // Clean up reCAPTCHA when component unmounts
   useEffect(() => {
-    // Initialize reCAPTCHA verifier
-    if (typeof window !== 'undefined') {
-      recaptchaVerifier.current = new RecaptchaVerifier(
-        auth,
-        'recaptcha-container',
-        {
-          size: 'invisible',
-        }
-      );
-    }
-
     return () => {
-      if (recaptchaVerifier.current) {
-        recaptchaVerifier.current.clear();
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (error) {
+          console.warn('Error cleaning up reCAPTCHA:', error);
+        }
       }
     };
   }, []);
@@ -56,14 +62,17 @@ export default function PhoneStep() {
 
       const formattedPhone = `+91${phone}`;
       
-      if (!recaptchaVerifier.current) {
-        throw new Error('reCAPTCHA not initialized');
+      if (!window.recaptchaVerifier) {
+        throw new Error('Security check failed. Please refresh the page and try again.');
       }
+
+      // Make sure reCAPTCHA is ready
+      await window.recaptchaVerifier.verify();
 
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         formattedPhone,
-        recaptchaVerifier.current
+        window.recaptchaVerifier
       );
 
       // Store confirmation result in session storage
