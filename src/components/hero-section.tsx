@@ -68,7 +68,7 @@ export function HeroSection() {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-playfair font-bold leading-tight text-balance">
-              Your little corner of the internet, <span className="text-pink-500">only for two</span>
+              Your little corner of the internet, <span className="text-pink-500">only for two.</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
@@ -153,15 +153,15 @@ export function HeroSection() {
                 {/* Content */}
                 <div className="p-8 space-y-6">
                   <div className="text-center space-y-2">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center">
                       <Image 
                         src="/images/pinkbonddd.png" 
                         alt="" 
-                        width={72} 
-                        height={72}
-                        className="w-18 h-18"
+                        width={120} 
+                        height={120}
+                        className="w-32 h-32"
                       />
-                      <span className="text-8xl font-playfair font-bold text-primary">ondly</span>
+                      <span className="text-8xl font-playfair font-bold text-primary -ml-3">ondly</span>
                     </div>
                     <div className="text-sm text-muted-foreground">Your private space</div>
                   </div>
