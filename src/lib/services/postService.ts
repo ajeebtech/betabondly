@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   DocumentData
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase';
 
 interface CreatePostData {
   coupleId: string;

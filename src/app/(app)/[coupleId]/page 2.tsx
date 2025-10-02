@@ -7,7 +7,7 @@ import { CalendarDrawer } from "@/components/CalendarDrawer"
 import { format } from "date-fns"
 import { Textarea as HeroTextarea } from "@heroui/react"
 import { Calendar as CalendarIcon } from "lucide-react"
-import SidebarDemo from "@/components/sidebar-demo";
+import EnhancedSidebar from "@/components/EnhancedSidebar";
 
 export default function CoupleDashboard() {
   const params = useParams()
@@ -57,14 +57,12 @@ export default function CoupleDashboard() {
 
   if (isLoading) {
     return (
-      <div className="relative min-h-screen bg-gray-50 flex">
-        {/* Sidebar - Fixed */}
-        <div className="fixed inset-y-0 left-0 z-40 w-[280px] border-r border-gray-200">
-          <SidebarDemo />
-        </div>
+      <div className="relative min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 flex">
+        {/* Enhanced Sidebar */}
+        <EnhancedSidebar />
 
         {/* Main Content */}
-        <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 md:pl-[280px] min-h-screen">
+        <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 ml-[64px] min-h-screen">
           {/* Loading Skeleton for Post Composer */}
           <div className="w-full max-w-2xl mb-6 bg-white rounded-lg shadow p-4">
             <div className="animate-pulse space-y-4">
@@ -106,14 +104,12 @@ export default function CoupleDashboard() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-50 flex">
-      {/* Sidebar - Fixed */}
-      <div className="fixed inset-y-0 left-0 z-40">
-        <SidebarDemo />
-      </div>
+    <div className="relative min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 flex">
+      {/* Enhanced Sidebar */}
+      <EnhancedSidebar />
 
       {/* Main Content */}
-      <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 md:pl-[280px]">
+      <main className="relative z-30 p-6 flex flex-col items-center w-full transition-all duration-300 ml-[64px]">
         {/* Post Composer */}
         <div className="w-full max-w-2xl mb-6 bg-white rounded-lg shadow p-4">
           <form onSubmit={handleSubmit}>

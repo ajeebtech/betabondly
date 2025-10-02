@@ -12,7 +12,7 @@ import {
   orderBy,
   limit
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase';
 
 interface CoupleData {
   coupleId: string;

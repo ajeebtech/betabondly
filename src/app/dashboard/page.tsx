@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { signOut } from "firebase/auth"
-import { auth } from "@/lib/firebase/config"
+import { auth } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 

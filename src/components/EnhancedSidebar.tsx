@@ -259,43 +259,50 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
         ))}
       </motion.div>
 
-      {/* Premium Section */}
-      <motion.div 
+      {/* Premium Link */}
+      <motion.div
         className="px-2 pb-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-3 text-white relative overflow-hidden mb-2"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
-              whileHover={{ scale: 1.02 }}
-            >
-              <div className="relative z-10">
-                <div className="flex items-center space-x-1 mb-1">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span className="font-medium text-xs">Premium</span>
-                </div>
-                <p className="text-xs opacity-90 mb-2">
-                  Unlock features
-                </p>
-                <motion.button
-                  className="bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-2 py-1 rounded-md transition-all duration-150"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Upgrade
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <motion.a
+          href="#"
+          className="flex items-center space-x-2 px-2 py-2 rounded-lg transition-all duration-150 group hover:bg-yellow-50"
+          whileHover={{ scale: 1.01, x: 1 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <motion.div
+            className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-md flex items-center justify-center group-hover:from-yellow-600 group-hover:to-orange-600 transition-all duration-150"
+            whileHover={{ rotate: 3 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+          </motion.div>
+          
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.span
+                className="text-sm font-medium bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent group-hover:from-yellow-700 group-hover:to-orange-700 transition-all"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.1 }}
+              >
+                premium
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.a>
+      </motion.div>
 
+      {/* User Profile and Logout */}
+      <motion.div 
+        className="px-2 pb-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
         {/* User Profile */}
         <motion.div 
           className={cn(

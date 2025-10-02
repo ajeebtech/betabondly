@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
 
 export async function POST() {
   try {

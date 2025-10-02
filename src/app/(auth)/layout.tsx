@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
 import { redirect } from 'next/navigation';
 
 interface AuthLayoutProps {

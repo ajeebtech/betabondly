@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Camera, CameraOff, Download, RotateCw, X, Upload, RefreshCw } from 'lucide-react';
-import SidebarDemo from "@/components/sidebar-demo";
+import EnhancedSidebar from "@/components/EnhancedSidebar";
 import { cn } from "@/lib/utils";
 
 export default function PhotoboothPage() {
@@ -268,13 +268,11 @@ export default function PhotoboothPage() {
   }, [photos]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 w-[300px] h-full bg-white shadow-xl">
-        <SidebarDemo />
-      </aside>
+    <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 relative">
+      {/* Enhanced Sidebar */}
+      <EnhancedSidebar />
 
-      <div className="flex-1 flex flex-col ml-0 lg:ml-[300px] transition-all duration-300 relative z-10 overflow-x-hidden">
+      <div className="flex-1 flex flex-col ml-[64px] transition-all duration-300 relative z-10 overflow-x-hidden">
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center p-4 lg:p-8 w-full">
           <div className="w-full max-w-[1600px] px-2 mx-auto">

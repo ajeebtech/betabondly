@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './lib/firebase/config';
+import { auth } from './lib/firebase';
 import { getIdToken } from 'firebase/auth';
 
 // Define public routes that don't require authentication

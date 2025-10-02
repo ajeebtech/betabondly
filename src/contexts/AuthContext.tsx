@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 type OnboardingData = {

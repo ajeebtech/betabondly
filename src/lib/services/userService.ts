@@ -6,9 +6,9 @@ import {
   arrayUnion,
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase/config';
+import { storage } from '@/lib/firebase';
 
 export interface UserData {
   uid: string;

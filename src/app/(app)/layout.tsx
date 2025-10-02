@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/auth/LoadingSpinner';
