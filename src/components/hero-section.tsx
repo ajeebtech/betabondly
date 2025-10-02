@@ -1,18 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import Link from "next/link"
 import { ArrowRight, Check, Sparkles, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { db } from "@/lib/firebase"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { collection, addDoc, serverTimestamp, getCountFromServer, query } from "firebase/firestore"
 import { toast } from "sonner"
+import { GoogleSignInButton } from "@/components/GoogleSignInButton"
 
 export function HeroSection() {
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [waitlistCount, setWaitlistCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const waitlistRef = collection(db, "waitlist")
+        const q = query(waitlistRef)
+        const snapshot = await getCountFromServer(q)
+        setWaitlistCount(snapshot.data().count)
+      } catch (err) {
+        console.error("Failed to fetch waitlist count", err)
+      }
+    }
+    fetchCount()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -120,8 +137,16 @@ export function HeroSection() {
             </form>
 
             <p className="text-sm text-muted-foreground">
-              Join <span className="font-semibold text-foreground">2,847</span> couples already on the waitlist
+              Join <span className="font-semibold text-foreground">{waitlistCount ?? 'many'}</span> to-be users already on the waitlist
             </p>
+
+            {/* Quick start actions */}
+            <div className="pt-2 max-w-md space-y-2">
+              <Button size="lg" className="w-full h-12" asChild>
+                <Link href="/sign-up">Get Started</Link>
+              </Button>
+              <GoogleSignInButton className="w-full h-11" />
+            </div>
           </div>
 
           {/* Right visual */}

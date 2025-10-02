@@ -30,23 +30,33 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Check if email already exists
-    const snapshot = await db.collection('waitlist')
+    // First, try to find and update existing email
+    const emailQuery = await db.collection('waitlist')
       .where('email', '==', email)
       .limit(1)
       .get();
 
-    if (!snapshot.empty) {
+    if (!emailQuery.empty) {
+      // Get the first matching document
+      const existingDoc = emailQuery.docs[0];
+      
+      // Update the existing document with current timestamp
+      await db.collection('waitlist').doc(existingDoc.id).update({
+        email: email,
+        updatedAt: new Date().toISOString()
+      });
+
       return NextResponse.json(
-        { message: 'You\'re already on the waitlist!' },
+        { message: 'Your waitlist entry has been updated!', updated: true },
         { status: 200 }
       );
     }
 
-    // Add to waitlist
+    // If no existing email found, add new entry
     const docRef = await db.collection('waitlist').add({
-      email,
-      createdAt: new Date().toISOString()
+      email: email,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     });
 
     return NextResponse.json(
