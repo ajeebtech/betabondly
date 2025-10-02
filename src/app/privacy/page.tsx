@@ -60,8 +60,12 @@ export default function PrivacyPage() {
   return (
     <Box minH="100vh" w="100vw" position="relative" overflow="hidden">
       <GrainGradient 
-        style={{ height: '100vh', width: '100%' }}
-        colorBack="hsl(120, 40%, 97%)"
+        style={{ 
+          height: '100vh', 
+          width: '100%',
+          backgroundColor: '#e076b2',
+        }}
+        colorBack="#e076b2"
         softness={0.7}
         intensity={0.6}
         noise={0.8}

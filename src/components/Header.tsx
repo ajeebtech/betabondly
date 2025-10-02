@@ -27,7 +27,7 @@ export function Header() {
                     href="#features"
                     className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                   >
-                    Features
+                    features
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
                 <NavigationMenu.Item>
@@ -35,15 +35,15 @@ export function Header() {
                     href="#how-it-works"
                     className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                   >
-                    How it Works
+                    how it works
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
                 <NavigationMenu.Item>
                   <NavigationMenu.Link
-                    href="#testimonials"
-                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                    href="/premium"
+                    className="text-sm font-medium bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-400 bg-clip-text text-transparent font-semibold hover:opacity-90 transition-all"
                   >
-                    Testimonials
+                    premium
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
               </NavigationMenu.List>

@@ -62,6 +62,7 @@ export default function RootLayout({
             style={{
               width: '100vw',
               height: '100vh',
+              backgroundColor: '#e076b2',
               position: 'fixed',
               top: 0,
               left: 0,

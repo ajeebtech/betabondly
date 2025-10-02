@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AITextLoading from '@/components/kokonutui/ai-text-loading';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 
 // Initialize the Gemini model
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
@@ -148,9 +150,16 @@ export default function TextGame() {
     if (lastGameMasterMessage) {
       console.log('Showing game master message:', lastGameMasterMessage.text);
       return (
-        <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master</div>
-          <div className="text-gray-800 dark:text-gray-200 text-base">
+        <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl shadow-lg p-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <div className="text-sm font-semibold text-purple-700">Game Master</div>
+          </div>
+          <div className="text-gray-800 text-base leading-relaxed">
             {lastGameMasterMessage.text}
           </div>
         </div>
@@ -161,11 +170,16 @@ export default function TextGame() {
     if (isAITyping) {
       console.log('AI is typing, showing loading state');
       return (
-        <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master is thinking...</div>
+        <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl shadow-lg p-6">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div className="text-sm font-semibold text-purple-700">Game Master is thinking...</div>
+          </div>
           <AITextLoading 
             texts={waitingMessages}
-            className="text-gray-800 dark:text-gray-200 text-base"
+            className="text-gray-800 text-base leading-relaxed"
           />
         </div>
       );
@@ -173,11 +187,16 @@ export default function TextGame() {
     
     // Otherwise, show loading animation with waiting messages
     return (
-      <div className="w-full mb-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Game Master is thinking...</div>
+      <div className="bg-gradient-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-2xl shadow-lg p-6">
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div className="text-sm font-semibold text-purple-700">Game Master is thinking...</div>
+        </div>
         <AITextLoading 
           texts={waitingMessages}
-          className="text-gray-800 dark:text-gray-200 text-base"
+          className="text-gray-800 text-base leading-relaxed"
         />
       </div>
     );
@@ -386,31 +405,73 @@ export default function TextGame() {
 
   if (!playerRole) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center p-6 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-4">Join as Player</h1>
-          <div className="space-y-3">
-            <button
-              onClick={() => {
-                const role = 'player1';
-                setPlayerRole(role);
-                localStorage.setItem('playerRole', role);
-              }}
-              className="w-full px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            >
-              Join as Player 1
-            </button>
-            <button
-              onClick={() => {
-                const role = 'player2';
-                setPlayerRole(role);
-                localStorage.setItem('playerRole', role);
-              }}
-              className="w-full px-6 py-3 bg-green-500 text-white rounded hover:bg-green-600 transition"
-            >
-              Join as Player 2
-            </button>
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <Image
+                src="/pinkbonddd.png"
+                alt="Bondly Logo"
+                width={100}
+                height={100}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                Text Adventure
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Choose your role to begin the story
+              </p>
+            </div>
           </div>
+
+          {/* Player Selection Card */}
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8 space-y-6">
+              <div className="space-y-4">
+                <button
+                  onClick={() => {
+                    const role = 'player1';
+                    setPlayerRole(role);
+                    localStorage.setItem('playerRole', role);
+                  }}
+                  className="w-full h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-3"
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-lg font-bold">1</span>
+                  </div>
+                  <span className="text-lg">Join as Player 1</span>
+                </button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">or</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    const role = 'player2';
+                    setPlayerRole(role);
+                    localStorage.setItem('playerRole', role);
+                  }}
+                  className="w-full h-16 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-3"
+                >
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-lg font-bold">2</span>
+                  </div>
+                  <span className="text-lg">Join as Player 2</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -418,18 +479,61 @@ export default function TextGame() {
 
   if (!gameStarted) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-3xl font-bold mb-8">Text Adventure Game</h1>
-        <p className="text-lg mb-8 text-center max-w-md">
-          Embark on a collaborative storytelling adventure with a friend. 
-          Take turns responding to the game master's prompts and see where your story takes you!
-        </p>
-        <button
-          onClick={startGame}
-          className="px-8 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-        >
-          Start Adventure
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <Image
+                src="/pinkbonddd.png"
+                alt="Bondly Logo"
+                width={80}
+                height={80}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                Text Adventure
+              </h1>
+              <p className="text-gray-600 text-lg">
+                Ready to begin your story?
+              </p>
+            </div>
+          </div>
+
+          {/* Game Info Card */}
+          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-8 space-y-6">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span>You are: <span className="font-semibold text-rose-600">{playerRole?.toUpperCase()}</span></span>
+                </div>
+                
+                <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-6 border border-rose-100">
+                  <p className="text-gray-700 leading-relaxed">
+                    Embark on a collaborative storytelling adventure with your partner. 
+                    Take turns responding to the game master's prompts and see where your story takes you!
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={startGame}
+                className="w-full h-14 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center space-x-3"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m2-10a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-lg">Start Adventure</span>
+              </button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -443,44 +547,71 @@ export default function TextGame() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h1 className="text-2xl font-bold">Text Adventure Game</h1>
-          <a 
-            href={getGameMasterUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors"
-          >
-            Open Game Master Console
-          </a>
-        </div>
-        <div className="text-center text-sm text-gray-500">
-          You are: <span className="font-medium">{playerRole?.toUpperCase() || 'Not Selected'}</span>
-          {currentTurn && (
-            <span> | Current Turn: <span className="font-medium">{currentTurn.toUpperCase()}</span></span>
-          )}
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex justify-center">
+                <Image
+                  src="/pinkbonddd.png"
+                  alt="Bondly Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                Text Adventure
+              </h1>
+            </div>
+            <a 
+              href={getGameMasterUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Game Master Console</span>
+            </a>
+          </div>
+          <div className="flex items-center justify-center space-x-6 text-sm">
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${playerRole === 'player1' ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+              <span className="text-gray-600">You are: <span className="font-semibold text-rose-600">{playerRole?.toUpperCase()}</span></span>
+            </div>
+            {currentTurn && (
+              <div className="flex items-center space-x-2">
+                <div className={`w-3 h-3 rounded-full ${currentTurn === 'player1' ? 'bg-blue-500' : currentTurn === 'player2' ? 'bg-green-500' : 'bg-purple-500'}`}></div>
+                <span className="text-gray-600">Current Turn: <span className="font-semibold">{currentTurn.toUpperCase()}</span></span>
+              </div>
+            )}
+          </div>
+        </header>
       
-      {/* Game Master AI Text */}
-      {renderGameMasterMessage()}
+        {/* Game Master AI Text */}
+        {renderGameMasterMessage()}
 
-      {/* Combined Chat Area */}
-      <div className="flex-1 flex flex-col bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="flex">
-          <div className="w-1/2 p-3 bg-blue-500 text-white text-center font-medium">
-            Player 1
+        {/* Combined Chat Area */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+          <div className="flex">
+            <div className="w-1/2 p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center font-medium flex items-center justify-center space-x-2">
+              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+              <span>Player 1</span>
+            </div>
+            <div className="w-1/2 p-4 bg-gradient-to-r from-green-500 to-green-600 text-white text-center font-medium flex items-center justify-center space-x-2">
+              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+              <span>Player 2</span>
+            </div>
           </div>
-          <div className="w-1/2 p-3 bg-green-500 text-white text-center font-medium">
-            Player 2
-          </div>
-        </div>
         
         <div className="flex-1 flex overflow-hidden">
           {/* Combined Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-96">
             {messages
               .filter(msg => msg.sender === 'player1' || msg.sender === 'player2')
               .sort((a, b) => a.timestamp - b.timestamp)
@@ -492,15 +623,17 @@ export default function TextGame() {
                   }`}
                 >
                   <div 
-                    className={`max-w-[80%] p-3 rounded-lg ${
+                    className={`max-w-[80%] p-4 rounded-2xl shadow-md ${
                       message.sender === 'player1'
-                        ? 'bg-blue-100 text-blue-900'
-                        : 'bg-green-100 text-green-900'
+                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-900 border border-blue-200'
+                        : 'bg-gradient-to-r from-green-50 to-green-100 text-green-900 border border-green-200'
                     }`}
                   >
-                    <div className="text-sm">{message.text}</div>
-                    <div className="text-xs opacity-50 mt-1">
-                      {new Date(message.timestamp).toLocaleTimeString()}
+                    <div className="text-sm leading-relaxed">{message.text}</div>
+                    <div className="text-xs opacity-60 mt-2 flex items-center space-x-1">
+                      <span>{message.sender.toUpperCase()}</span>
+                      <span>•</span>
+                      <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
                     </div>
                   </div>
                 </div>
@@ -510,34 +643,47 @@ export default function TextGame() {
         </div>
       </div>
 
-      {/* Input Area */}
-      <form onSubmit={sendMessage} className="mt-4">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder={
-              !playerRole 
-                ? 'Select your player role above' 
-                : playerRole === currentTurn
-                  ? 'Your turn! Type a message...'
-                  : `Waiting for ${currentTurn === 'player1' ? 'Player 1' : 'Player 2'}...`
-            }
-            disabled={!playerRole || playerRole !== currentTurn || isLoading}
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={!inputText.trim() || !playerRole || playerRole !== currentTurn || isLoading}
-            className={`px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${
-              isLoading ? 'opacity-70' : ''
-            }`}
-          >
-            {isLoading ? 'Sending...' : 'Send'}
-          </button>
-        </div>
-      </form>
+        {/* Input Area */}
+        <form onSubmit={sendMessage} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4">
+          <div className="flex space-x-3">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder={
+                !playerRole 
+                  ? 'Select your player role above' 
+                  : playerRole === currentTurn
+                    ? 'Your turn! Type a message...'
+                    : `Waiting for ${currentTurn === 'player1' ? 'Player 1' : 'Player 2'}...`
+              }
+              disabled={!playerRole || playerRole !== currentTurn || isLoading}
+              className="flex-1 p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-400 focus:border-rose-400 disabled:opacity-50 disabled:bg-gray-50 text-gray-700 placeholder-gray-400"
+            />
+            <button
+              type="submit"
+              disabled={!inputText.trim() || !playerRole || playerRole !== currentTurn || isLoading}
+              className={`px-6 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 ${
+                isLoading ? 'opacity-70' : ''
+              }`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Sending...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span>Send</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

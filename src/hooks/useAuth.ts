@@ -6,7 +6,7 @@ import {
   User as FirebaseUser,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase';
 
 declare global {
   interface Window {

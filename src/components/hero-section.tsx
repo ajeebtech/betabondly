@@ -3,14 +3,54 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight, Check, Sparkles, Loader2 } from "lucide-react"
 import Image from "next/image"
+import { db } from "@/lib/firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { toast } from "sonner"
 
 export function HeroSection() {
   const [email, setEmail] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      toast.error("Please enter a valid email address")
+      return
+    }
+
+    setIsSubmitting(true)
+    
+    try {
+      // Add email to Firestore
+      await addDoc(collection(db, "waitlist"), {
+        email: email.trim().toLowerCase(),
+        createdAt: serverTimestamp(),
+        status: "pending"
+      })
+      
+      setEmail("")
+      setIsSuccess(true)
+      toast.success("You've been added to the waitlist!")
+      
+      // Reset success state after 5 seconds
+      setTimeout(() => {
+        setIsSuccess(false)
+      }, 5000)
+      
+    } catch (error) {
+      console.error("Error adding to waitlist: ", error)
+      toast.error("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <section className="relative pt-24 pb-16 md:pt-28 md:pb-24 overflow-hidden" style={{ scrollMarginTop: '4rem' }}>
+    <section className="relative pt-8 pb-8 md:pt-12 md:pb-12 overflow-hidden" style={{ scrollMarginTop: '4rem' }}>
       {/* Subtle background decoration */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -20,7 +60,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left content */}
-          <div className="space-y-8">
+          <div className="space-y-4 md:space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/50 border border-primary/20">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Early Access • Be the First</span>
@@ -37,19 +77,47 @@ export function HeroSection() {
             </p>
 
             {/* Waitlist form */}
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 h-12 bg-card"
-              />
-              <Button size="lg" className="h-12 px-8 whitespace-nowrap">
-                Join Waitlist
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting || isSuccess}
+                  className="flex-1 h-12 bg-card"
+                  required
+                />
+                <Button 
+                  type="submit"
+                  size="lg" 
+                  className="h-12 px-8 whitespace-nowrap"
+                  disabled={isSubmitting || isSuccess}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : isSuccess ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Joined!
+                    </>
+                  ) : (
+                    <>
+                      Join Waitlist
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+              {isSuccess && (
+                <p className="text-sm text-green-500">
+                  Thank you! We'll be in touch soon.
+                </p>
+              )}
+            </form>
 
             <p className="text-sm text-muted-foreground">
               Join <span className="font-semibold text-foreground">2,847</span> couples already on the waitlist

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Heart } from "lucide-react"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -9,8 +9,14 @@ export function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2">
-              <Heart className="w-6 h-6 text-primary fill-primary" />
+            <Link href="/" className="flex items-center -space-x-1">
+              <Image
+                src="/images/pinkbonddd.png"
+                alt="Ondly Logo"
+                width={24}
+                height={24}
+                className="w-6 h-6"
+              />
               <span className="text-xl font-semibold">ondly</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -84,7 +90,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2025 Ondly. Made with love for couples everywhere.</p>
+          <p>© 2025 Bondly. Made with love for couples everywhere.</p>
         </div>
       </div>
     </footer>

@@ -30,6 +30,11 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
+// Validate Firebase configuration
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+  console.error('Missing required Firebase configuration. Please check your environment variables.');
+}
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
@@ -41,6 +46,12 @@ const googleProvider = new GoogleAuthProvider();
 const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVerifier => {
   if (typeof window === 'undefined') {
     throw new Error('Cannot initialize reCAPTCHA on server side');
+  }
+
+  // Check if reCAPTCHA site key is available
+  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  if (!recaptchaSiteKey) {
+    throw new Error('reCAPTCHA site key not configured. Please add NEXT_PUBLIC_RECAPTCHA_SITE_KEY to your environment variables.');
   }
 
   // Clear existing reCAPTCHA if any
@@ -55,24 +66,29 @@ const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVe
 
   try {
     console.log('Initializing reCAPTCHA with container:', containerId);
+    console.log('Using reCAPTCHA site key:', recaptchaSiteKey);
     
     // Create new reCAPTCHA verifier
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'invisible',
-      callback: () => {
-        console.log('reCAPTCHA verified successfully');
-      },
-      'expired-callback': () => {
-        console.log('reCAPTCHA expired');
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      containerId,
+      {
+        size: 'invisible',
+        callback: () => {
+          console.log('reCAPTCHA verified successfully');
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA expired');
+          if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = null;
+          }
+        },
+        'error-callback': (error: Error) => {
+          console.error('reCAPTCHA error:', error);
         }
-      },
-      'error-callback': (error: Error) => {
-        console.error('reCAPTCHA error:', error);
       }
-    });
+    );
 
     console.log('reCAPTCHA verifier created successfully');
     return window.recaptchaVerifier;
@@ -82,7 +98,8 @@ const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVe
     console.error('Failed to initialize reCAPTCHA:', {
       error: errorMessage,
       authDomain: firebaseConfig.authDomain,
-      projectId: firebaseConfig.projectId
+      projectId: firebaseConfig.projectId,
+      recaptchaSiteKey: recaptchaSiteKey
     });
     throw new Error(`Failed to initialize security check: ${errorMessage}`);
   }

@@ -6,7 +6,7 @@
         "node": "22.x"
     },
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 3000",
         "build": "next build",
         "start": "next start",
         "lint": "next lint"
@@ -53,7 +53,7 @@
         "date-fns": "^4.1.0",
         "firebase": "^12.2.1",
         "firebase-admin": "^13.5.0",
-        "framer-motion": "^12.23.12",
+        "framer-motion": "^12.23.22",
         "geist": "^1.5.1",
         "googleapis": "^160.0.0",
         "input-otp": "^1.4.2",

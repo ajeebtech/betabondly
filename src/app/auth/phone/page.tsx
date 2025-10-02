@@ -22,13 +22,36 @@ export default function PhoneStep() {
 
   useEffect(() => {
     // Initialize reCAPTCHA when component mounts
-    try {
-      initRecaptcha('recaptcha-container');
-      setRecaptchaReady(true);
-    } catch (error) {
-      console.error('Failed to initialize reCAPTCHA:', error);
-      setError('Failed to initialize security check. Please refresh the page and try again.');
-    }
+    const initializeRecaptcha = async () => {
+      try {
+        // Clear any existing reCAPTCHA
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        }
+
+        // Create the container if it doesn't exist
+        let container = document.getElementById('recaptcha-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'recaptcha-container';
+          container.style.display = 'none';
+          document.body.appendChild(container);
+        }
+
+        // Initialize reCAPTCHA using the centralized function
+        window.recaptchaVerifier = initRecaptcha('recaptcha-container');
+        
+        // Render the reCAPTCHA widget
+        await window.recaptchaVerifier.render();
+        setRecaptchaReady(true);
+      } catch (error) {
+        console.error('Failed to initialize reCAPTCHA:', error);
+        setError('Failed to initialize security check. Please refresh the page and try again.');
+      }
+    };
+
+    initializeRecaptcha();
   }, []);
 
   if (authLoading || !recaptchaReady) {
@@ -66,9 +89,6 @@ export default function PhoneStep() {
         throw new Error('Security check failed. Please refresh the page and try again.');
       }
 
-      // Make sure reCAPTCHA is ready
-      await window.recaptchaVerifier.verify();
-
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         formattedPhone,
@@ -80,13 +100,28 @@ export default function PhoneStep() {
         'confirmationResult',
         JSON.stringify({
           verificationId: confirmationResult.verificationId,
+          phoneNumber: formattedPhone,
         })
       );
 
       router.push('/auth/verify');
     } catch (error: any) {
       console.error('Error sending OTP:', error);
-      setError(error.message || 'Failed to send OTP. Please try again.');
+      
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/invalid-phone-number') {
+        setError('The provided phone number is not valid.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setError('Too many requests. Please try again later.');
+      } else if (error.code === 'auth/invalid-app-credential') {
+        setError('Authentication configuration error. Please check your Firebase setup.');
+      } else if (error.code === 'auth/missing-app-credential') {
+        setError('Authentication credentials missing. Please check your Firebase configuration.');
+      } else if (error.code === 'auth/app-not-authorized') {
+        setError('This app is not authorized for phone authentication. Please contact support.');
+      } else {
+        setError(error.message || 'Failed to send OTP. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -10,11 +10,13 @@ import { db } from '@/lib/firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase/config';
 
-interface UserData {
+export interface UserData {
   uid: string;
   name: string;
   preferredName: string;
+  email: string;
   phone: string;
+  bio?: string;
   photoURL?: string;
   coupleId?: string | null;
   createdAt: any;
