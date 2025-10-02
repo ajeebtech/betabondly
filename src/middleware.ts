@@ -4,13 +4,13 @@ import { auth } from './lib/firebase';
 import { getIdToken } from 'firebase/auth';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/auth', '/api/auth', '/_next', '/favicon.ico'];
+const publicRoutes = ['/auth', '/api/auth', '/_next', '/favicon.ico', '/download'];
 
 // Define authentication routes
 const authRoutes = ['/auth/name', '/auth/phone', '/auth/verify'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/app'];
+const protectedRoutes = ['/dashboard'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

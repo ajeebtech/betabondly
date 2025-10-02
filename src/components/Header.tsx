@@ -39,6 +39,16 @@ export function Header() {
                   </NavigationMenu.Link>
                 </NavigationMenu.Item>
                 <NavigationMenu.Item>
+                  <NavigationMenu.Link asChild>
+                    <Link
+                      href="/download"
+                      className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      download the app
+                    </Link>
+                  </NavigationMenu.Link>
+                </NavigationMenu.Item>
+                <NavigationMenu.Item>
                   <NavigationMenu.Link
                     href="/premium"
                     className="text-sm font-medium bg-gradient-to-r from-yellow-500 via-amber-500 to-yellow-400 bg-clip-text text-transparent font-semibold hover:opacity-90 transition-all"
