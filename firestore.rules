@@ -1,13 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own user document
-    match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if user is authenticated and verified
+    function isUserAuthenticated() {
+      return request.auth != null;
     }
-
-    // Couples collection
+    
+    function isEmailVerified() {
+      return isUserAuthenticated() && request.auth.token.email_verified == true;
+    }
+    
+    // Only allow reads if authenticated
+    match /{document=**} {
+      allow read: if isUserAuthenticated();
+      allow write: if isEmailVerified();
+    }
+    
+    // More specific rules for users collection
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Users can only create/update their own document after email verification
+      allow create: if request.auth != null && 
+                    request.auth.uid == userId && 
+                    request.auth.token.email_verified == true;
+      allow update: if request.auth != null && 
+                    request.auth.uid == userId && 
+                    request.auth.token.email_verified == true;
+    }
+    
+    // Couples collection rules
     match /couples/{coupleId} {
       // Users can read their own couple document
       allow read: if request.auth != null && 

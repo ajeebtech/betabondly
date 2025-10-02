@@ -4,25 +4,65 @@ import { auth } from './lib/firebase';
 import { getIdToken } from 'firebase/auth';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/auth', '/api/auth', '/_next', '/favicon.ico', '/download'];
+const publicRoutes = [
+  '/auth', 
+  '/api/auth', 
+  '/_next', 
+  '/favicon.ico', 
+  '/download',
+  '/invite',
+  '/sign-in',
+  '/sign-up',
+  '/verify-email'
+];
 
 // Define authentication routes
 const authRoutes = ['/auth/name', '/auth/phone', '/auth/verify'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard'];
+const protectedRoutes = ['/dashboard', '/couple'];
+
+// Couple routes that should be handled by the app router
+const coupleRoutes = ['/photobooth', '/games', '/memories', '/calendar'];
+
+// Check if a path is a couple route
+function isCoupleRoute(pathname: string): boolean {
+  return coupleRoutes.some(route => pathname.startsWith(`/default-couple${route}`));
+}
+
+// Extract couple ID from the path
+function getCoupleIdFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/couple\/([^/]+)/);
+  return match ? match[1] : null;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip middleware for static files and API routes
+  // Skip middleware for static files, API routes, and known public paths
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.includes('.') ||
-    pathname.startsWith('/favicon.ico')
+    pathname.startsWith('/favicon.ico') ||
+    pathname === '/'
   ) {
     return NextResponse.next();
+  }
+
+  // Handle redirection from /default-couple/* to /couple/[coupleId]/*
+  if (pathname.startsWith('/default-couple')) {
+    // For the root /default-couple, redirect to the user's couple page
+    if (pathname === '/default-couple') {
+      // In a real app, you'd fetch the user's couple ID from the database
+      // For now, we'll use a default ID or redirect to the app root
+      const url = new URL('/app', request.url);
+      return NextResponse.redirect(url);
+    }
+    
+    // For other /default-couple routes, redirect to the dynamic route
+    const newPath = pathname.replace('/default-couple', '/couple/default-couple');
+    return NextResponse.redirect(new URL(newPath, request.url));
   }
 
   // Check if the current path is a public route
@@ -107,7 +147,12 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      * - auth routes (handled by client-side auth)
+     * - default-couple routes (handled by redirection)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+    // Match all default-couple routes
+    '/default-couple/:path*',
+    // Match all dynamic couple routes
+    '/couple/:path*',
   ],
 };

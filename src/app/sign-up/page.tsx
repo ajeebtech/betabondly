@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,12 +9,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { simpleEmailAuth } from '@/lib/simpleEmailAuth'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 import { auth } from '@/lib/firebase'
-import { sendEmailVerification } from 'firebase/auth'
-import { toast } from 'sonner'
+import { 
+  sendEmailVerification, 
+  createUserWithEmailAndPassword, 
+  updateProfile 
+} from 'firebase/auth'
+import { toast } from 'sonner';
+import { CheckCircle } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { InviteSection } from '@/components/invite-section';
 
 function getPasswordScore(pw: string) {
   let score = 0
-  if (pw.length >= 8) score++
   if (/[A-Z]/.test(pw)) score++
   if (/[a-z]/.test(pw)) score++
   if (/\d/.test(pw)) score++
@@ -24,7 +31,10 @@ function getPasswordScore(pw: string) {
 
 export default function SignUpPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
+  const [isVerified, setIsVerified] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,37 +44,141 @@ export default function SignUpPage() {
     if (!password) return ''
     if (score <= 2) return 'Weak'
     if (score === 3) return 'Medium'
-    return 'Strong'
   }, [score, password])
 
   const canSubmit = name.trim() && email.trim() && password.length >= 8
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!canSubmit || loading) return
-    setLoading(true)
-    try {
-      const user = await simpleEmailAuth.signUp(email, password, name)
+  // Check if user is verified after email verification
+  useEffect(() => {
+    const checkAuthState = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        await sendEmailVerification(user)
-        toast.success('Verification email sent. Please check your inbox and spam folder.')
-        // Require verification before using the app: sign out and redirect
-        await simpleEmailAuth.signOut()
-        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+        // Force refresh the user to get the latest email verification status
+        await user.reload();
+        const updatedUser = auth.currentUser;
+        
+        if (updatedUser?.emailVerified) {
+          setCurrentUser(updatedUser);
+          setIsVerified(true);
+          
+          // Create or update user document in Firestore
+          await setDoc(doc(db, 'users', updatedUser.uid), {
+            uid: updatedUser.uid,
+            displayName: updatedUser.displayName || name || '',
+            email: updatedUser.email,
+            emailVerified: updatedUser.emailVerified,
+            photoURL: updatedUser.photoURL || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        }
+      }
+    });
+
+    // Check URL for verification redirect
+    const handleVerification = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        await user.reload();
+        if (user.emailVerified) {
+          setCurrentUser(user);
+          setIsVerified(true);
+          
+          // Create or update user document in Firestore
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            displayName: user.displayName || name || '',
+            email: user.email,
+            emailVerified: user.emailVerified,
+            photoURL: user.photoURL || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        }
+      }
+    };
+
+    handleVerification();
+    return () => checkAuthState();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || loading) return;
+    setLoading(true);
+    
+    try {
+      // Create the user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      if (user) {
+        // Update the user's display name
+        await updateProfile(user, {
+          displayName: name,
+        });
+        
+        // Send verification email with a redirect URL
+        await sendEmailVerification(user, {
+          url: `${window.location.origin}/verify-email?email=${encodeURIComponent(email)}`
+        });
+        
+        // Create user document in Firestore (but mark as unverified)
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          displayName: name,
+          email: email,
+          emailVerified: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        
+        // Sign out the user to prevent access before verification
+        await auth.signOut();
+        
+        // Redirect to verification page
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        
+        toast.success('Verification email sent! Please check your inbox to verify your email.');
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Sign up failed')
+      console.error('Sign up error:', err);
+      toast.error(err?.message || 'Sign up failed. Please try again.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  };
+
+  const handleSignIn = () => {
+    router.push('/sign-in');
+  };
+  if (isVerified && currentUser) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-8">
+        <Card className="w-full max-w-md mb-6">
+          <CardHeader className="space-y-2 text-center">
+            <CheckCircle className="h-12 w-12 mx-auto text-green-500" />
+            <CardTitle className="text-2xl font-bold">Email Verified!</CardTitle>
+            <CardDescription>Your account has been successfully verified.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={handleSignIn}
+              className="w-full h-11"
+            >
+              Continue to Sign In
+            </Button>
+          </CardContent>
+        </Card>
+        <InviteSection userId={currentUser.uid} />
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-8">
       <Card className="w-full max-w-md border border-muted/40 bg-background/80 backdrop-blur">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-semibold tracking-tight">Create your account</CardTitle>
-          <CardDescription>We&apos;ll send a verification email</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,12 +217,20 @@ export default function SignUpPage() {
               <span className="bg-background px-2 text-muted-foreground">or</span>
             </div>
           </div>
-
           <GoogleSignInButton className="w-full h-11" />
+          
+          <div className="text-center text-sm mt-4">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <button 
+              type="button" 
+              onClick={handleSignIn}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign In
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-
-

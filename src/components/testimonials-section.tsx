@@ -12,13 +12,13 @@ const testimonials = [
   },
   {
     quote:
-      "The privacy and intimacy of Ondly has brought us closer together. We love having our own space away from social media.",
+      "The privacy and intimacy of bondly has brought us closer together. We love having our own space away from social media.",
     author: "Emma & James",
     location: "London, UK",
   },
   {
     quote:
-      "It's become our daily ritual to check in and share moments. Ondly feels like a digital love letter we write together.",
+      "It's become our daily ritual to check in and share moments. bondly feels like a digital love letter we write together.",
     author: "Alex & Jordan",
     location: "Toronto, CA",
   },
@@ -31,7 +31,7 @@ export function TestimonialsSection() {
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-4xl md:text-5xl font-playfair font-bold text-balance">Loved by couples everywhere</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            See what couples are saying about their private space on Ondly.
+            See what couples are saying about their private space on bondly.
           </p>
         </div>
 

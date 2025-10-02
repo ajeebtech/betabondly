@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, Lock, Calendar, MessageCircle, ImageIcon, Sparkles } from "lucide-react"
+import { Heart, Lock, Calendar, Camera, ImageIcon, Sparkles, CalendarCheck } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 const features = [
@@ -10,9 +10,9 @@ const features = [
     description: "End-to-end encrypted. No ads, no algorithms, no third parties. Just you two.",
   },
   {
-    icon: MessageCircle,
-    title: "Intimate Messaging",
-    description: "Share thoughts, feelings, and daily moments in a space designed for meaningful connection.",
+    icon: Camera,
+    title: "AI Photo Booth",
+    description: "Create magical couple moments with our AI-powered photo booth that suggests fun poses and filters.",
   },
   {
     icon: ImageIcon,
@@ -20,9 +20,9 @@ const features = [
     description: "Create beautiful photo albums and collections that tell your unique story together.",
   },
   {
-    icon: Calendar,
-    title: "Special Moments",
-    description: "Never forget anniversaries, date nights, or important milestones with gentle reminders.",
+    icon: CalendarCheck,
+    title: "AI Date Planner",
+    description: "Let AI create perfect date itineraries based on your preferences and schedule.",
   },
   {
     icon: Heart,
@@ -30,9 +30,9 @@ const features = [
     description: "Leave surprise messages and notes for your partner to discover throughout their day.",
   },
   {
-    icon: Sparkles,
-    title: "Mood Tracking",
-    description: "Check in with each other emotionally and stay connected even when apart.",
+    icon: Calendar,
+    title: "Special Moments",
+    description: "Never forget anniversaries, date nights, or important milestones with gentle reminders.",
   },
 ]
 
@@ -42,10 +42,10 @@ export function FeaturesSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-4xl md:text-5xl font-playfair font-bold text-balance">
-            Everything you need to stay close
+            Smart Features for Modern Couples
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Thoughtfully designed features that help couples nurture their relationship in the digital age.
+            AI-powered tools that make your relationship more fun, organized, and memorable.
           </p>
         </div>
 
