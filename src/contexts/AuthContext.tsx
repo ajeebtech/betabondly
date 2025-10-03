@@ -8,6 +8,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 type OnboardingData = {
   name: string;
   phone: string;
+  datingStartDate: string;
 };
 
 type AuthContextType = {
@@ -18,10 +19,12 @@ type AuthContextType = {
   // Onboarding state
   name: string;
   phone: string;
+  datingStartDate: string;
   
   // Methods
   setName: (name: string) => void;
   setPhone: (phone: string) => void;
+  setDatingStartDate: (date: string) => void;
   setUser: (user: FirebaseUser | null) => void;
   clearOnboarding: () => void;
 };
@@ -34,10 +37,12 @@ const AuthContext = createContext<AuthContextType>({
   // Onboarding state
   name: '',
   phone: '',
+  datingStartDate: '',
   
   // Methods
   setName: () => {},
   setPhone: () => {},
+  setDatingStartDate: () => {},
   setUser: () => {},
   clearOnboarding: () => {},
 });
@@ -50,6 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     name: '',
     phone: '',
+    datingStartDate: '',
   });
 
   // Handle auth state changes
@@ -72,6 +78,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setOnboardingData(prev => ({ ...prev, phone }));
   };
 
+  // Set dating start date
+  const setDatingStartDate = (datingStartDate: string) => {
+    setOnboardingData(prev => ({ ...prev, datingStartDate }));
+  };
+
   // Update user in context
   const updateUser = (user: FirebaseUser | null) => {
     setUser(user);
@@ -79,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Clear onboarding data
   const clearOnboarding = () => {
-    setOnboardingData({ name: '', phone: '' });
+    setOnboardingData({ name: '', phone: '', datingStartDate: '' });
   };
 
   return (
@@ -89,8 +100,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         name: onboardingData.name,
         phone: onboardingData.phone,
+        datingStartDate: onboardingData.datingStartDate,
         setName,
         setPhone,
+        setDatingStartDate,
         setUser: updateUser,
         clearOnboarding,
       }}

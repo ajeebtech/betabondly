@@ -170,7 +170,7 @@ export function HeroSection() {
                         height={16}
                         className="w-4 h-4"
                       />
-                      ondly.app
+                      bondly.fun
                     </div>
                   </div>
                 </div>

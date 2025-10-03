@@ -17,7 +17,7 @@ import {
 import { toast } from 'sonner';
 import { CheckCircle } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { InviteSection } from '@/components/invite-section';
 
 function getPasswordScore(pw: string) {
@@ -151,6 +151,34 @@ export default function SignUpPage() {
   const handleSignIn = () => {
     router.push('/sign-in');
   };
+
+  const handleGoogleOnboarding = async (userInfo: any) => {
+    // Ensure user doc exists
+    const userDocRef = doc(db, 'users', userInfo.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) {
+      await setDoc(userDocRef, {
+        uid: userInfo.uid,
+        displayName: userInfo.name || '',
+        email: userInfo.email,
+        emailVerified: true,
+        photoURL: userInfo.photoURL || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    const data = (await getDoc(userDocRef)).data();
+    if (!data?.datingStartDate) {
+      router.push('/auth/date');
+    } else if (!data?.photoURL) {
+      router.push('/auth/photo');
+    } else if (data?.coupleId) {
+      router.push(`/${data.coupleId}`);
+    } else {
+      router.push('/');
+    }
+  };
+
   if (isVerified && currentUser) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-8">
@@ -217,7 +245,10 @@ export default function SignUpPage() {
               <span className="bg-background px-2 text-muted-foreground">or</span>
             </div>
           </div>
-          <GoogleSignInButton className="w-full h-11" />
+          <GoogleSignInButton
+            className="w-full h-11"
+            onSuccess={handleGoogleOnboarding}
+          />
           
           <div className="text-center text-sm mt-4">
             <span className="text-muted-foreground">Already have an account? </span>

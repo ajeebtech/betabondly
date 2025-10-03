@@ -25,27 +25,11 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Product</h3>
+            <h3 className="font-semibold mb-4">Downloads</h3>
             <ul className="space-y-2">
               <li>
-                <Link
-                  href="#features"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#how-it-works"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  How it Works
-                </Link>
-              </li>
-              <li>
-                <Link href="#premium" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Premium
+                <Link href="/download" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Download App
                 </Link>
               </li>
             </ul>
@@ -67,22 +51,6 @@ export function Footer() {
               <li>
                 <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="#privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Terms of Service
                 </Link>
               </li>
             </ul>

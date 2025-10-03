@@ -15,6 +15,8 @@ import {
   sendEmailVerification
 } from 'firebase/auth'
 import { toast } from 'sonner'
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 export default function SignInPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -51,8 +53,18 @@ export default function SignInPage() {
         return
       }
       
-      // If we get here, the user is verified and signed in
-      router.push('/dashboard')
+      // Onboarding redirect logic
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const data = userDoc.data();
+      if (!data?.datingStartDate) {
+        router.push('/auth/date');
+      } else if (!data?.photoURL) {
+        router.push('/auth/photo');
+      } else if (data?.coupleId) {
+        router.push(`/${data.coupleId}`);
+      } else {
+        router.push('/'); // fallback
+      }
       
     } catch (err: any) {
       console.error('Sign in error:', err)
@@ -61,6 +73,33 @@ export default function SignInPage() {
       setLoading(false)
     }
   }
+
+  const handleGoogleOnboarding = async (userInfo: any) => {
+    // Ensure user doc exists
+    const userDocRef = doc(db, 'users', userInfo.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) {
+      await setDoc(userDocRef, {
+        uid: userInfo.uid,
+        displayName: userInfo.name || '',
+        email: userInfo.email,
+        emailVerified: true,
+        photoURL: userInfo.photoURL || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    const data = (await getDoc(userDocRef)).data();
+    if (!data?.datingStartDate) {
+      router.push('/auth/date');
+    } else if (!data?.photoURL) {
+      router.push('/auth/photo');
+    } else if (data?.coupleId) {
+      router.push(`/${data.coupleId}`);
+    } else {
+      router.push('/');
+    }
+  };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -133,7 +172,10 @@ export default function SignInPage() {
             </div>
           </div>
 
-          <GoogleSignInButton className="w-full h-11" />
+          <GoogleSignInButton
+            className="w-full h-11"
+            onSuccess={handleGoogleOnboarding}
+          />
 
           <p className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{' '}
