@@ -90,7 +90,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2025 Bondly. Made with love for couples everywhere.</p>
+          <p>© 2025 bondly. Made with love for couples everywhere.</p>
         </div>
       </div>
     </footer>

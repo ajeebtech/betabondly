@@ -1,29 +1,44 @@
+import type { Metadata } from 'next';
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { getInviteByCode, useInviteCode } from '@/lib/inviteUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function InvitePage({ params }: { params: { code: string } }) {
+type Invite = {
+  id?: string;
+  code?: string;
+  createdBy?: string;
+  createdAt?: string;
+  used?: boolean;
+  usedBy?: string | null;
+  usedAt?: string | null;
+  [key: string]: any;
+};
+
+export default function InvitePage() {
+  const params = useParams();
+  const code = params.code as string;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [inviteData, setInviteData] = useState<any>(null);
+  const [inviteData, setInviteData] = useState<Invite | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const checkInvite = async () => {
       try {
-        const invite = await getInviteByCode(params.code);
+        const invite = await getInviteByCode(code) as Invite;
+        console.log('Invite object:', invite);
         
         if (!invite) {
           setError('Invalid or expired invite code');
           return;
         }
         
-        if (invite.used) {
+        if ((invite.used ?? false) === true) {
           setError('This invite has already been used');
           return;
         }
@@ -38,7 +53,7 @@ export default function InvitePage({ params }: { params: { code: string } }) {
     };
     
     checkInvite();
-  }, [params.code]);
+  }, [code]);
 
   const handleAcceptInvite = async () => {
     try {
@@ -46,15 +61,15 @@ export default function InvitePage({ params }: { params: { code: string } }) {
       
       if (!user) {
         // Redirect to sign up with the invite code
-        router.push(`/sign-up?invite=${params.code}`);
+        router.push(`/sign-up?invite=${code}`);
         return;
       }
       
       // Use the invite code
-      await useInviteCode(params.code, user.uid);
+      await useInviteCode(code, user.uid);
       
       // Redirect to the couple's page
-      router.push(`/couple/${params.code}`);
+      router.push(`/couple/${code}`);
     } catch (err) {
       console.error('Error accepting invite:', err);
       setError('Failed to accept invite');

@@ -33,7 +33,7 @@ export function CTASection() {
             </Button>
           </div>
 
-          <p className="text-sm text-muted-foreground">No credit card required • Launch in early 2025</p>
+          <p className="text-sm text-muted-foreground">No credit card required • Launch in late 2025</p>
         </div>
       </div>
     </section>

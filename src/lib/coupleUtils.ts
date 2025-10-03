@@ -61,8 +61,8 @@ export async function joinCouple(userId: string, inviteCode: string): Promise<Co
   });
 
   return {
-    id: coupleSnap.id,
     ...coupleData,
+    id: coupleSnap.id,
     members: [...coupleData.members, userId],
   };
 }
