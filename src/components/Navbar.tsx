@@ -4,9 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Users } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -54,14 +59,35 @@ const Navbar = () => {
 
         {/* Button Group */}
         <div className="flex items-center gap-x-3 lg:gap-x-4 ms-auto py-1 lg:ps-6 lg:order-3 lg:col-span-3">
-          <Link 
-            href="/signin" 
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-black/90 transition-colors duration-200 border border-transparent hover:bg-white hover:border-black/10"
-            aria-label="Sign in"
-          >
-            <Users className="h-5 w-5" />
-            <span className="text-base font-semibold">sign in</span>
-          </Link>
+          {!loading && user ? (
+            <Button
+              onClick={async () => {
+                await signOut(auth);
+                window.location.reload();
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black/90 transition-colors duration-200 border border-transparent hover:bg-white hover:border-black/10"
+            >
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black/90 transition-colors duration-200 border border-transparent hover:bg-white hover:border-black/10"
+                aria-label="Sign in"
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-base font-semibold">sign in</span>
+              </Link>
+              <Link
+                href="/sign-up"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 transition-colors duration-200"
+                aria-label="Get Started"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
 
           <div className="lg:hidden">
             <button 

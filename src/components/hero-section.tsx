@@ -85,7 +85,7 @@ export function HeroSection() {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-playfair font-bold leading-tight text-balance">
-              Your little corner of the internet, <span className="text-pink-500">only for two.</span>
+              Your little corner of the internet, <span className="text-pink-600 font-extrabold drop-shadow-lg" style={{textShadow: '0 2px 8px #fff0f6, 0 1px 0 #ff69b4'}}>only for two.</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
@@ -102,7 +102,7 @@ export function HeroSection() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting || isSuccess}
-                  className="flex-1 h-12 bg-card"
+                  className="flex-1 h-12 bg-white/90 border-2 border-pink-300 text-pink-900 placeholder-pink-400 shadow-md focus:border-pink-500 focus:ring-pink-200"
                   required
                 />
                 <Button 

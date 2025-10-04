@@ -7,10 +7,11 @@ import { signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import { GrainGradient } from '@paper-design/shaders-react';
 
 function DashboardContent() {
-  const { user } = useAuth()
-  const router = useRouter()
+  const { user, loading } = useAuth();
+  const router = useRouter();
   
   const handleLogout = async () => {
     try {
@@ -50,22 +51,41 @@ function DashboardContent() {
     },
   ]
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-900">Our Moments</h1>
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-600">Welcome, {user?.displayName || 'User'}</span>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleLogout}
-          >
-            Sign Out
-          </Button>
-        </div>
-      </header>
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+  // If not authenticated, show sign-in prompt
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Sign in to compose posts and add pictures</h2>
+        <Button onClick={() => router.push('/sign-in')}>Sign In</Button>
+      </div>
+    );
+  }
 
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Pink Grain Gradient Background */}
+      <div className="fixed inset-0 -z-10">
+        <GrainGradient
+          width={1920}
+          height={1080}
+          colors={[
+            "#ffb6e6", // light pink
+            "#ff69b4", // hot pink
+            "#ff4fa3", // deep pink
+            "#fff0f6"  // almost white pink
+          ]}
+          colorBack="#fff0f6"
+          softness={0.7}
+          intensity={0.6}
+          noise={0.18}
+          shape="corners"
+          speed={0.7}
+        />
+      </div>
+      {/* Main Dashboard Content */}
       <div className="max-w-2xl mx-auto px-6 py-8 w-full">
         <div className="flex justify-center mb-8">
           <form onSubmit={handleSubmit} className="w-full max-w-[600px] px-4">
@@ -103,9 +123,9 @@ function DashboardContent() {
           </form>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col items-center">
           {posts.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm w-full max-w-[600px]">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { useParams } from "next/navigation"
 import { CalendarIcon, Plus, MoreVertical, Heart, MessageCircle, Share2, Bookmark, Flag } from "lucide-react"
 import { CameraIcon } from '@/components/icons/CameraIcon';
@@ -20,6 +19,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ComposeMessageDialog } from "@/components/ComposeMessageDialog"
 import { AddToCalendarDialog } from "@/components/AddToCalendarDialog"
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 type DatePlan = {
   date: Date
@@ -96,10 +99,58 @@ const CARDS = [
 export default function CoupleDashboard() {
   const params = useParams()
   const coupleId = (params.coupleId as string) || "default-couple"
+  const { user, loading } = useAuth();
+  const [checking, setChecking] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [isDateDetailsOpen, setIsDateDetailsOpen] = useState(false)
   const [budget, setBudget] = useState("")
   const [distance, setDistance] = useState("5")
   const [date, setDate] = useState<Date | null>(null)
+
+  useEffect(() => {
+    async function checkMembership() {
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+      const coupleRef = doc(db, 'couples', coupleId);
+      const coupleSnap = await getDoc(coupleRef);
+      if (!coupleSnap.exists()) {
+        setAccessDenied(true);
+        setChecking(false);
+        return;
+      }
+      const coupleData = coupleSnap.data();
+      if (!coupleData.users || !coupleData.users.includes(user.uid)) {
+        setAccessDenied(true);
+      }
+      setChecking(false);
+    }
+    if (!loading) {
+      checkMembership();
+    }
+  }, [user, loading, coupleId]);
+
+  if (loading || checking) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Sign in to access this couple's dashboard</h2>
+        <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
+      </div>
+    );
+  }
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
+        <p className="mb-4">You do not have permission to view this couple's dashboard.</p>
+        <Button onClick={() => window.location.href = '/'}>Return Home</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">

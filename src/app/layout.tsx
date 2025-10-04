@@ -62,18 +62,23 @@ export default function RootLayout({
             style={{
               width: '100vw',
               height: '100vh',
-              backgroundColor: '#e076b2',
+              backgroundColor: '#fff0f6', // very light pink
               position: 'fixed',
               top: 0,
               left: 0,
             }}
-            colors={["#ffffff", "#fef6ff", "#ffe6ff", "#ffffff"]}
-            colorBack="#ffffff"
-            softness={0.5}
-            intensity={0.5}
-            noise={0.15}
+            colors={[
+              "#ffb6e6", // light pink
+              "#ff69b4", // hot pink
+              "#ff4fa3", // deep pink
+              "#fff0f6"  // almost white pink
+            ]}
+            colorBack="#fff0f6"
+            softness={0.7}
+            intensity={0.6}
+            noise={0.18}
             shape="corners"
-            speed={0.8}
+            speed={2.5}
           />
         </div>
         <Providers>

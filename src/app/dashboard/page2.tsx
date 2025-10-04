@@ -2,8 +2,22 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Sign in to compose posts and add pictures</h2>
+        <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
+      </div>
+    );
+  }
+
   const [postContent, setPostContent] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
