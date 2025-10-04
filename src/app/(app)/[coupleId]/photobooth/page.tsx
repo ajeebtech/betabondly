@@ -268,62 +268,67 @@ export default function PhotoboothPage() {
   }, [photos]);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 relative">
+    <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
       {/* Enhanced Sidebar */}
-      <EnhancedSidebar />
+      <aside className="shrink-0 relative z-40">
+        <EnhancedSidebar />
+      </aside>
 
-      <div className="flex-1 flex flex-col ml-[64px] transition-all duration-300 relative z-10 overflow-x-hidden">
+      <div className="flex-1 flex flex-col relative ml-[64px]">
+        {/* Top Navigation Bar */}
+        <header className="w-full bg-white/80 backdrop-blur-sm border-b border-rose-100 px-6 py-4 flex justify-center sticky top-0 z-50 shadow-sm">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-pink-600">Photobooth</h1>
+            <p className="text-gray-600 mt-1">Capture your special moments together, powered by AI</p>
+          </div>
+        </header>
+
         {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center p-4 lg:p-8 w-full">
-          <div className="w-full max-w-[1600px] px-2 mx-auto">
-            <div className="text-center mb-6 md:mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">photobooth</h1>
-              <p className="text-gray-600 mt-1">capture your special moments together, powered by Nano Banana</p>
-            </div>
-            <div className="flex flex-col lg:flex-row w-full gap-6">
-              {/* Upload Section - Fixed Left Side */}
-              <div className="w-full lg:w-[300px] shrink-0">
-                <div className="sticky top-6">
-                  <div className="p-6 bg-white rounded-lg shadow-lg">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                      <div className="flex flex-col items-center justify-center space-y-4">
-                        <Upload className="w-12 h-12 text-gray-400" />
-                        <p className="text-lg font-medium text-gray-700">
-                          Upload your photos
-                        </p>
-                        <p className="text-sm text-gray-500 text-center">
-                          Drag and drop your images here, or click to browse
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Supports: .jpeg, .jpg, .png (max 5MB each)
-                        </p>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="file-upload"
-                        />
-                        <Button
-                          onClick={() => document.getElementById('file-upload')?.click()}
-                          variant="outline"
-                          className="mt-2 px-6 py-2 text-sm border-black"
-                        >
-                          Select Files
-                        </Button>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[calc(100vh-80px)]">
+          <div className="w-full px-4">
+            <div className="flex flex-col lg:flex-row w-full gap-8 items-start justify-between">
+              {/* Upload Section - Left Side */}
+              <div className="w-full lg:w-[350px] shrink-0">
+                <div className="bg-white rounded-2xl shadow-lg p-8">
+                  <div className="border-2 border-dashed border-pink-300 rounded-xl p-8 hover:border-pink-400 transition-colors">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center">
+                        <Upload className="w-8 h-8 text-pink-500" />
                       </div>
+                      <h3 className="text-xl font-semibold text-gray-800">
+                        Upload Photos
+                      </h3>
+                      <p className="text-sm text-gray-600 text-center">
+                        Drag and drop your images here, or click to browse
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Supports: .jpeg, .jpg, .png (max 5MB each)
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <Button
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                        className="mt-4 px-8 py-3 bg-pink-500 hover:bg-pink-600 text-white rounded-lg"
+                      >
+                        Choose Files
+                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
               {/* Camera Previews - Right Side */}
-              <div className="flex-1 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex-1 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {[0, 1].map((cameraIndex) => (
                     <div key={cameraIndex} className="flex flex-col items-center">
                       <div className="flex flex-col items-center w-full">
-                        <div className="relative bg-black rounded-lg overflow-hidden aspect-[4/5] w-full max-w-[400px] mx-auto">
+                        <div className="relative bg-black rounded-2xl overflow-hidden aspect-[4/5] w-full max-w-[400px] mx-auto shadow-xl">
                           {!isCameraActive && !useFileUpload ? (
                             <div className="w-full h-full flex items-center justify-center">
                             </div>
@@ -373,7 +378,7 @@ export default function PhotoboothPage() {
                         </div>
                         <canvas ref={canvasRef} className="hidden" />
                       </div>
-                      <div className="mt-2 w-full max-w-[400px] mx-auto">
+                        <div className="mt-4 w-full max-w-[400px] mx-auto">
                         <Button
                           onClick={() => {
                             setUseFileUpload(false);
@@ -396,28 +401,32 @@ setPhotoStatus(prev => {
                               capturePhoto(cameraIndex);
                             }
                           }}
-                          className={`w-full py-2 flex items-center justify-center gap-2 ${isCameraActive && activeCameraIndex === cameraIndex ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          className={`w-full py-3 flex items-center justify-center gap-2 rounded-xl font-medium ${
+                            isCameraActive && activeCameraIndex === cameraIndex 
+                              ? 'bg-green-500 hover:bg-green-600 text-white' 
+                              : 'bg-pink-500 hover:bg-pink-600 text-white'
+                          }`}
                         >
                           {photos[cameraIndex] ? (
                             <>
-                              <RotateCw className="w-4 h-4" />
+                              <RotateCw className="w-5 h-5" />
                               Retake Photo {cameraIndex + 1}
                             </>
                           ) : isCameraActive && activeCameraIndex === cameraIndex ? (
                             <>
-                              <Camera className="w-4 h-4" />
+                              <Camera className="w-5 h-5" />
                               Capture Photo {cameraIndex + 1}
                             </>
                           ) : (
                             <>
-                              <Camera className="w-4 h-4" />
+                              <Camera className="w-5 h-5" />
                               Open Camera {cameraIndex + 1}
                             </>
                           )}
                         </Button>
                       </div>
                       <div className={cn(
-                        "mt-2 px-4 py-2 rounded-full text-sm font-medium transition-colors w-full text-center",
+                        "mt-3 px-4 py-2 rounded-full text-sm font-medium transition-colors w-full text-center",
                         photoStatus[cameraIndex] 
                           ? "bg-green-100 text-green-800" 
                           : "bg-yellow-100 text-yellow-800"
@@ -431,38 +440,42 @@ setPhotoStatus(prev => {
                 </div>
                 
                 {/* Generate Button */}
-                <div className="mt-8 text-center">
+                <div className="mt-12 text-center">
                   <Button
                     onClick={generateImage}
                     disabled={photos.filter(Boolean).length !== 2 || isGenerating}
-                    className={`px-8 py-3 text-lg ${photos.filter(Boolean).length === 2 && !isGenerating ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                    className={`px-12 py-4 text-xl rounded-2xl font-semibold transition-all ${
+                      photos.filter(Boolean).length === 2 && !isGenerating 
+                        ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl' 
+                        : 'bg-gray-300 cursor-not-allowed text-gray-500'
+                    }`}
                   >
                     {isGenerating ? (
                       <>
-                        <RefreshCw className="animate-spin mr-2 h-4 w-4" />
-                        Generating...
+                        <RefreshCw className="animate-spin mr-3 h-6 w-6" />
+                        Generating Magic...
                       </>
                     ) : (
                       '✨ Generate Magic'
                     )}
                   </Button>
                   {photos.filter(Boolean).length !== 2 && (
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-gray-500 mt-4">
                       Please upload or capture 2 photos to generate a new image
                     </p>
                   )}
                   
                   {/* Generated Image Preview */}
                   {generatedImage && (
-                    <div className="mt-8">
-                      <h3 className="text-lg font-medium mb-4">Generated Image</h3>
-                      <div className="relative bg-black rounded-lg overflow-hidden aspect-square w-full max-w-md mx-auto">
+                    <div className="mt-12">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-6">✨ Your Generated Image</h3>
+                      <div className="relative bg-black rounded-2xl overflow-hidden aspect-square w-full max-w-lg mx-auto shadow-2xl">
                         <img
                           src={generatedImage}
                           alt="Generated composition"
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute bottom-4 right-4">
+                        <div className="absolute bottom-6 right-6">
                           <Button
                             onClick={() => {
                               const link = document.createElement('a');
@@ -472,11 +485,9 @@ setPhotoStatus(prev => {
                               link.click();
                               document.body.removeChild(link);
                             }}
-                            size="sm"
-                            variant="secondary"
-                            className="bg-white/90 hover:bg-white"
+                            className="bg-white/90 hover:bg-white text-gray-800 px-4 py-2 rounded-lg font-medium shadow-lg"
                           >
-                            <Download className="w-4 h-4 mr-2" />
+                            <Download className="w-5 h-5 mr-2" />
                             Download
                           </Button>
                         </div>

@@ -89,8 +89,7 @@ export function HeroSection() {
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
-              A beautiful, private space where couples can share moments, memories, and messages away from the noise of
-              social media.
+              a private space where you and your partner can document and capture all your moments and bond together.
             </p>
 
             {/* Waitlist form */}

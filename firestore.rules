@@ -1,58 +1,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated and verified
-    function isUserAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isEmailVerified() {
-      return isUserAuthenticated() && request.auth.token.email_verified == true;
-    }
-    
-    // Only allow reads if authenticated
     match /{document=**} {
-      allow read: if isUserAuthenticated();
-      allow write: if isEmailVerified();
-    }
-    
-    // More specific rules for users collection
-    match /users/{userId} {
-      // Users can read their own data
-      allow read: if request.auth != null && request.auth.uid == userId;
-      // Allow create for any authenticated user
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Only allow update if email is verified
-      allow update: if request.auth != null && request.auth.uid == userId && request.auth.token.email_verified == true;
-    }
-    
-    // Couples collection rules
-    match /couples/{coupleId} {
-      // Only users in the couple can read or update the couple doc
-      allow read, update: if request.auth != null && resource.data.users.hasAny([request.auth.uid]);
-      // Only authenticated users can create a couple (first user onboarding)
-      allow create: if request.auth != null;
-    }
-
-    // Posts collection
-    match /posts/{postId} {
-      // Users can read posts from their couple
-      allow read: if request.auth != null && 
-        (resource.data.coupleId in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users);
-      
-      // Users can create posts for their couple
-      allow create: if request.auth != null && 
-        request.auth.uid == request.resource.data.userId &&
-        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
-      
-      // Only the post creator can update/delete their posts
-      allow update, delete: if request.auth != null && 
-        resource.data.userId == request.auth.uid;
-    }
-
-    // Waitlist collection: allow anyone to add and read
-    match /waitlist/{waitlistId} {
-      allow read, create: if true;
+      allow read, write: if true;
     }
   }
 }

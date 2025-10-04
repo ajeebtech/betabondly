@@ -109,6 +109,11 @@ export default function CoupleDashboard() {
 
   useEffect(() => {
     async function checkMembership() {
+      // DEVELOPMENT: Bypass membership check
+      setAccessDenied(false);
+      setChecking(false);
+      return;
+      /*
       if (!user) {
         setChecking(false);
         return;
@@ -125,6 +130,7 @@ export default function CoupleDashboard() {
         setAccessDenied(true);
       }
       setChecking(false);
+      */
     }
     if (!loading) {
       checkMembership();

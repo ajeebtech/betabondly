@@ -60,9 +60,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
     
-    // For other /default-couple routes, redirect to the dynamic route
-    const newPath = pathname.replace('/default-couple', '/couple/default-couple');
-    return NextResponse.redirect(new URL(newPath, request.url));
+    // For other /default-couple routes, let them pass through to the (app) group
+    // The (app) group handles /default-couple/* routes directly
+    return NextResponse.next();
   }
 
   // Check if the current path is a public route
@@ -80,20 +80,19 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
   try {
+    // TEMPORARY: Disable all auth redirects for development
+    /*
     // For protected routes, check for auth token
     if (isProtectedRoute) {
       const currentUser = auth.currentUser;
-      
       // If no user is logged in, redirect to login
       if (!currentUser) {
         const loginUrl = new URL('/auth/name', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
-      
       // Get the ID token
       const token = await getIdToken(currentUser, true);
-      
       // If no token (shouldn't happen if we have a user), redirect to login
       if (!token) {
         const loginUrl = new URL('/auth/name', request.url);
@@ -101,17 +100,15 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
     }
-    
     // If user is already authenticated and tries to access auth routes, redirect to dashboard
     if (isAuthRoute && auth.currentUser) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    
     // If token exists and trying to access auth routes, redirect to dashboard
     if (authRoutes.some(route => pathname.startsWith(route))) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    
+    */
     return NextResponse.next();
   } catch (error) {
     console.error('Auth middleware error:', error);

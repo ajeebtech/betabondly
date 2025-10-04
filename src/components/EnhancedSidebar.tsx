@@ -41,7 +41,7 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
   const links: SidebarLink[] = [
     {
       label: "your bond",
-      href: "#",
+      href: "/default-couple",
       icon: Heart,
       isActive: activeLink === "your bond",
       onClick: () => setActiveLink("your bond")
@@ -55,7 +55,7 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
     },
     {
       label: "media",
-      href: "#",
+      href: "/default-couple/media", // This will be dynamic in a real app
       icon: ImageIcon,
       badge: "3",
       isActive: activeLink === "media",

@@ -40,7 +40,12 @@ export async function POST(request: Request) {
     });
 
     console.log('Sending request to Gemini...');
-    const prompt = `Create a 4K HD polaroid-style snapshot of the uploaded individuals sharing a sweet, candid laugh. Add natural dim lighting, a hint of film grain, and the feel of an instant photo.`;
+    const prompt = `Take a picture with a Polaroid camera. The photo should look like a normal photo, without any clear subjects or props. The photo should have a slight blur effect and a consistent light source, such as a flash from a dark room, spread throughout the photo.
+Do not change the faces.
+Replace the photo should have a slight blur effect and a
+consistent light source, such as a flash from a dark room, spread throughout the photo.
+Do not change the faces.
+Replace the background behind the two people with a white curtain. With the guy being close to me like a couple.`;
     
     console.log('Prompt:', prompt);
     

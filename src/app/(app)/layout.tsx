@@ -17,14 +17,16 @@ export default function AppLayout({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // TEMPORARY: Disable auth redirect for development
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        // If user is not authenticated, redirect to login
-        router.push('/auth/name');
-      } else {
-        // Update auth context with user data
-        setUser(user);
-      }
+      // if (!user) {
+      //   // If user is not authenticated, redirect to login
+      //   router.push('/auth/name');
+      // } else {
+      //   // Update auth context with user data
+      //   setUser(user);
+      // }
+      setUser(user); // Always set user, even if null
       setIsLoading(false);
     });
 

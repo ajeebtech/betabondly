@@ -20,6 +20,8 @@ export default function ProtectedRoute({
   const router = useRouter();
 
   useEffect(() => {
+    // TEMPORARY: Disable auth redirect for development
+    /*
     if (!loading) {
       // If authentication is required but no user is logged in, redirect to login
       if (requireAuth && !user) {
@@ -30,6 +32,7 @@ export default function ProtectedRoute({
         router.push('/dashboard');
       }
     }
+    */
   }, [user, loading, requireAuth, redirectTo, router]);
 
   // Show loading indicator while checking auth state
