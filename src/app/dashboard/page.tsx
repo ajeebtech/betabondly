@@ -69,8 +69,14 @@ function DashboardContent() {
       {/* Pink Grain Gradient Background */}
       <div className="fixed inset-0 -z-10">
         <GrainGradient
-          width={1920}
-          height={1080}
+          style={{
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: '#fff0f6',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+          }}
           colors={[
             "#ffb6e6", // light pink
             "#ff69b4", // hot pink
