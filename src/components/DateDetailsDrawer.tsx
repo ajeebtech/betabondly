@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { format } from "date-fns"
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons"
-import { X, MapPin, Plus, Trash2 } from "lucide-react"
+import { X, MapPin, Plus, Trash2, Navigation, Clock, Route, Car } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -66,11 +66,10 @@ const NearbyPlaces = dynamic<NearbyPlacesProps>(
   }
 );
 
-
 // Extend the global Window interface
 declare global {
   interface Window {
-    google: any; // Using any to avoid complex type definitions
+    google: any;
     initMap?: () => void;
   }
 }
@@ -96,12 +95,24 @@ interface LocationPoint {
   place: Place | null;
 }
 
+interface RouteInfo {
+  distance: string;
+  duration: string;
+  steps: Array<{
+    instruction: string;
+    distance: string;
+    duration: string;
+  }>;
+}
+
 interface DatePlan {
   startingPoint: string;
   destination: string;
   waypoints: string[];
   budget: string;
   distance: string;
+  routeInfo?: RouteInfo;
+  navigationLink?: string;
 }
 
 interface DateDetailsDrawerProps {
@@ -129,21 +140,27 @@ export function DateDetailsDrawer({
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [navigationLink, setNavigationLink] = useState<string>('');
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [hasReachedFirstDestination, setHasReachedFirstDestination] = useState(false);
   
   const [startingPoint, setStartingPoint] = useState<LocationPoint>({ address: '', place: null });
   const [destination, setDestination] = useState<LocationPoint>({ address: '', place: null });
-  const [waypoints, setWaypoints] = useState<LocationPoint[]>([]);
   
   // Reset all form fields
   const resetForm = () => {
     setStartingPoint({ address: '', place: null });
     setDestination({ address: '', place: null });
-    setWaypoints([]);
     onBudgetChange('');
     onDistanceChange('');
     setShowSuccess(false);
     setShowError(false);
     setErrorMessage('');
+    setRouteInfo(null);
+    setNavigationLink('');
+    setHasReachedFirstDestination(false);
     
     // Clear the map
     if (directionsRenderer.current) {
@@ -160,17 +177,192 @@ export function DateDetailsDrawer({
   const directionsService = useRef<google.maps.DirectionsService | null>(null);
   const directionsRenderer = useRef<google.maps.DirectionsRenderer | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-  
-  // Get destination coordinates for nearby places
-  const destinationCoords = useMemo(() => {
-    if (!destination.place?.geometry?.location) return null;
+  const watchId = useRef<number | null>(null);
+
+  // Get current location and start tracking
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      console.error('Geolocation is not supported by this browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCurrentLocation(location);
+        console.log('Current location:', location);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Start watching location for proximity detection
+  const startLocationTracking = () => {
+    if (!navigator.geolocation) return;
+
+    watchId.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCurrentLocation(location);
+
+        // Check if user has reached the first destination
+        if (!hasReachedFirstDestination && startingPoint.place?.geometry?.location) {
+          const startLoc = startingPoint.place.geometry.location;
+          const startLat = typeof startLoc.lat === 'function' ? startLoc.lat() : startLoc.lat;
+          const startLng = typeof startLoc.lng === 'function' ? startLoc.lng() : startLoc.lng;
+
+          const distance = calculateDistance(
+            location.lat, location.lng,
+            startLat, startLng
+          );
+
+          // If within 100 meters of first destination, update navigation
+          if (distance < 0.1) {
+            setHasReachedFirstDestination(true);
+            updateNavigationLink();
+          }
+        }
+      },
+      (error) => {
+        console.error('Error watching location:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000
+      }
+    );
+  };
+
+  // Stop location tracking
+  const stopLocationTracking = () => {
+    if (watchId.current) {
+      navigator.geolocation.clearWatch(watchId.current);
+      watchId.current = null;
+    }
+  };
+
+  // Calculate distance between two points in kilometers
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Calculate route between two places
+  const calculateRoute = async () => {
+    if (!startingPoint.place || !destination.place || !directionsService.current) {
+      return;
+    }
+
+    setIsCalculatingRoute(true);
     
-    const loc = destination.place.geometry.location;
-    return {
-      lat: typeof loc.lat === 'function' ? loc.lat() : loc.lat,
-      lng: typeof loc.lng === 'function' ? loc.lng() : loc.lng,
-    };
-  }, [destination.place]);
+    try {
+      const origin = startingPoint.place.formatted_address || startingPoint.address;
+      const dest = destination.place.formatted_address || destination.address;
+
+      const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
+        directionsService.current!.route(
+          {
+            origin,
+            destination: dest,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+            optimizeWaypoints: true,
+          },
+          (result, status) => {
+            if (status === 'OK' && result) {
+              resolve(result);
+            } else {
+              reject(new Error(`Directions request failed: ${status}`));
+            }
+          }
+        );
+      });
+
+      // Extract route information
+      const route = result.routes[0];
+      const leg = route.legs[0];
+      
+      const routeData: RouteInfo = {
+        distance: leg.distance?.text || 'Unknown',
+        duration: leg.duration?.text || 'Unknown',
+        steps: leg.steps?.map(step => ({
+          instruction: step.instructions || '',
+          distance: step.distance?.text || '',
+          duration: step.duration?.text || ''
+        })) || []
+      };
+
+      setRouteInfo(routeData);
+      
+      // Display route on map
+      if (directionsRenderer.current) {
+        directionsRenderer.current.setDirections(result);
+        
+        // Fit map to route bounds
+        const bounds = new window.google.maps.LatLngBounds();
+        route.legs.forEach((leg: google.maps.DirectionsLeg) => {
+          if (leg.start_location) bounds.extend(leg.start_location);
+          if (leg.end_location) bounds.extend(leg.end_location);
+        });
+        
+        if (mapInstance.current) {
+          mapInstance.current.fitBounds(bounds);
+        }
+      }
+
+      // Generate initial navigation link to first destination
+      updateNavigationLink();
+
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      setErrorMessage('Failed to calculate route. Please try again.');
+      setShowError(true);
+    } finally {
+      setIsCalculatingRoute(false);
+    }
+  };
+
+  // Update navigation link based on current progress
+  const updateNavigationLink = () => {
+    if (!startingPoint.place || !destination.place) return;
+
+    const startLoc = startingPoint.place.geometry?.location;
+    const destLoc = destination.place.geometry?.location;
+
+    if (!startLoc || !destLoc) return;
+
+    const startLat = typeof startLoc.lat === 'function' ? startLoc.lat() : startLoc.lat;
+    const startLng = typeof startLoc.lng === 'function' ? startLoc.lng() : startLoc.lng;
+    const destLat = typeof destLoc.lat === 'function' ? destLoc.lat() : destLoc.lat;
+    const destLng = typeof destLoc.lng === 'function' ? destLoc.lng() : destLoc.lng;
+
+    // Determine which destination to navigate to
+    const targetLat = hasReachedFirstDestination ? destLat : startLat;
+    const targetLng = hasReachedFirstDestination ? destLng : startLng;
+
+    // Generate Google Maps navigation URL
+    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${targetLat},${targetLng}&travelmode=driving`;
+    setNavigationLink(navUrl);
+  };
 
   // Load Google Maps script with Directions and Places libraries
   useEffect(() => {
@@ -362,18 +554,13 @@ export function DateDetailsDrawer({
       const origin = startingPoint.place?.formatted_address || startingPoint.address;
       const dest = destination.place?.formatted_address || destination.address;
       
-      const waypointList = waypoints
-        .filter(wp => wp.address)
-        .map(wp => ({
-          location: wp.place?.formatted_address || wp.address,
-          stopover: true
-        }));
+      const waypointList: any[] = []; // No waypoints for simplified two-place selection
       
       directionsService.current.route(
         {
           origin,
           destination: dest,
-          waypoints: waypointList,
+          waypoints: [], // No waypoints for simplified two-place selection
           travelMode: window.google.maps.TravelMode.DRIVING,
           optimizeWaypoints: true,
         },
@@ -396,19 +583,9 @@ export function DateDetailsDrawer({
         }
       );
     }
-  }, [startingPoint, destination, waypoints, mapLoaded]);
+  }, [startingPoint, destination, mapLoaded]);
 
-  // Handle adding a waypoint
-  const handleAddWaypoint = (place: Place) => {
-    setWaypoints([...waypoints, { address: place.formatted_address || place.name || '', place }]);
-  };
-
-  // Handle removing a waypoint
-  const handleRemoveWaypoint = (index: number) => {
-    const newWaypoints = [...waypoints];
-    newWaypoints.splice(index, 1);
-    setWaypoints(newWaypoints);
-  };
+  // Note: Waypoints functionality removed to focus on two-place selection
 
   // Handle confirming the date plan
   const handleConfirm = () => {
@@ -422,7 +599,7 @@ export function DateDetailsDrawer({
     onConfirm({
       startingPoint: startingPoint.address,
       destination: destination.address,
-      waypoints: waypoints.map(wp => wp.address),
+      waypoints: [], // Simplified to two-place selection
       budget,
       distance
     });
@@ -483,10 +660,7 @@ export function DateDetailsDrawer({
             origin: origin,
             destination: dest,
             travelMode: window.google.maps.TravelMode.DRIVING,
-            waypoints: waypoints.map(waypoint => ({
-              location: waypoint.place?.formatted_address || waypoint.address,
-              stopover: true
-            })),
+            waypoints: [], // No waypoints for simplified two-place selection
             optimizeWaypoints: true
           },
           (result, status) => {
@@ -521,7 +695,14 @@ export function DateDetailsDrawer({
       
       return () => clearTimeout(timer);
     }
-  }, [startingPoint, destination, waypoints, mapLoaded, open]);
+  }, [startingPoint, destination, mapLoaded, open]);
+
+  // Cleanup location tracking on unmount
+  useEffect(() => {
+    return () => {
+      stopLocationTracking();
+    };
+  }, []);
 
   // Prevent clicks inside the drawer content from closing it
   const handleDrawerContentClick = (e: React.MouseEvent) => {
@@ -531,7 +712,7 @@ export function DateDetailsDrawer({
   const resetDrawer = () => {
     setStartingPoint({ address: '', place: null });
     setDestination({ address: '', place: null });
-    setWaypoints([]);
+    // setWaypoints([]); // Removed - no waypoints in simplified version
     setShowSuccess(false);
     setShowError(false);
     setErrorMessage('');
@@ -558,10 +739,18 @@ export function DateDetailsDrawer({
     onConfirm({
       startingPoint: startingPoint.address,
       destination: destination.address,
-      waypoints: waypoints.map(wp => wp.address),
+      waypoints: [], // Simplified to two-place selection
       budget,
-      distance
+      distance,
+      routeInfo: routeInfo || undefined,
+      navigationLink: navigationLink || undefined
     });
+    
+    // Start location tracking for navigation updates
+    if (navigationLink) {
+      getCurrentLocation();
+      startLocationTracking();
+    }
     
     // Reset form after submission
     resetForm();
@@ -649,6 +838,80 @@ export function DateDetailsDrawer({
                   )}
                 </div>
               </div>
+
+              {/* Route Calculation Section */}
+              {startingPoint.address && destination.address && (
+                <div className="space-y-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-pink-800 flex items-center gap-2">
+                      <Route className="h-5 w-5" />
+                      Route Information
+                    </h3>
+                    <Button
+                      onClick={calculateRoute}
+                      disabled={isCalculatingRoute}
+                      className="bg-pink-500 hover:bg-pink-600 text-white"
+                    >
+                      {isCalculatingRoute ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Calculating...
+                        </>
+                      ) : (
+                        <>
+                          <Route className="h-4 w-4 mr-2" />
+                          Calculate Route
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {routeInfo && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Car className="h-4 w-4 text-pink-600" />
+                          <span className="font-medium">Distance:</span>
+                          <span>{routeInfo.distance}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-pink-600" />
+                          <span className="font-medium">Duration:</span>
+                          <span>{routeInfo.duration}</span>
+                        </div>
+                      </div>
+
+                      {/* Navigation Link */}
+                      {navigationLink && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Navigation className="h-4 w-4 text-pink-600" />
+                            <span className="font-medium">
+                              Navigate to: {hasReachedFirstDestination ? 'Final Destination' : 'First Stop'}
+                            </span>
+                          </div>
+                          <Button
+                            onClick={() => window.open(navigationLink, '_blank')}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white"
+                          >
+                            <Navigation className="h-4 w-4 mr-2" />
+                            Open in Google Maps
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Location Tracking Status */}
+                      <div className="text-xs text-gray-600">
+                        {currentLocation ? (
+                          <span className="text-green-600">📍 Location tracking active</span>
+                        ) : (
+                          <span className="text-orange-600">⚠️ Enable location access for automatic navigation updates</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium mb-1">Distance (km)</label>
@@ -661,56 +924,7 @@ export function DateDetailsDrawer({
                 />
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label className="block text-sm font-medium">Waypoints</label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => {
-                      const newWaypoint = {
-                        address: '',
-                        place: null
-                      };
-                      setWaypoints([...waypoints, newWaypoint]);
-                    }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Stop
-                  </Button>
-                </div>
-                
-                {waypoints.length > 0 && (
-                  <div className="space-y-2">
-                    {waypoints.map((waypoint, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="relative flex-1">
-                          <LocationSearch
-                            onPlaceSelected={(place) => {
-                              const updatedWaypoints = [...waypoints];
-                              updatedWaypoints[index] = {
-                                address: place?.formatted_address || place?.name || '',
-                                place: place || null
-                              };
-                              setWaypoints(updatedWaypoints);
-                            }}
-                            placeholder={`Stop ${index + 1}`}
-                            value={waypoint.address}
-                          />
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => handleRemoveWaypoint(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Waypoints section removed - focusing on two-place selection for simplicity */}
               
               <div className="pt-4">
                 <Button 
@@ -740,32 +954,7 @@ export function DateDetailsDrawer({
                 </div>
               </div>
               
-              {/* Nearby Places Section */}
-              {destinationCoords && (
-                <div className="mt-4 border-t pt-4">
-                  <NearbyPlaces 
-                    location={destinationCoords} 
-                    radius={500}
-                    onPlaceSelect={(result) => {
-                      // Handle the optimized route
-                      if (result.selectedPlaces.length > 0) {
-                        const firstPlace = result.selectedPlaces[0];
-                        if (mapInstance.current && firstPlace.geometry?.location) {
-                          mapInstance.current.setCenter({
-                            lat: firstPlace.geometry.location.lat,
-                            lng: firstPlace.geometry.location.lng
-                          });
-                          mapInstance.current.setZoom(15);
-                        }
-                        
-                        // Here you can also handle the route visualization
-                        // using result.route which contains the optimized route
-                        console.log('Optimized route:', result.route);
-                      }
-                    }}
-                  />
-                </div>
-              )}
+              {/* Nearby Places Section - Removed to focus on two-place selection */}
             </div>
           </div>
           
