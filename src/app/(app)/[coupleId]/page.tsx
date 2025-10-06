@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ComposeMessageDialog } from "@/components/ComposeMessageDialog"
 import { AddToCalendarDialog } from "@/components/AddToCalendarDialog"
+import { TamaguiProvider } from "@/components/TamaguiProvider"
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -331,7 +332,9 @@ export default function CoupleDashboard() {
         {/* Right Column - Card Stack - Now positioned independently */}
         <div className="fixed right-8 top-4 w-72 hidden lg:flex flex-col">
           <div className="w-full flex justify-end pr-4 mb-2">
-            <AddToCalendarDialog onCardAdded={addCard} />
+            <TamaguiProvider>
+              <AddToCalendarDialog onCardAdded={addCard} />
+            </TamaguiProvider>
           </div>
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-rose-100 p-4 mt-4 hover:shadow-xl transition-all duration-300">
             <CardStack 

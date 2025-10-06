@@ -329,21 +329,6 @@ export function EnhancedPostComposer({
                 <Image className="h-5 w-5" />
               </button>
 
-              {/* YouTube */}
-              <button
-                type="button"
-                disabled={youtubeLinks.length >= MAX_YOUTUBE}
-                className={cn(
-                  "p-3 rounded-full transition-all duration-200 hover:scale-110",
-                  youtubeLinks.length >= MAX_YOUTUBE
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-red-600 hover:text-red-700"
-                )}
-                title="Add YouTube link"
-              >
-                <Youtube className="h-5 w-5" />
-              </button>
-
               {/* Camera */}
               <button
                 type="button"
@@ -388,10 +373,6 @@ export function EnhancedPostComposer({
             </Button>
           </div>
 
-          {/* Helper text */}
-          <div className="text-xs text-gray-500 text-center">
-            <p>💡 Tip: Paste a YouTube link to automatically embed the video</p>
-          </div>
         </form>
       </CardContent>
     </Card>
