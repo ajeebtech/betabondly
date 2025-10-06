@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTokens, saveTokens } from '@/lib/google/oauth';
+import { exchangeCodeForTokens, saveTokens } from '@/lib/google/oauth';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const { userId } = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
     
     // Exchange code for tokens
-    const tokens = await getTokens(code);
+    const tokens = await exchangeCodeForTokens(code);
     
     // Save tokens for the user
     await saveTokens(userId, tokens);

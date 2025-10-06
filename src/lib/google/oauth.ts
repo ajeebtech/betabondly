@@ -23,7 +23,7 @@ export async function getAuthUrl(userId: string) {
   });
 }
 
-export async function getTokens(code: string) {
+export async function exchangeCodeForTokens(code: string) {
   const { tokens } = await oauth2Client.getToken(code);
   return tokens;
 }
@@ -45,6 +45,21 @@ export async function saveTokens(userId: string, tokens: any) {
   } catch (error) {
     console.error('Error saving tokens:', error);
     throw error;
+  }
+}
+
+export async function getTokens(userId: string) {
+  if (!adminAuth) {
+    console.error('Firebase Admin is not initialized');
+    return null;
+  }
+  
+  try {
+    const user = await adminAuth.getUser(userId);
+    return (user.customClaims as any)?.googleTokens || null;
+  } catch (error) {
+    console.error('Error getting tokens:', error);
+    return null;
   }
 }
 

@@ -42,6 +42,10 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Add Google Calendar scopes to the provider
+googleProvider.addScope('https://www.googleapis.com/auth/calendar');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+
 // Initialize reCAPTCHA
 const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVerifier => {
   if (typeof window === 'undefined') {

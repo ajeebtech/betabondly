@@ -147,25 +147,93 @@ export const CardStack = ({
                         className="p-2 rounded-full hover:bg-gray-100 transition-colors text-pink-500 hover:text-pink-600"
                         onClick={async (e) => {
                           e.stopPropagation();
-                          // Show toast notification
-                          toast("Event has been created", {
-                            description: card.name + (card.designation ? ` (${card.designation})` : ''),
-                            action: {
-                              label: "Undo",
-                              onClick: () => console.log("Undo add to calendar"),
-                            },
-                            actionButtonStyle: {
-                              color: 'white',
-                              background: '#ec4899',
-                              border: 'none',
-                              padding: '4px 12px',
-                              borderRadius: '4px',
-                              cursor: 'pointer',
-                            },
-                          });
                           
-                          // Here you can add the actual calendar integration
-                          console.log('Add to calendar:', card);
+                          try {
+                            // Get Firebase ID token for authentication
+                            const { auth } = await import('@/lib/firebase');
+                            const user = auth.currentUser;
+                            
+                            if (!user) {
+                              toast.error("Please sign in to add events to your calendar");
+                              return;
+                            }
+
+                            const idToken = await user.getIdToken();
+
+                            // Create event data
+                            const eventData = {
+                              summary: card.name,
+                              description: card.designation || '',
+                              start: {
+                                dateTime: new Date().toISOString(),
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                              },
+                              end: {
+                                dateTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours later
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                              },
+                              reminders: {
+                                useDefault: false,
+                                overrides: [
+                                  { method: 'email', minutes: 24 * 60 }, // 1 day before
+                                  { method: 'popup', minutes: 30 } // 30 minutes before
+                                ]
+                              }
+                            };
+
+                            // Call our API to create the event
+                            const response = await fetch('/api/calendar/create-event', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ eventData, idToken }),
+                            });
+
+                            const result = await response.json();
+
+                            console.log('API Response:', response.status, result);
+
+                            if (!response.ok) {
+                              if (result.needsAuth) {
+                                toast.error("Please connect your Google Calendar first", {
+                                  description: "Click here to connect",
+                                  action: {
+                                    label: "Connect",
+                                    onClick: () => window.open('/api/google/oauth/url', '_blank'),
+                                  },
+                                });
+                              } else {
+                                throw new Error(result.error || 'Failed to create calendar event');
+                              }
+                              return;
+                            }
+
+                            // Show success toast
+                            toast.success("Event added to Google Calendar!", {
+                              description: `${card.name} has been added to your calendar`,
+                              action: {
+                                label: "View Event",
+                                onClick: () => {
+                                  if (result.eventUrl) {
+                                    window.open(result.eventUrl, '_blank');
+                                  }
+                                },
+                              },
+                              actionButtonStyle: {
+                                color: 'white',
+                                background: '#ec4899',
+                                border: 'none',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                              },
+                            });
+                            
+                          } catch (error) {
+                            console.error('Error adding to calendar:', error);
+                            toast.error(error instanceof Error ? error.message : 'Failed to add event to calendar');
+                          }
                         }}
                       >
                         <CalendarPlus className="h-5 w-5" />

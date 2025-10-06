@@ -25,7 +25,11 @@ import {
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-export function AddToCalendarDialog() {
+interface AddToCalendarDialogProps {
+  onCardAdded?: (card: { name: string; designation: string; content: React.ReactNode }) => void;
+}
+
+export function AddToCalendarDialog({ onCardAdded }: AddToCalendarDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [time, setTime] = useState(() => {
@@ -56,6 +60,17 @@ export function AddToCalendarDialog() {
         return
       }
       
+      // Get Firebase ID token for authentication
+      const { auth } = await import('@/lib/firebase');
+      const user = auth.currentUser;
+      
+      if (!user) {
+        toast.error("Please sign in to add events to your calendar");
+        return;
+      }
+
+      const idToken = await user.getIdToken();
+
       const formData = {
         title: (e.currentTarget as HTMLFormElement).eventTitle.value,
         date: eventDate,
@@ -63,11 +78,109 @@ export function AddToCalendarDialog() {
         notes: (e.currentTarget as HTMLFormElement).eventNotes.value,
       }
       
-      // Here you would typically make an API call to save the event
-      console.log('Event created:', formData)
+      // Create event data for Google Calendar
+      const eventData = {
+        summary: formData.title,
+        description: formData.notes || '',
+        start: {
+          dateTime: formData.date.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: new Date(formData.date.getTime() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours later
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        location: formData.location || undefined,
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 }, // 1 day before
+            { method: 'popup', minutes: 30 } // 30 minutes before
+          ]
+        }
+      };
+
+      // Call our API to create the event
+      const response = await fetch('/api/calendar/create-event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventData, idToken }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (result.needsAuth) {
+          toast.error("Please connect your Google Calendar first", {
+            description: "Click here to connect",
+            action: {
+              label: "Connect",
+              onClick: () => window.open('/api/google/oauth/url', '_blank'),
+            },
+          });
+        } else {
+          throw new Error(result.error || 'Failed to create calendar event');
+        }
+        return;
+      }
       
       // Show success message
-      toast.success("Event added to calendar")
+      toast.success("Event added to Google Calendar!", {
+        description: `${formData.title} has been added to your calendar`,
+        action: {
+          label: "View Event",
+          onClick: () => {
+            if (result.eventUrl) {
+              window.open(result.eventUrl, '_blank');
+            }
+          },
+        },
+      });
+
+      // Create a card for the new event
+      if (onCardAdded) {
+        const eventDate = new Date(formData.date);
+        const timeString = eventDate.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        });
+        const dateString = eventDate.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          month: 'short', 
+          day: 'numeric' 
+        });
+
+        onCardAdded({
+          name: formData.title,
+          designation: `${dateString}, ${timeString}`,
+          content: (
+            <p>
+              {formData.notes ? (
+                <>
+                  {formData.notes}
+                  {formData.location && (
+                    <>
+                      <br />
+                      <span className="font-bold text-pink-500">📍 {formData.location}</span>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {formData.location ? (
+                    <span className="font-bold text-pink-500">📍 {formData.location}</span>
+                  ) : (
+                    "Let's make some memories together! ❤️"
+                  )}
+                </>
+              )}
+            </p>
+          ),
+        });
+      }
       
       // Reset form
       ;(e.target as HTMLFormElement).reset()
@@ -80,7 +193,7 @@ export function AddToCalendarDialog() {
       }, 1000)
     } catch (error) {
       console.error("Error creating event:", error)
-      toast.error("Failed to create event. Please try again.")
+      toast.error(error instanceof Error ? error.message : "Failed to create event. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -95,14 +208,14 @@ export function AddToCalendarDialog() {
             Add to Calendar
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px] bg-white border-black">
+        <DialogContent className="sm:max-w-[500px] bg-white border-black">
           <DialogHeader>
             <DialogTitle className="text-black">Add to Calendar</DialogTitle>
             <DialogDescription className="text-gray-700">
               Create a new calendar event. Click save when you're done.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="event-title" className="text-black font-medium">Event Title</Label>
               <Input 
@@ -115,7 +228,7 @@ export function AddToCalendarDialog() {
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="event-date" className="text-black font-medium">Date</Label>
                 <Popover>
@@ -132,7 +245,7 @@ export function AddToCalendarDialog() {
                       {date ? format(date, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-4" align="start">
                     <Calendar
                       mode="single"
                       selected={date}
@@ -140,9 +253,28 @@ export function AddToCalendarDialog() {
                       initialFocus
                       disabled={(date) => date < new Date()}
                       weekStartsOn={1}
+                      className="rounded-md border-0"
                       classNames={{
-                        day_selected: "bg-black text-white hover:bg-black hover:text-white",
-                        day_today: "border border-black",
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                        month: "space-y-4",
+                        caption: "flex justify-center pt-1 relative items-center",
+                        caption_label: "text-sm font-medium",
+                        nav: "space-x-1 flex items-center",
+                        nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                        nav_button_previous: "absolute left-1",
+                        nav_button_next: "absolute right-1",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex",
+                        head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                        row: "flex w-full mt-2",
+                        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                        day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                        day_selected: "bg-black text-white hover:bg-black hover:text-white focus:bg-black focus:text-white",
+                        day_today: "border border-black font-semibold",
+                        day_outside: "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+                        day_disabled: "text-muted-foreground opacity-50",
+                        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                        day_hidden: "invisible",
                       }}
                     />
                   </PopoverContent>

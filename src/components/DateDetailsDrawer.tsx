@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { format } from "date-fns"
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons"
-import { X, MapPin, Plus, Trash2, Navigation, Clock, Route, Car } from "lucide-react"
+import { X, MapPin, Plus, Trash2, Navigation, Clock, Route, Car, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -115,6 +115,28 @@ interface DatePlan {
   navigationLink?: string;
 }
 
+interface NearbyPlace {
+  place_id: string;
+  name: string;
+  rating?: number;
+  price_level?: number;
+  types: string[];
+  vicinity: string;
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+}
+
+interface Waypoint {
+  id: string;
+  name: string;
+  address: string;
+  place: Place | null;
+}
+
 interface DateDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -144,15 +166,45 @@ export function DateDetailsDrawer({
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [navigationLink, setNavigationLink] = useState<string>('');
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
-  const [hasReachedFirstDestination, setHasReachedFirstDestination] = useState(false);
+  // const [hasReachedFirstDestination, setHasReachedFirstDestination] = useState(false); // Removed - direct navigation to destination
   
   const [startingPoint, setStartingPoint] = useState<LocationPoint>({ address: '', place: null });
   const [destination, setDestination] = useState<LocationPoint>({ address: '', place: null });
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
+  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [showNearbyPlaces, setShowNearbyPlaces] = useState(false);
+  const [showManualLocation, setShowManualLocation] = useState(false);
+  const [manualLocation, setManualLocation] = useState<LocationPoint>({ address: '', place: null });
+  const [searchTimeoutId, setSearchTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [isMetroMode, setIsMetroMode] = useState(false);
+  const [transitLayer, setTransitLayer] = useState<google.maps.TransitLayer | null>(null);
+  const [showDateTimePicker, setShowDateTimePicker] = useState(false);
+  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
+  const [isCreatingCalendarEvent, setIsCreatingCalendarEvent] = useState(false);
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
+  const [checkingCalendarStatus, setCheckingCalendarStatus] = useState(true);
   
   // Reset all form fields
   const resetForm = () => {
     setStartingPoint({ address: '', place: null });
     setDestination({ address: '', place: null });
+    setWaypoints([]);
+    setNearbyPlaces([]);
+    setShowNearbyPlaces(false);
+    setShowManualLocation(false);
+    setManualLocation({ address: '', place: null });
+    setIsMetroMode(false);
+    setShowDateTimePicker(false);
+    setSelectedDateTime(null);
+    if (transitLayer) {
+      transitLayer.setMap(null);
+      setTransitLayer(null);
+    }
+    if (searchTimeoutId) {
+      clearTimeout(searchTimeoutId);
+      setSearchTimeoutId(null);
+    }
     onBudgetChange('');
     onDistanceChange('');
     setShowSuccess(false);
@@ -160,7 +212,7 @@ export function DateDetailsDrawer({
     setErrorMessage('');
     setRouteInfo(null);
     setNavigationLink('');
-    setHasReachedFirstDestination(false);
+    // setHasReachedFirstDestination(false); // Removed - no longer using progressive navigation
     
     // Clear the map
     if (directionsRenderer.current) {
@@ -218,21 +270,21 @@ export function DateDetailsDrawer({
         };
         setCurrentLocation(location);
 
-        // Check if user has reached the first destination
-        if (!hasReachedFirstDestination && startingPoint.place?.geometry?.location) {
-          const startLoc = startingPoint.place.geometry.location;
-          const startLat = typeof startLoc.lat === 'function' ? startLoc.lat() : startLoc.lat;
-          const startLng = typeof startLoc.lng === 'function' ? startLoc.lng() : startLoc.lng;
+        // Check if user has reached the destination
+        if (destination.place?.geometry?.location) {
+          const destLoc = destination.place.geometry.location;
+          const destLat = typeof destLoc.lat === 'function' ? destLoc.lat() : destLoc.lat;
+          const destLng = typeof destLoc.lng === 'function' ? destLoc.lng() : destLoc.lng;
 
           const distance = calculateDistance(
             location.lat, location.lng,
-            startLat, startLng
+            destLat, destLng
           );
 
-          // If within 100 meters of first destination, update navigation
+          // If within 100 meters of destination, show arrival message
           if (distance < 0.1) {
-            setHasReachedFirstDestination(true);
-            updateNavigationLink();
+            console.log('You have arrived at your destination!');
+            // You could show a success message or stop tracking here
           }
         }
       },
@@ -279,12 +331,26 @@ export function DateDetailsDrawer({
       const origin = startingPoint.place.formatted_address || startingPoint.address;
       const dest = destination.place.formatted_address || destination.address;
 
+      // Prepare waypoints for the route
+      const waypointList = waypoints
+        .filter(wp => wp.place?.geometry?.location)
+        .map(wp => {
+          const loc = wp.place!.geometry!.location!;
+          const lat = typeof loc.lat === 'function' ? loc.lat() : loc.lat;
+          const lng = typeof loc.lng === 'function' ? loc.lng() : loc.lng;
+    return {
+            location: new window.google.maps.LatLng(lat, lng),
+            stopover: true
+          };
+        });
+
       const result = await new Promise<google.maps.DirectionsResult>((resolve, reject) => {
         directionsService.current!.route(
           {
             origin,
             destination: dest,
-            travelMode: window.google.maps.TravelMode.DRIVING,
+            waypoints: waypointList,
+            travelMode: isMetroMode ? window.google.maps.TravelMode.TRANSIT : window.google.maps.TravelMode.DRIVING,
             optimizeWaypoints: true,
           },
           (result, status) => {
@@ -355,14 +421,348 @@ export function DateDetailsDrawer({
     const destLat = typeof destLoc.lat === 'function' ? destLoc.lat() : destLoc.lat;
     const destLng = typeof destLoc.lng === 'function' ? destLoc.lng() : destLoc.lng;
 
-    // Determine which destination to navigate to
-    const targetLat = hasReachedFirstDestination ? destLat : startLat;
-    const targetLng = hasReachedFirstDestination ? destLng : startLng;
+    // Always navigate directly to the destination
+    const targetLat = destLat;
+    const targetLng = destLng;
 
     // Generate Google Maps navigation URL
-    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${targetLat},${targetLng}&travelmode=driving`;
+    const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${targetLat},${targetLng}&travelmode=${isMetroMode ? 'transit' : 'driving'}`;
     setNavigationLink(navUrl);
   };
+
+  // Toggle transit layer on map
+  const toggleTransitLayer = (enabled: boolean) => {
+    if (!mapInstance.current) return;
+    
+    if (enabled) {
+      // Create and show transit layer
+      if (!transitLayer) {
+        const layer = new window.google.maps.TransitLayer();
+        layer.setMap(mapInstance.current);
+        setTransitLayer(layer);
+        console.log('✅ [Map] Transit layer enabled');
+      }
+    } else {
+      // Hide transit layer
+      if (transitLayer) {
+        transitLayer.setMap(null);
+        setTransitLayer(null);
+        console.log('✅ [Map] Transit layer disabled');
+      }
+    }
+  };
+
+  // Fetch nearby places around destination
+  const fetchNearbyPlaces = async () => {
+    if (!destination.place?.geometry?.location || !window.google?.maps?.places) {
+      console.error('Missing destination or Google Maps Places API');
+      setIsLoadingNearby(false);
+      return;
+    }
+    
+    console.log('Starting nearby places search...');
+    console.log('Google Maps API available:', !!window.google?.maps?.places);
+    console.log('PlacesService available:', !!window.google?.maps?.places?.PlacesService);
+    setIsLoadingNearby(true);
+    
+    try {
+      const destLoc = destination.place.geometry.location;
+      const destLat = typeof destLoc.lat === 'function' ? destLoc.lat() : destLoc.lat;
+      const destLng = typeof destLoc.lng === 'function' ? destLoc.lng() : destLoc.lng;
+      
+      // Create a proper div element for the PlacesService
+      const mapDiv = document.createElement('div');
+      mapDiv.style.display = 'none';
+      document.body.appendChild(mapDiv);
+      
+      const service = new window.google.maps.places.PlacesService(mapDiv);
+      
+      const request = {
+        location: new window.google.maps.LatLng(destLat, destLng),
+        radius: 1000, // 1km radius
+        type: 'restaurant' // Simplified to just restaurants for testing
+      };
+      
+      // Add timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        console.error('Nearby places search timed out');
+        setIsLoadingNearby(false);
+        document.body.removeChild(mapDiv);
+        setErrorMessage('Search timed out. Please try again.');
+        setShowError(true);
+        setSearchTimeoutId(null);
+      }, 5000); // Reduced to 5 seconds for testing
+      
+      setSearchTimeoutId(timeoutId);
+      
+      service.nearbySearch(request, (results: google.maps.places.PlaceResult[] | null, status: google.maps.places.PlacesServiceStatus) => {
+        clearTimeout(timeoutId);
+        setSearchTimeoutId(null);
+        document.body.removeChild(mapDiv);
+        
+        console.log('Nearby places search result:', status, results?.length);
+        
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          const places: NearbyPlace[] = results.map((place: google.maps.places.PlaceResult) => ({
+            place_id: place.place_id || '',
+            name: place.name || '',
+            rating: place.rating,
+            price_level: place.price_level,
+            types: place.types || [],
+            vicinity: place.vicinity || '',
+            geometry: place.geometry ? {
+              location: {
+                lat: (() => {
+                  const lat = place.geometry?.location?.lat;
+                  return typeof lat === 'function' ? lat() : (lat || 0);
+                })(),
+                lng: (() => {
+                  const lng = place.geometry?.location?.lng;
+                  return typeof lng === 'function' ? lng() : (lng || 0);
+                })()
+              }
+            } : undefined
+          }));
+          
+          console.log('Found places:', places.length);
+          setNearbyPlaces(places.slice(0, 8)); // Limit to 8 places
+          setShowNearbyPlaces(true);
+        } else {
+          console.error('Nearby places search failed:', status);
+          // Try a simpler approach with mock data for testing
+          console.log('Using mock data as fallback...');
+          const mockPlaces: NearbyPlace[] = [
+            {
+              place_id: 'mock1',
+              name: 'Sample Restaurant',
+              rating: 4.2,
+              price_level: 2,
+              types: ['restaurant'],
+              vicinity: 'Near your destination',
+              geometry: {
+                location: { lat: destLat + 0.001, lng: destLng + 0.001 }
+              }
+            },
+            {
+              place_id: 'mock2',
+              name: 'Local Cafe',
+              rating: 4.0,
+              price_level: 1,
+              types: ['cafe'],
+              vicinity: 'Near your destination',
+              geometry: {
+                location: { lat: destLat - 0.001, lng: destLng + 0.001 }
+              }
+            }
+          ];
+          setNearbyPlaces(mockPlaces);
+          setShowNearbyPlaces(true);
+        }
+        setIsLoadingNearby(false);
+      });
+    } catch (error) {
+      console.error('Error fetching nearby places:', error);
+      setIsLoadingNearby(false);
+      setErrorMessage('Error searching for nearby places. Please try again.');
+      setShowError(true);
+    }
+  };
+
+  // Add place to route as waypoint
+  const addPlaceToRoute = (place: NearbyPlace) => {
+    const waypoint: Waypoint = {
+      id: place.place_id,
+      name: place.name,
+      address: place.vicinity,
+      place: {
+        place_id: place.place_id,
+        name: place.name,
+        formatted_address: place.vicinity,
+        geometry: place.geometry,
+        types: place.types
+      } as Place
+    };
+    
+    setWaypoints(prev => [...prev, waypoint]);
+  };
+
+  // Remove waypoint from route
+  const removeWaypoint = (waypointId: string) => {
+    setWaypoints(prev => prev.filter(wp => wp.id !== waypointId));
+  };
+
+  // Cancel nearby places search
+  const cancelNearbySearch = () => {
+    if (searchTimeoutId) {
+      clearTimeout(searchTimeoutId);
+      setSearchTimeoutId(null);
+    }
+    setIsLoadingNearby(false);
+    setErrorMessage('Search cancelled.');
+    setShowError(true);
+  };
+
+  // Add manual location to route
+  const addManualLocationToRoute = () => {
+    if (!manualLocation.address || !manualLocation.place) return;
+    
+    const waypoint: Waypoint = {
+      id: manualLocation.place.place_id || `manual-${Date.now()}`,
+      name: manualLocation.place.name || manualLocation.address,
+      address: manualLocation.address,
+      place: manualLocation.place
+    };
+    
+    setWaypoints(prev => [...prev, waypoint]);
+    setManualLocation({ address: '', place: null });
+    setShowManualLocation(false);
+  };
+
+  // Create calendar event with navigation and places
+  const createCalendarEvent = async () => {
+    if (!selectedDateTime) {
+      setErrorMessage('Please select a date and time for your date.');
+      setShowError(true);
+      return;
+    }
+
+    setIsCreatingCalendarEvent(true);
+    setErrorMessage('');
+
+    try {
+      // Format places sequence
+      const placesSequence = [];
+      placesSequence.push(`Start: ${startingPoint.address}`);
+      
+      waypoints.forEach((waypoint, index) => {
+        placesSequence.push(`Stop ${index + 1}: ${waypoint.name}`);
+      });
+      
+      placesSequence.push(`Destination: ${destination.address}`);
+
+      // Create event description
+      const description = [
+        `🗺️ Date Route:`,
+        placesSequence.join(' → '),
+        '',
+        `🚗 Navigation: ${navigationLink || 'Navigation link not available'}`,
+        '',
+        `💰 Budget: ${budget || 'Not specified'}`,
+        `🚇 Transport: ${isMetroMode ? 'Metro/Public Transit' : 'Driving'}`,
+        '',
+        `Route Details:`,
+        routeInfo ? `Distance: ${routeInfo.distance} | Duration: ${routeInfo.duration}` : 'Route not calculated'
+      ].join('\n');
+
+      // Create calendar event data
+      const eventData = {
+        summary: `Date: ${startingPoint.address} → ${destination.address}`,
+        description: description,
+        start: {
+          dateTime: selectedDateTime.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: new Date(selectedDateTime.getTime() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours later
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        location: destination.address,
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 }, // 1 day before
+            { method: 'popup', minutes: 30 } // 30 minutes before
+          ]
+        }
+      };
+
+      // Get Firebase ID token for authentication
+      const { auth } = await import('@/lib/firebase');
+      const user = auth.currentUser;
+      
+      if (!user) {
+        throw new Error('Please sign in to add events to your calendar');
+      }
+
+      const idToken = await user.getIdToken();
+
+      // Call our API to create the event directly in Google Calendar
+      const response = await fetch('/api/calendar/create-event', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventData, idToken }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create calendar event');
+      }
+
+      // Show success message with link to the created event
+      setShowSuccess(true);
+      setShowDateTimePicker(false);
+      
+      // If we have an event URL, show it to the user
+      if (result.eventUrl) {
+        console.log('Event created successfully:', result.eventUrl);
+      }
+      
+      setTimeout(() => {
+        resetForm();
+        onOpenChange(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error creating calendar event:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create calendar event. Please try again.');
+      setShowError(true);
+    } finally {
+      setIsCreatingCalendarEvent(false);
+    }
+  };
+
+  // Update transit layer when metro mode changes
+  useEffect(() => {
+    if (mapLoaded && destination.address) {
+      toggleTransitLayer(isMetroMode);
+    }
+  }, [isMetroMode, mapLoaded, destination.address]);
+
+  // Cleanup transit layer on unmount
+  useEffect(() => {
+    return () => {
+      if (transitLayer) {
+        transitLayer.setMap(null);
+      }
+    };
+  }, [transitLayer]);
+
+  // Check Google Calendar connection status (using Firebase Auth)
+  useEffect(() => {
+    const checkCalendarStatus = async () => {
+      try {
+        // Check if user is signed in with Google (which now includes calendar scopes)
+        const { auth } = await import('@/lib/firebase');
+        const user = auth.currentUser;
+        
+        if (user && user.providerData.some(provider => provider.providerId === 'google.com')) {
+          setIsCalendarConnected(true);
+        } else {
+          setIsCalendarConnected(false);
+        }
+      } catch (error) {
+        console.error('Error checking calendar status:', error);
+        setIsCalendarConnected(false);
+      } finally {
+        setCheckingCalendarStatus(false);
+      }
+    };
+
+    checkCalendarStatus();
+  }, []);
 
   // Load Google Maps script with Directions and Places libraries
   useEffect(() => {
@@ -596,13 +996,8 @@ export function DateDetailsDrawer({
       return;
     }
 
-    onConfirm({
-      startingPoint: startingPoint.address,
-      destination: destination.address,
-      waypoints: [], // Simplified to two-place selection
-      budget,
-      distance
-    });
+    // Show date/time picker instead of directly confirming
+    setShowDateTimePicker(true);
   };
 
   // Handle place selection for starting point
@@ -736,24 +1131,8 @@ export function DateDetailsDrawer({
       return;
     }
     
-    onConfirm({
-      startingPoint: startingPoint.address,
-      destination: destination.address,
-      waypoints: [], // Simplified to two-place selection
-      budget,
-      distance,
-      routeInfo: routeInfo || undefined,
-      navigationLink: navigationLink || undefined
-    });
-    
-    // Start location tracking for navigation updates
-    if (navigationLink) {
-      getCurrentLocation();
-      startLocationTracking();
-    }
-    
-    // Reset form after submission
-    resetForm();
+    // Show date/time picker instead of directly confirming
+    setShowDateTimePicker(true);
   };
   
   // Handle confirm button click - using handleSubmit directly
@@ -838,7 +1217,22 @@ export function DateDetailsDrawer({
                   )}
                 </div>
               </div>
-
+              
+              {/* Metro Button */}
+              <div className="pt-2">
+                <Button 
+                  variant={isMetroMode ? "default" : "outline"}
+                  size="sm"
+                  className={`w-full ${isMetroMode ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                  onClick={() => setIsMetroMode(!isMetroMode)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256" className="mr-2">
+                    <path d="M184,24H72A32,32,0,0,0,40,56V184a32,32,0,0,0,32,32h8L65.6,235.2a8,8,0,1,0,12.8,9.6L100,216h56l21.6,28.8a8,8,0,1,0,12.8-9.6L176,216h8a32,32,0,0,0,32-32V56A32,32,0,0,0,184,24ZM56,120V80h64v40Zm80-40h64v40H136ZM72,40H184a16,16,0,0,1,16,16v8H56V56A16,16,0,0,1,72,40ZM184,200H72a16,16,0,0,1-16-16V136H200v48A16,16,0,0,1,184,200ZM96,172a12,12,0,1,1-12-12A12,12,0,0,1,96,172Zm88,0a12,12,0,1,1-12-12A12,12,0,0,1,184,172Z"></path>
+                  </svg>
+                  {isMetroMode ? 'Metro mode enabled' : 'Using the metro?'}
+                </Button>
+              </div>
+              
               {/* Route Calculation Section */}
               {startingPoint.address && destination.address && (
                 <div className="space-y-4 p-4 bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg border border-pink-200">
@@ -846,6 +1240,14 @@ export function DateDetailsDrawer({
                     <h3 className="text-lg font-semibold text-pink-800 flex items-center gap-2">
                       <Route className="h-5 w-5" />
                       Route Information
+                      {isMetroMode && (
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256" className="mr-1">
+                            <path d="M184,24H72A32,32,0,0,0,40,56V184a32,32,0,0,0,32,32h8L65.6,235.2a8,8,0,1,0,12.8,9.6L100,216h56l21.6,28.8a8,8,0,1,0,12.8-9.6L176,216h8a32,32,0,0,0,32-32V56A32,32,0,0,0,184,24ZM56,120V80h64v40Zm80-40h64v40H136ZM72,40H184a16,16,0,0,1,16,16v8H56V56A16,16,0,0,1,72,40ZM184,200H72a16,16,0,0,1-16-16V136H200v48A16,16,0,0,1,184,200ZM96,172a12,12,0,1,1-12-12A12,12,0,0,1,96,172Zm88,0a12,12,0,1,1-12-12A12,12,0,0,1,184,172Z"></path>
+                          </svg>
+                          Metro
+                        </Badge>
+                      )}
                     </h3>
                     <Button
                       onClick={calculateRoute}
@@ -883,14 +1285,14 @@ export function DateDetailsDrawer({
 
                       {/* Navigation Link */}
                       {navigationLink && (
-                        <div className="space-y-2">
+              <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm">
                             <Navigation className="h-4 w-4 text-pink-600" />
                             <span className="font-medium">
-                              Navigate to: {hasReachedFirstDestination ? 'Final Destination' : 'First Stop'}
+                              Navigate to: Final Destination
                             </span>
                           </div>
-                          <Button
+                  <Button
                             onClick={() => window.open(navigationLink, '_blank')}
                             className="w-full bg-green-500 hover:bg-green-600 text-white"
                           >
@@ -913,18 +1315,154 @@ export function DateDetailsDrawer({
                 </div>
               )}
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Distance (km)</label>
-                <Input 
-                  type="number" 
-                  value={distance} 
-                  onChange={(e) => onDistanceChange(e.target.value)}
-                  min="1"
-                  max="50"
-                />
-              </div>
+              {/* Distance input removed to save space */}
               
-              {/* Waypoints section removed - focusing on two-place selection for simplicity */}
+              {/* Nearby Places Section */}
+              {destination.address && !showNearbyPlaces && (
+                <div className="pt-4">
+                  {isLoadingNearby ? (
+                    <div className="space-y-2">
+                      <Button 
+                        disabled
+                    variant="outline"
+                        className="w-full"
+                      >
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-500 mr-2"></div>
+                        Finding nearby places...
+                      </Button>
+                      <Button 
+                        onClick={cancelNearbySearch}
+                        variant="destructive"
+                    size="sm"
+                        className="w-full"
+                      >
+                        Cancel Search
+                  </Button>
+                </div>
+                  ) : (
+                    <Button 
+                      onClick={fetchNearbyPlaces}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Find nearby places
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Nearby Places List */}
+              {showNearbyPlaces && nearbyPlaces.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h3 className="text-sm font-medium mb-3">Nearby Places</h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {nearbyPlaces.map((place) => (
+                      <div key={place.place_id} className="flex items-center justify-between p-2 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{place.name}</div>
+                          <div className="text-xs text-gray-600">{place.vicinity}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {place.rating && (
+                              <span className="text-xs text-yellow-600">⭐ {place.rating}</span>
+                            )}
+                            {place.price_level && (
+                              <span className="text-xs text-green-600">
+                                {'$'.repeat(place.price_level)}
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-500">
+                              {place.types[0]?.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => addPlaceToRoute(place)}
+                          className="ml-2"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Waypoints List */}
+                {waypoints.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h3 className="text-sm font-medium mb-3">Route Stops</h3>
+                  <div className="space-y-2">
+                    {waypoints.map((waypoint) => (
+                      <div key={waypoint.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{waypoint.name}</div>
+                          <div className="text-xs text-gray-600">{waypoint.address}</div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => removeWaypoint(waypoint.id)}
+                          className="ml-2"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  </div>
+                )}
+
+              {/* Add Another Location */}
+              <div className="pt-4">
+                <Button 
+                  onClick={() => setShowManualLocation(!showManualLocation)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add another location
+                </Button>
+              </div>
+
+              {/* Manual Location Input */}
+              {showManualLocation && (
+                <div className="pt-4 border-t">
+                  <h3 className="text-sm font-medium mb-3">Add Custom Location</h3>
+                  <div className="space-y-3">
+                    <LocationSearch
+                      placeholder="Search for a location..."
+                      onPlaceSelected={(place: Place) => {
+                        setManualLocation({
+                          address: place.formatted_address || place.name || '',
+                          place: place
+                        });
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={addManualLocationToRoute}
+                        disabled={!manualLocation.address || !manualLocation.place}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        Add to Route
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowManualLocation(false);
+                          setManualLocation({ address: '', place: null });
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="pt-4">
                 <Button 
@@ -941,6 +1479,16 @@ export function DateDetailsDrawer({
             <div className="space-y-6 h-full flex flex-col">
               {/* Map Container */}
               <div className="relative flex-1 min-h-[300px] rounded-lg overflow-hidden border border-gray-200">
+                {/* Transit Layer Indicator */}
+                {isMetroMode && destination.address && (
+                  <div className="absolute top-2 left-2 z-10 bg-blue-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 256 256">
+                      <path d="M184,24H72A32,32,0,0,0,40,56V184a32,32,0,0,0,32,32h8L65.6,235.2a8,8,0,1,0,12.8,9.6L100,216h56l21.6,28.8a8,8,0,1,0,12.8-9.6L176,216h8a32,32,0,0,0,32-32V56A32,32,0,0,0,184,24ZM56,120V80h64v40Zm80-40h64v40H136ZM72,40H184a16,16,0,0,1,16,16v8H56V56A16,16,0,0,1,72,40ZM184,200H72a16,16,0,0,1-16-16V136H200v48A16,16,0,0,1,184,200ZM96,172a12,12,0,1,1-12-12A12,12,0,0,1,96,172Zm88,0a12,12,0,1,1-12-12A12,12,0,0,1,184,172Z"></path>
+                    </svg>
+                    Transit Lines
+                  </div>
+                )}
+                
                 <div 
                   ref={mapRef} 
                   className="w-full h-full"
@@ -957,6 +1505,110 @@ export function DateDetailsDrawer({
               {/* Nearby Places Section - Removed to focus on two-place selection */}
             </div>
           </div>
+          
+          {/* Date/Time Picker Modal */}
+          {showDateTimePicker && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-pink-600" />
+                  When is your date?
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Date</label>
+                    <Input
+                      type="date"
+                      value={selectedDateTime ? selectedDateTime.toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        const date = e.target.value;
+                        if (date) {
+                          const newDate = new Date(date);
+                          if (selectedDateTime) {
+                            newDate.setHours(selectedDateTime.getHours());
+                            newDate.setMinutes(selectedDateTime.getMinutes());
+                          }
+                          setSelectedDateTime(newDate);
+                        }
+                      }}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Time</label>
+                    <Input
+                      type="time"
+                      value={selectedDateTime ? selectedDateTime.toTimeString().slice(0, 5) : ''}
+                      onChange={(e) => {
+                        const time = e.target.value;
+                        if (time && selectedDateTime) {
+                          const [hours, minutes] = time.split(':').map(Number);
+                          const newDate = new Date(selectedDateTime);
+                          newDate.setHours(hours, minutes);
+                          setSelectedDateTime(newDate);
+                        } else if (time) {
+                          const [hours, minutes] = time.split(':').map(Number);
+                          const newDate = new Date();
+                          newDate.setHours(hours, minutes);
+                          setSelectedDateTime(newDate);
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Your Date Plan:</h4>
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div>📍 Start: {startingPoint.address}</div>
+                      {waypoints.map((wp, i) => (
+                        <div key={wp.id}>📍 Stop {i + 1}: {wp.name}</div>
+                      ))}
+                      <div>🎯 End: {destination.address}</div>
+                      <div>🚇 Transport: {isMetroMode ? 'Metro' : 'Driving'}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDateTimePicker(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  {checkingCalendarStatus ? (
+                    <Button
+                      disabled
+                      className="flex-1 bg-gray-400 text-white"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Checking Calendar...
+                    </Button>
+                  ) : isCalendarConnected ? (
+                    <Button
+                      onClick={createCalendarEvent}
+                      disabled={!selectedDateTime || isCreatingCalendarEvent}
+                      className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {isCreatingCalendarEvent ? 'Adding to Calendar...' : 'Add to Calendar'}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => window.location.href = '/sign-in'}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Sign in with Google
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           <DrawerFooter>
             <DrawerClose asChild>

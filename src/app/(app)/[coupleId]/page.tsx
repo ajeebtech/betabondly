@@ -36,61 +36,11 @@ type DatePlan = {
 const CARDS = [
   {
     id: 0,
-    name: "Romantic Dinner",
-    designation: "This Friday, 8:00 PM",
+    name: "Date Night",
+    designation: "Today, 8:00 PM",
     content: (
       <p>
-        Booked a table at <span className="font-bold text-pink-500">Le Petit Jardin</span> for a romantic dinner. Don&apos;t forget to wear that dress I love! ❤️
-      </p>
-    ),
-  },
-  {
-    id: 1,
-    name: "Movie Night",
-    designation: "Next Tuesday, 7:30 PM",
-    content: (
-      <p>
-        <span className="font-bold text-pink-500">Inception</span> is playing at the local theater. I know it&apos;s your favorite!
-      </p>
-    ),
-  },
-  {
-    id: 2,
-    name: "Weekend Getaway",
-    designation: "Next Month",
-    content: (
-      <p>
-        Surprise weekend trip to the mountains! <span className="font-bold text-pink-500">Pack warm clothes</span> and your camera. 🏔️
-      </p>
-    ),
-  },
-  {
-    id: 3,
-    name: "Cooking Class",
-    designation: "Next Thursday, 6:30 PM",
-    content: (
-      <p>
-        Signed us up for an Italian cooking class! <span className="font-bold text-pink-500">Get ready to make pasta from scratch</span>! 🍝
-      </p>
-    ),
-  },
-  {
-    id: 4,
-    name: "Beach Day",
-    designation: "This Sunday, 10:00 AM",
-    content: (
-      <p>
-        Let's go to the beach! <span className="font-bold text-pink-500">Don't forget sunscreen</span> and a towel. 🏖️
-      </p>
-    ),
-  },
-  {
-    id: 5,
-    name: "Anniversary Dinner",
-    designation: "October 15, 7:00 PM",
-    content: (
-      <p>
-        Made reservations at <span className="font-bold text-pink-500">The Melting Pot</span> for our anniversary! Can't wait to celebrate us. 💑
+        Let's have a romantic evening together! <span className="font-bold text-pink-500">Dinner and a movie</span> - just the two of us. ❤️
       </p>
     ),
   },
@@ -103,9 +53,21 @@ export default function CoupleDashboard() {
   const [checking, setChecking] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [isDateDetailsOpen, setIsDateDetailsOpen] = useState(false)
+  const [cards, setCards] = useState(CARDS)
   const [budget, setBudget] = useState("")
   const [distance, setDistance] = useState("5")
   const [date, setDate] = useState<Date | null>(null)
+
+  // Function to add a new card to the cards state
+  const addCard = (newCard: { name: string; designation: string; content: React.ReactNode }) => {
+    const card = {
+      id: Date.now(), // Use timestamp as unique ID
+      name: newCard.name,
+      designation: newCard.designation,
+      content: newCard.content as React.ReactElement
+    };
+    setCards(prevCards => [card, ...prevCards]);
+  }
 
   useEffect(() => {
     async function checkMembership() {
@@ -369,14 +331,16 @@ export default function CoupleDashboard() {
         {/* Right Column - Card Stack - Now positioned independently */}
         <div className="fixed right-8 top-4 w-72 hidden lg:flex flex-col">
           <div className="w-full flex justify-end pr-4 mb-2">
-            <AddToCalendarDialog />
+            <AddToCalendarDialog onCardAdded={addCard} />
           </div>
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-rose-100 p-4 mt-4 hover:shadow-xl transition-all duration-300">
             <CardStack 
-              items={CARDS} 
+              items={cards} 
               className="w-full"
               onSwipe={(id) => {
                 console.log(`Card ${id} swiped away`);
+                // Remove the swiped card from the state
+                setCards(prevCards => prevCards.filter(card => card.id !== id));
               }}
             />
           </div>
