@@ -18,6 +18,12 @@ export async function POST(request: Request) {
 
     // Verify the Firebase ID token
     console.log('📅 Calendar API: Verifying Firebase token...');
+    
+    if (!adminAuth) {
+      console.log('📅 Calendar API: Firebase Admin not initialized');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const userId = decodedToken.uid;
     
