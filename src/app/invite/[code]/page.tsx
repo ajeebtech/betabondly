@@ -185,7 +185,6 @@ export default function InvitePage() {
           <GoogleSignInButton
             className="w-full h-11"
             onSuccess={handleGoogleSignIn}
-            disabled={isConnecting}
           />
           
           {isConnecting && (

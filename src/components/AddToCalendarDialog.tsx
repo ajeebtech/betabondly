@@ -258,20 +258,23 @@ export function AddToCalendarDialog({ onCardAdded }: AddToCalendarDialogProps) {
               <YStack space="$2" flex={1} minWidth={200}>
                 <Label htmlFor="event-time" color="$color" fontWeight="600">Time</Label>
                 <XStack position="relative" alignItems="center">
-                  <Clock 
+                  <XStack 
                     position="absolute" 
                     left="$3" 
                     top="50%" 
                     transform="translateY(-50%)" 
-                    size="$1" 
-                    color="$gray10" 
                     zIndex={1}
-                  />
+                  >
+                    <Clock 
+                      size="$1" 
+                      color="$gray10" 
+                    />
+                  </XStack>
                   <Input 
                     id="event-time" 
                     type="time" 
                     value={time}
-                    onChange={(e) => setTime(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)}
                     borderColor="$gray8"
                     focusStyle={{
                       borderColor: "$black",
