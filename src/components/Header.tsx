@@ -43,22 +43,6 @@ export function Header() {
             <NavigationMenu.Root>
               <NavigationMenu.List className="flex space-x-6">
                 <NavigationMenu.Item>
-                  <NavigationMenu.Link
-                    href="#features"
-                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    features
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-                <NavigationMenu.Item>
-                  <NavigationMenu.Link
-                    href="#how-it-works"
-                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    how it works
-                  </NavigationMenu.Link>
-                </NavigationMenu.Item>
-                <NavigationMenu.Item>
                   <NavigationMenu.Link asChild>
                     <Link
                       href="/download"
@@ -81,35 +65,24 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {user ? (
-            <>
-              <div className="flex items-center gap-2">
-                {/* User avatar with fallback */}
-                {user.photoURL ? (
-                  <Image src={user.photoURL} alt="avatar" width={32} height={32} className="rounded-full border border-gray-300" />
-                ) : (
-                  <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 border border-gray-300 text-gray-600 font-bold">
-                    {getInitials(user.displayName || user.email || "U")}
-                  </span>
-                )}
-                <Button
-                  onClick={handleLogout}
-                  size="sm"
-                  className="bg-black text-white border-black hover:bg-neutral-900 hover:text-white"
-                >
-                  Log Out
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/sign-in">Sign In</Link>
+          {user && (
+            <div className="flex items-center gap-2">
+              {/* User avatar with fallback */}
+              {user.photoURL ? (
+                <Image src={user.photoURL} alt="avatar" width={32} height={32} className="rounded-full border border-gray-300" />
+              ) : (
+                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 border border-gray-300 text-gray-600 font-bold">
+                  {getInitials(user.displayName || user.email || "U")}
+                </span>
+              )}
+              <Button
+                onClick={handleLogout}
+                size="sm"
+                className="bg-black text-white border-black hover:bg-neutral-900 hover:text-white"
+              >
+                Log Out
               </Button>
-              <Button size="sm" asChild>
-                <Link href="#cta">Get Started</Link>
-              </Button>
-            </>
+            </div>
           )}
         </div>
       </div>

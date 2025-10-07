@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link href="/download" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Download App
+                  download the app
                 </Link>
               </li>
             </ul>
@@ -39,18 +39,8 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
+                <Link href="https://x.com/ajeebtech" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  contact
                 </Link>
               </li>
             </ul>
@@ -58,7 +48,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2025 bondly. Made with love for couples everywhere.</p>
+          <p>© 2025 bondly. made with love for couples everywhere.</p>
         </div>
       </div>
     </footer>

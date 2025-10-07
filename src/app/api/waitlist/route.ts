@@ -30,30 +30,27 @@ export async function POST(request: Request) {
   }
 
   try {
-    // First, try to find and update existing email
-    const emailQuery = await db.collection('waitlist')
-      .where('email', '==', email)
-      .limit(1)
-      .get();
-
-    if (!emailQuery.empty) {
-      // Get the first matching document
-      const existingDoc = emailQuery.docs[0];
-      
-      // Update the existing document with current timestamp
-      await db.collection('waitlist').doc(existingDoc.id).update({
-        email: email,
-        updatedAt: new Date().toISOString()
-      });
-
+    // Create a safe document ID from email
+    const emailKey = email.toLowerCase().replace(/\./g, "_").replace(/@/g, "_at_");
+    
+    // Check if document already exists
+    const docRef = db.collection('waitlist').doc(emailKey);
+    const docSnap = await docRef.get();
+    
+    if (docSnap.exists) {
+      // Email already exists - reject the request
       return NextResponse.json(
-        { message: 'Your waitlist entry has been updated!', updated: true },
-        { status: 200 }
+        { 
+          error: 'This email is already on our waitlist!',
+          message: 'You\'re already signed up. We\'ll notify you when we launch!',
+          alreadyExists: true
+        },
+        { status: 409 } // Conflict status code
       );
     }
-
-    // If no existing email found, add new entry
-    const docRef = await db.collection('waitlist').add({
+    
+    // Email doesn't exist - create new entry
+    await docRef.set({
       email: email,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -62,7 +59,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { 
         message: 'Thanks for joining our waitlist!',
-        id: docRef.id 
+        id: emailKey,
+        success: true
       },
       { status: 201 }
     );

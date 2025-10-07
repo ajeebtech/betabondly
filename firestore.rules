@@ -113,8 +113,9 @@ service cloud.firestore {
     }
 
     // Waitlist collection: allow anyone to add and read
-    match /waitlist/{waitlistId} {
-      allow read, create: if true;
+    // Document ID is based on email (email@example.com -> email_at_example_com)
+    match /waitlist/{emailKey} {
+      allow read, create, update: if true;
     }
     
     // Calendar events collection (for Google Calendar integration)

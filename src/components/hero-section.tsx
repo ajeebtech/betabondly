@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
 import { ArrowRight, Check, Sparkles, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { db } from "@/lib/firebase"
-import { collection, addDoc, serverTimestamp, getCountFromServer, query } from "firebase/firestore"
+import { collection, getCountFromServer, query } from "firebase/firestore"
 import { toast } from "sonner"
 import { GoogleSignInButton } from "@/components/GoogleSignInButton"
 
@@ -42,21 +41,43 @@ export function HeroSection() {
     setIsSubmitting(true)
     
     try {
-      // Add email to Firestore
-      await addDoc(collection(db, "waitlist"), {
-        email: email.trim().toLowerCase(),
-        createdAt: serverTimestamp(),
-        status: "pending"
+      // Add email via API endpoint (handles deduplication)
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       })
       
-      setEmail("")
-      setIsSuccess(true)
-      toast.success("You've been added to the waitlist!")
+      const result = await response.json()
       
-      // Reset success state after 5 seconds
-      setTimeout(() => {
-        setIsSuccess(false)
-      }, 5000)
+      if (response.ok) {
+        setEmail("")
+        setIsSuccess(true)
+        toast.success(result.message)
+        
+        // Refresh the count
+        const waitlistRef = collection(db, "waitlist")
+        const q = query(waitlistRef)
+        const snapshot = await getCountFromServer(q)
+        setWaitlistCount(snapshot.data().count)
+        
+        // Reset success state after 5 seconds
+        setTimeout(() => {
+          setIsSuccess(false)
+        }, 5000)
+      } else {
+        // Handle different error cases
+        if (result.alreadyExists) {
+          // Email already exists - show info message instead of error
+          toast.info(result.message)
+          setEmail("") // Clear the email field
+        } else {
+          // Other errors - show error message
+          throw new Error(result.error || 'Failed to add to waitlist')
+        }
+      }
       
     } catch (error) {
       console.error("Error adding to waitlist: ", error)
@@ -67,7 +88,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative pt-8 pb-8 md:pt-12 md:pb-12 overflow-hidden" style={{ scrollMarginTop: '4rem' }}>
+    <section className="relative pt-6 pb-6 md:pt-10 md:pb-10 overflow-hidden" style={{ scrollMarginTop: '4rem' }}>
       {/* Subtle background decoration */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -75,9 +96,9 @@ export function HeroSection() {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Left content */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-5">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/50 border border-primary/20">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">Early Access • Be the First</span>
@@ -85,11 +106,11 @@ export function HeroSection() {
             </div>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-playfair font-bold leading-tight text-balance">
-              Your little corner of the internet, <span className="text-pink-600 font-extrabold drop-shadow-lg" style={{textShadow: '0 2px 8px #fff0f6, 0 1px 0 #ff69b4'}}>only for two.</span>
+              your little corner of the internet, <span className="text-pink-600 font-extrabold drop-shadow-lg" style={{textShadow: '0 2px 8px #fff0f6, 0 1px 0 #ff69b4'}}>only for two.</span>
             </h1>
 
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed text-pretty max-w-xl">
-              a private space where you and your partner can document and capture all your moments and bond together.
+              where you and your partner can document and capture all your moments and bond together.
             </p>
 
             {/* Waitlist form */}
@@ -140,11 +161,8 @@ export function HeroSection() {
             </p>
 
             {/* Quick start actions */}
-            <div className="pt-2 max-w-md space-y-2">
-              <Button size="lg" className="w-full h-12" asChild>
-                <Link href="/sign-up">Get Started</Link>
-              </Button>
-              <GoogleSignInButton className="w-full h-11" />
+            <div className="pt-2 max-w-md">
+              <GoogleSignInButton className="w-full h-12" />
             </div>
           </div>
 
