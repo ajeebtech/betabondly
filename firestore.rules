@@ -1,8 +1,127 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    // Helper functions
+    function isUserAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isUserAuthenticated() && request.auth.token.email_verified == true;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    function isValidInviteCode(code) {
+      return code is string && code.size() == 5 && code.matches('[0-9]{5}');
+    }
+    
+    function isValidInviteStatus(status) {
+      return status in ['in process', 'completed', 'expired'];
+    }
+    
+    // Users collection - comprehensive rules for onboarding and profile data
+    match /users/{userId} {
+      // Users can read their own data
+      allow read: if isOwner(userId);
+      
+      // Allow create for any authenticated user (Google sign-in)
+      allow create: if isUserAuthenticated() && 
+        isOwner(userId) &&
+        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email == request.auth.token.email;
+      
+      // Allow update for onboarding steps and profile management
+      allow update: if isOwner(userId) && (
+        // Basic profile updates (name, photo)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt'])) ||
+        
+        // Dating start date update
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['datingStartDate', 'updatedAt'])) ||
+        
+        // Invite code generation
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['inviteCode', 'inviteLink', 'inviteStatus', 'updatedAt']) &&
+         isValidInviteCode(request.resource.data.inviteCode) &&
+         isValidInviteStatus(request.resource.data.inviteStatus)) ||
+        
+        // Couple connection (when partner joins)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coupleId', 'inviteStatus', 'updatedAt']) &&
+         isValidInviteStatus(request.resource.data.inviteStatus)) ||
+        
+        // Email verification status update
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified', 'updatedAt']))
+      );
+      
+      // Allow users to find other users by invite code (for partner connection)
+      allow read: if isUserAuthenticated() && 
+        request.query.where('inviteCode', '==', request.query.limit(1));
+      
+      // Allow reading user data for invite verification (public invite pages)
+      allow read: if request.query.where('inviteCode', '==', request.query.limit(1));
+    }
+    
+    // Couples collection rules
+    match /couples/{coupleId} {
+      // Users can read couple data if they're a member
+      allow read: if isUserAuthenticated() && 
+        request.auth.uid in resource.data.users;
+      
+      // Allow create for authenticated users (first user creates couple)
+      allow create: if isUserAuthenticated() && 
+        request.resource.data.users.hasAll([request.auth.uid]) &&
+        request.resource.data.keys().hasAll(['users', 'createdAt']);
+      
+      // Allow update to add partner (when invite code is used)
+      allow update: if isUserAuthenticated() && 
+        request.auth.uid in resource.data.users &&
+        request.resource.data.users.size() <= 2; // Couples can only have 2 members
+    }
+
+    // Posts collection
+    match /posts/{postId} {
+      // Users can read posts from their couple
+      allow read: if isUserAuthenticated() && 
+        exists(/databases/$(database)/documents/couples/$(resource.data.coupleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users;
+      
+      // Users can create posts for their couple
+      allow create: if isUserAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        exists(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
+      
+      // Only the post creator can update/delete their posts
+      allow update, delete: if isUserAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+    }
+
+    // Messages collection (for couple chat)
+    match /couple-messages/{messageId} {
+      // Users can read messages from their couple
+      allow read: if isUserAuthenticated() && 
+        exists(/databases/$(database)/documents/couples/$(resource.data.coupleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users;
+      
+      // Users can create messages for their couple
+      allow create: if isUserAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        exists(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
+    }
+
+    // Waitlist collection: allow anyone to add and read
+    match /waitlist/{waitlistId} {
+      allow read, create: if true;
+    }
+    
+    // Calendar events collection (for Google Calendar integration)
+    match /calendar-events/{eventId} {
+      // Users can read/create/update their own calendar events
+      allow read, create, update, delete: if isUserAuthenticated() && 
+        request.auth.uid == resource.data.userId;
     }
   }
 }

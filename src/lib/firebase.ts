@@ -35,16 +35,28 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
   console.error('Missing required Firebase configuration. Please check your environment variables.');
 }
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase with explicit configuration
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
 
-// Add Google Calendar scopes to the provider
+// Create a fresh Google provider instance
+const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
 googleProvider.addScope('https://www.googleapis.com/auth/calendar');
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+
+// Debug: Log the configuration being used
+if (typeof window !== 'undefined') {
+  console.log('Firebase Config:', {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
+    appId: firebaseConfig.appId
+  });
+}
 
 // Initialize reCAPTCHA
 const initRecaptcha = (containerId: string = 'recaptcha-container'): RecaptchaVerifier => {

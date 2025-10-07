@@ -1,4 +1,4 @@
-// Google Sign-In - super simple, no bullshit
+// Google Sign-In - restored after OAuth fix
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
 

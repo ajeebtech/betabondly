@@ -1,29 +1,44 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRequireNoAuth } from '@/hooks/useRequireAuth';
-import { LoadingSpinner } from '@/components/auth/LoadingSpinner';
+import { auth, db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 export default function NameStep() {
   const router = useRouter();
-  const { name, setName } = useAuth();
-  const { loading } = useRequireNoAuth();
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      router.push('/auth/phone');
+    if (!name.trim()) return;
+    
+    setLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        // Update user's display name in Firebase Auth
+        await updateDoc(doc(db, 'users', user.uid), {
+          displayName: name.trim(),
+          updatedAt: new Date().toISOString(),
+        });
+        
+        toast.success('Name updated successfully!');
+        router.push('/auth/photo');
+      }
+    } catch (error) {
+      console.error('Error updating name:', error);
+      toast.error('Failed to update name. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -48,8 +63,8 @@ export default function NameStep() {
                 className="mt-1"
               />
             </div>
-            <Button type="submit" className="w-full">
-              Continue
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Saving...' : 'Continue'}
             </Button>
           </form>
         </CardContent>
