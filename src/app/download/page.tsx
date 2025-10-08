@@ -16,7 +16,7 @@ export default function AppDownloadsPage() {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl border bg-white/60 backdrop-blur p-8 shadow-sm">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Get the Bondly app</h1>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">get the bondly app</h1>
             <p className="text-sm text-muted-foreground">Choose your platform to download</p>
           </div>
 
@@ -35,7 +35,7 @@ export default function AppDownloadsPage() {
             </Button>
           </div>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">We’ll add direct store links here when live.</p>
+          <p className="mt-6 text-center text-xs text-muted-foreground">coming soon.</p>
         </div>
       </div>
     </div>

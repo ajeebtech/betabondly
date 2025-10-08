@@ -18,12 +18,11 @@ export default function PrivacyPage() {
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, setEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value;
-
+    
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErrorMessage('Please enter a valid email address');
       setShowError(true);
@@ -39,14 +38,24 @@ export default function PrivacyPage() {
         body: JSON.stringify({ email }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to join waitlist');
+      const result = await response.json();
+      
+      if (response.ok) {
+        setShowSuccess(true);
+        setEmail(""); // Clear the email field
+        setTimeout(() => setShowSuccess(false), 5000);
+      } else {
+        // Handle different error cases
+        if (result.alreadyExists) {
+          // Email already exists - show info message instead of error
+          setShowSuccess(true);
+          setEmail(""); // Clear the email field
+          setTimeout(() => setShowSuccess(false), 5000);
+        } else {
+          // Other errors - show error message
+          throw new Error(result.error || 'Failed to join waitlist');
+        }
       }
-
-      setShowSuccess(true);
-      form.reset();
-      setTimeout(() => setShowSuccess(false), 5000);
     } catch (error: any) {
       console.error('Error:', error);
       setErrorMessage(error?.message || 'Failed to join waitlist. Please try again.');
@@ -192,6 +201,8 @@ export default function PrivacyPage() {
                       type="email" 
                       id="email" 
                       name="email" 
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="hs-input py-3 pl-10 pr-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none shadow-sm text-gray-800 bg-white" 
                       placeholder="Enter your email" 
                       style={{ color: '#1a1a1a' }}
