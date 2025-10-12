@@ -54,8 +54,20 @@ if (typeof window !== 'undefined') {
     projectId: firebaseConfig.projectId,
     authDomain: firebaseConfig.authDomain,
     apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
-    appId: firebaseConfig.appId
+    appId: firebaseConfig.appId,
+    environment: process.env.NODE_ENV,
+    isProduction: process.env.NODE_ENV === 'production'
   });
+  
+  // Check if any required config is missing
+  const missingConfig = [];
+  if (!firebaseConfig.apiKey) missingConfig.push('NEXT_PUBLIC_FIREBASE_API_KEY');
+  if (!firebaseConfig.authDomain) missingConfig.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
+  if (!firebaseConfig.projectId) missingConfig.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+  
+  if (missingConfig.length > 0) {
+    console.error('Missing Firebase environment variables:', missingConfig);
+  }
 }
 
 // Initialize reCAPTCHA

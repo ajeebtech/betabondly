@@ -11,12 +11,26 @@ export default function SignInPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
+    console.log('Starting Google onboarding for user:', userInfo);
     const userDocRef = doc(db, 'users', userInfo.uid);
     
     try {
       // Ensure user doc exists
+      console.log('Checking if user document exists...');
       const userDocSnap = await getDoc(userDocRef);
+      console.log('User document exists:', userDocSnap.exists());
+      
       if (!userDocSnap.exists()) {
+        console.log('Creating new user document with data:', {
+          uid: userInfo.uid,
+          email: userInfo.email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          displayName: userInfo.name || '',
+          emailVerified: true,
+          photoURL: userInfo.photoURL || null,
+        });
+        
         await setDoc(userDocRef, {
           uid: userInfo.uid,
           email: userInfo.email,
@@ -32,10 +46,17 @@ export default function SignInPage() {
       }
     } catch (error) {
       console.error('Error creating user document:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
     
+    console.log('Fetching user data for onboarding...');
     const data = (await getDoc(userDocRef)).data();
+    console.log('User data:', data);
     
     // Check onboarding progress - prioritize missing required fields
     if (!data?.datingStartDate) {
@@ -58,7 +79,14 @@ export default function SignInPage() {
         <CardContent className="space-y-6">
           <GoogleSignInButton
             className="w-full h-11"
-            onSuccess={handleGoogleOnboarding}
+            onSuccess={async (userInfo) => {
+              try {
+                await handleGoogleOnboarding(userInfo);
+              } catch (error) {
+                console.error('Onboarding failed:', error);
+                alert('Failed to create user account. Please try again.');
+              }
+            }}
             onError={(error) => {
               console.error('Google sign-in error:', error);
             }}
