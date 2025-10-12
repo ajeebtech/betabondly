@@ -50,13 +50,14 @@ googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
 
 // Debug: Log the configuration being used
 if (typeof window !== 'undefined') {
-  console.log('Firebase Config:', {
+  console.log('🔥 Firebase Config:', {
     projectId: firebaseConfig.projectId,
     authDomain: firebaseConfig.authDomain,
     apiKey: firebaseConfig.apiKey ? 'Present' : 'Missing',
     appId: firebaseConfig.appId,
     environment: process.env.NODE_ENV,
-    isProduction: process.env.NODE_ENV === 'production'
+    isProduction: process.env.NODE_ENV === 'production',
+    currentUrl: window.location.href
   });
   
   // Check if any required config is missing
@@ -66,8 +67,13 @@ if (typeof window !== 'undefined') {
   if (!firebaseConfig.projectId) missingConfig.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
   
   if (missingConfig.length > 0) {
-    console.error('Missing Firebase environment variables:', missingConfig);
+    console.error('❌ Missing Firebase environment variables:', missingConfig);
+  } else {
+    console.log('✅ All Firebase environment variables are present');
   }
+  
+  // Test Firestore connection
+  console.log('🔥 Firestore instance created:', !!db);
 }
 
 // Initialize reCAPTCHA

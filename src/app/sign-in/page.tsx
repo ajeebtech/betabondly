@@ -22,15 +22,17 @@ export default function SignInPage() {
     console.log('Auth user UID:', auth.currentUser?.uid);
     
     const userDocRef = doc(db, 'users', userInfo.uid);
+    let userData = null;
     
     try {
-      // Ensure user doc exists
+      // First, try client-side creation
+      console.log('Attempting client-side user creation...');
       console.log('Checking if user document exists...');
       const userDocSnap = await getDoc(userDocRef);
       console.log('User document exists:', userDocSnap.exists());
       
       if (!userDocSnap.exists()) {
-        const userData = {
+        const userDataToCreate = {
           uid: userInfo.uid,
           email: userInfo.email,
           createdAt: new Date().toISOString(),
@@ -40,12 +42,12 @@ export default function SignInPage() {
           photoURL: userInfo.photoURL || null,
         };
         
-        console.log('Creating new user document with data:', userData);
+        console.log('Creating new user document with data:', userDataToCreate);
         console.log('Firestore instance:', db);
         console.log('Document reference:', userDocRef);
         
-        await setDoc(userDocRef, userData);
-        console.log('✅ User document created successfully');
+        await setDoc(userDocRef, userDataToCreate);
+        console.log('✅ User document created successfully (client-side)');
         
         // Verify the document was created
         const verifyDoc = await getDoc(userDocRef);
@@ -56,8 +58,15 @@ export default function SignInPage() {
       } else {
         console.log('User document already exists');
       }
+      
+      // Fetch user data for onboarding
+      console.log('Fetching user data for onboarding...');
+      const data = (await getDoc(userDocRef)).data();
+      console.log('User data:', data);
+      userData = data;
+      
     } catch (error) {
-      console.error('❌ Error creating user document:', error);
+      console.error('❌ Client-side user creation failed:', error);
       console.error('❌ Error details:', {
         code: (error as any)?.code,
         message: (error as any)?.message,
@@ -65,29 +74,54 @@ export default function SignInPage() {
         name: (error as any)?.name
       });
       
-      // Check if it's a Firestore rules error
-      if ((error as any)?.code === 'permission-denied') {
-        console.error('❌ FIRESTORE RULES ERROR: Permission denied');
-        alert('Permission denied by Firestore rules. Check console for details.');
-      } else if ((error as any)?.code === 'unavailable') {
-        console.error('❌ FIRESTORE CONNECTION ERROR: Service unavailable');
-        alert('Firestore service unavailable. Check your internet connection.');
+      // Try server-side fallback
+      console.log('🔄 Attempting server-side user sync as fallback...');
+      try {
+        const response = await fetch('/api/sync-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            uid: userInfo.uid,
+            email: userInfo.email,
+            displayName: userInfo.name,
+            photoURL: userInfo.photoURL,
+          }),
+        });
+
+        const result = await response.json();
+        
+        if (response.ok) {
+          console.log('✅ Server-side user sync successful:', result);
+          userData = result.userData;
+        } else {
+          console.error('❌ Server-side user sync failed:', result);
+          throw new Error(result.error || 'Server-side sync failed');
+        }
+      } catch (serverError) {
+        console.error('❌ Server-side fallback also failed:', serverError);
+        
+        // Check if it's a Firestore rules error
+        if ((error as any)?.code === 'permission-denied') {
+          console.error('❌ FIRESTORE RULES ERROR: Permission denied');
+          alert('Permission denied by Firestore rules. Check console for details.');
+        } else if ((error as any)?.code === 'unavailable') {
+          console.error('❌ FIRESTORE CONNECTION ERROR: Service unavailable');
+          alert('Firestore service unavailable. Check your internet connection.');
+        }
+        
+        throw error;
       }
-      
-      throw error;
     }
     
-    console.log('Fetching user data for onboarding...');
-    const data = (await getDoc(userDocRef)).data();
-    console.log('User data:', data);
-    
     // Check onboarding progress - prioritize missing required fields
-    if (!data?.datingStartDate) {
+    if (!userData?.datingStartDate) {
       router.push('/auth/date');
-    } else if (!data?.inviteCode) {
+    } else if (!userData?.inviteCode) {
       router.push('/auth/invite');
-    } else if (data?.coupleId) {
-      router.push(`/${data.coupleId}`);
+    } else if (userData?.coupleId) {
+      router.push(`/${userData.coupleId}`);
     } else {
       router.push('/default-couple');
     }
