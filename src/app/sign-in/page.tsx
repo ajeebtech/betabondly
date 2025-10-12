@@ -83,12 +83,7 @@ export default function SignInPage() {
     };
 
     handleRedirectResult();
-  }, [handleGoogleOnboarding]);
-
-  const handleSuccess = async (userInfo: any) => {
-    console.log('🎉 CALLBACK CALLED!', userInfo);
-    await handleGoogleOnboarding(userInfo);
-  };
+  }, []);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -99,7 +94,10 @@ export default function SignInPage() {
         <CardContent className="space-y-6">
           <GoogleSignInButton
             className="w-full h-11"
-            onSuccess={handleSuccess}
+            onSuccess={async (userInfo: any) => {
+              console.log('🎉 CALLBACK CALLED!', userInfo);
+              await handleGoogleOnboarding(userInfo);
+            }}
             onError={(error) => {
               console.error('Google sign-in error:', error);
             }}
