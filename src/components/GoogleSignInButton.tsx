@@ -44,7 +44,11 @@ export function GoogleSignInButton({
       toast.success('Signed in successfully!');
       
       if (onSuccess) {
+        console.log('🚀 CALLING CALLBACK with:', userInfo);
         await onSuccess(userInfo);
+        console.log('✅ CALLBACK COMPLETED');
+      } else {
+        console.log('❌ NO CALLBACK PROVIDED');
       }
       
     } catch (error: any) {

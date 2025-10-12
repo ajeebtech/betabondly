@@ -86,6 +86,7 @@ export default function SignInPage() {
   }, [handleGoogleOnboarding]);
 
   const handleSuccess = async (userInfo: any) => {
+    console.log('🎉 CALLBACK CALLED!', userInfo);
     await handleGoogleOnboarding(userInfo);
   };
 
