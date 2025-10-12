@@ -299,6 +299,10 @@ export default function SignInPage() {
     handleRedirectResult();
   }, [handleGoogleOnboarding]);
 
+  // Debug the callback function
+  console.log('SignInPage: handleGoogleOnboarding function exists:', !!handleGoogleOnboarding);
+  console.log('SignInPage: handleGoogleOnboarding type:', typeof handleGoogleOnboarding);
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <Card className="w-full max-w-md border border-muted/40 bg-background/80 backdrop-blur">

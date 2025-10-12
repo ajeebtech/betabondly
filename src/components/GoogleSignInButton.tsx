@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { simpleGoogleAuth } from '@/lib/simpleGoogleAuth';
 import { toast } from 'sonner';
@@ -19,6 +19,23 @@ export function GoogleSignInButton({
   className 
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
+
+  // Debug props
+  console.log('GoogleSignInButton: Props received:', {
+    onSuccess: !!onSuccess,
+    onError: !!onError,
+    children,
+    className
+  });
+
+  useEffect(() => {
+    console.log('GoogleSignInButton: Component mounted with props:', {
+      onSuccess: !!onSuccess,
+      onError: !!onError,
+      children,
+      className
+    });
+  }, [onSuccess, onError, children, className]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
