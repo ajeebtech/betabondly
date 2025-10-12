@@ -148,7 +148,8 @@ export {
   signInWithPhoneNumber, 
   PhoneAuthProvider, 
   signInWithCredential,
-  initRecaptcha 
+  initRecaptcha,
+  app
 };
 
 export default app;

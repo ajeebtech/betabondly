@@ -26,10 +26,14 @@ export function GoogleSignInButton({
     try {
       const user = await simpleGoogleAuth.signInWithGoogle();
       
-      // Small delay to ensure auth state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // For redirect flow, user will be null and page will redirect
+      if (!user) {
+        console.log('Redirecting to Google sign-in...');
+        toast.info('Redirecting to Google sign-in...');
+        return;
+      }
       
-      // Extract user info
+      // Extract user info for popup flow
       const userInfo = {
         uid: user.uid,
         email: user.email,

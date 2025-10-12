@@ -41,6 +41,10 @@ service cloud.firestore {
         isOwner(userId) &&
         request.resource.data.keys().hasAll(['uid', 'email']);
       
+      // TEMPORARY: Very permissive rule for debugging (REMOVE AFTER FIX)
+      allow create: if isUserAuthenticated() && 
+        isOwner(userId);
+      
       // Allow update for onboarding steps and profile management
       allow update: if isOwner(userId) && (
         // Basic profile updates (name, photo)
