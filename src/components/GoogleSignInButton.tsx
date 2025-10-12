@@ -26,6 +26,10 @@ export function GoogleSignInButton({
     try {
       const user = await simpleGoogleAuth.signInWithGoogle();
       
+      console.log('GoogleSignInButton: Received user:', user);
+      console.log('GoogleSignInButton: User type:', typeof user);
+      console.log('GoogleSignInButton: User is null?', user === null);
+      
       // For redirect flow, user will be null and page will redirect
       if (!user) {
         console.log('Redirecting to Google sign-in...');
@@ -42,9 +46,12 @@ export function GoogleSignInButton({
         phone: user.phoneNumber,
       };
       
+      console.log('GoogleSignInButton: Extracted userInfo:', userInfo);
+      
       toast.success('Signed in successfully!');
       
       if (onSuccess) {
+        console.log('GoogleSignInButton: Calling onSuccess callback');
         onSuccess(userInfo);
       }
       
@@ -66,6 +73,7 @@ export function GoogleSignInButton({
       }
       
     } finally {
+      console.log('GoogleSignInButton: Setting loading to false');
       setLoading(false);
     }
   };

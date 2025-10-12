@@ -17,6 +17,13 @@ export const simpleGoogleAuth = {
         console.log('Attempting popup sign-in...');
         const popupResult = await signInWithPopup(auth, googleProvider);
         console.log('Google sign-in successful (popup):', popupResult.user);
+        console.log('User details:', {
+          uid: popupResult.user.uid,
+          email: popupResult.user.email,
+          displayName: popupResult.user.displayName,
+          photoURL: popupResult.user.photoURL,
+          emailVerified: popupResult.user.emailVerified
+        });
         return popupResult.user;
       } catch (popupError) {
         console.log('Popup failed, falling back to redirect:', popupError);

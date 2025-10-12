@@ -309,6 +309,7 @@ export default function SignInPage() {
           <GoogleSignInButton
             className="w-full h-11"
             onSuccess={async (userInfo) => {
+              console.log('SignInPage: onSuccess callback called with:', userInfo);
               try {
                 await handleGoogleOnboarding(userInfo);
               } catch (error) {
