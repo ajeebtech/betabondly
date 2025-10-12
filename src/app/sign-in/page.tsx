@@ -13,107 +13,19 @@ export default function SignInPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
-    console.log('Starting Google onboarding for user:', userInfo);
-    console.log('Current environment:', process.env.NODE_ENV);
-    console.log('Current URL:', window.location.href);
-    
-    // Production debugging
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🚀 PRODUCTION DEBUG INFO');
-      console.log('Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-      console.log('Auth Domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
-      console.log('API Key Present:', !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
-      console.log('App ID:', process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
-      console.log('Current URL:', window.location.href);
-      console.log('Expected Auth Domain:', `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`);
-      
-      // Check if auth domain matches
-      const expectedAuthDomain = `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`;
-      if (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN !== expectedAuthDomain) {
-        console.warn('⚠️ Auth domain mismatch:', {
-          expected: expectedAuthDomain,
-          actual: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-        });
-      }
-    }
-    
-    // Check Firebase auth state
-    console.log('Current Firebase auth user:', auth.currentUser);
-    console.log('Auth user email:', auth.currentUser?.email);
-    console.log('Auth user UID:', auth.currentUser?.uid);
-    
-    // Use the userInfo from the callback instead of auth.currentUser
-    // since auth.currentUser might not be updated immediately
-    const currentUser = auth.currentUser || userInfo;
-    
-    // Ensure user is authenticated before proceeding
-    if (!currentUser) {
-      console.error('❌ User not authenticated');
+    if (!userInfo?.uid) {
+      console.error('No user info provided');
       return;
     }
-    
-    // Wait for auth state to be ready if needed
-    if (!auth.currentUser && userInfo.uid) {
-      console.log('⏳ Waiting for auth state to be ready...');
-      await new Promise((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (user) {
-            console.log('✅ Auth state ready:', user.uid);
-            unsubscribe();
-            resolve(user);
-          }
-        });
-        
-        // Timeout after 5 seconds
-        setTimeout(() => {
-          console.log('⏰ Auth state timeout, proceeding with userInfo');
-          unsubscribe();
-          resolve(null);
-        }, 5000);
-      });
-    }
-    
+
     const userDocRef = doc(db, 'users', userInfo.uid);
-    let userData = null;
     
     try {
-      // Test Firebase connection and authentication
-      console.log('Testing Firebase connection...');
-      
-      // Test 1: Check if Firebase is properly initialized
-      console.log('Firebase app initialized:', !!app);
-      console.log('Auth instance:', !!auth);
-      console.log('Firestore instance:', !!db);
-      
-      // Test 2: Check authentication state
-      console.log('Auth current user:', auth.currentUser);
-      console.log('Auth state ready:', auth.currentUser !== undefined);
-      
-      // Test 3: Test Firestore connection
-      console.log('Testing Firestore connection...');
-      try {
-        const testDoc = doc(db, 'test', 'connection');
-        await getDoc(testDoc);
-        console.log('✅ Firestore connection test successful');
-      } catch (testError) {
-        console.error('❌ Firestore connection test failed:', testError);
-        console.error('Test error details:', {
-          code: (testError as any)?.code,
-          message: (testError as any)?.message
-        });
-      }
-      
-      // First, try client-side creation
-      console.log('Attempting client-side user creation...');
-      console.log('Checking if user document exists...');
-      console.log('UserDocRef path:', userDocRef.path);
-      console.log('UserDocRef id:', userDocRef.id);
-      
+      // Check if user document exists
       const userDocSnap = await getDoc(userDocRef);
-      console.log('User document exists:', userDocSnap.exists());
-      console.log('User document data:', userDocSnap.data());
       
       if (!userDocSnap.exists()) {
+        // Create user document
         const userDataToCreate = {
           uid: userInfo.uid,
           email: userInfo.email,
@@ -124,154 +36,29 @@ export default function SignInPage() {
           photoURL: userInfo.photoURL || null,
         };
         
-        console.log('Creating new user document with data:', userDataToCreate);
-        console.log('Data keys:', Object.keys(userDataToCreate));
-        console.log('Required fields check:');
-        console.log('  Has uid:', 'uid' in userDataToCreate);
-        console.log('  Has email:', 'email' in userDataToCreate);
-        console.log('  Has createdAt:', 'createdAt' in userDataToCreate);
-        console.log('Firestore instance:', db);
-        console.log('Document reference:', userDocRef);
-        console.log('Auth state:', auth.currentUser?.uid);
-        console.log('UserInfo UID:', userInfo.uid);
-        console.log('Auth state matches userInfo:', auth.currentUser?.uid === userInfo.uid);
-        
-        // Test write permissions first
-        console.log('Testing write permissions...');
-        try {
-          const testWriteDoc = doc(db, 'test', 'write-permission');
-          await setDoc(testWriteDoc, { test: true, timestamp: serverTimestamp() });
-          console.log('✅ Write permission test successful');
-          
-          // Clean up test document
-          await deleteDoc(testWriteDoc);
-          console.log('✅ Test document cleaned up');
-        } catch (writeError) {
-          console.error('❌ Write permission test failed:', writeError);
-          console.error('Write error details:', {
-            code: (writeError as any)?.code,
-            message: (writeError as any)?.message
-          });
-        }
-        
-        console.log('Attempting to create user document...');
         await setDoc(userDocRef, userDataToCreate);
-        console.log('✅ User document created successfully (client-side)');
-        
-        // Verify the document was created
-        const verifyDoc = await getDoc(userDocRef);
-        console.log('✅ Document verification:', verifyDoc.exists());
-        if (verifyDoc.exists()) {
-          console.log('✅ Document data:', verifyDoc.data());
-        }
+        console.log('✅ User document created successfully');
       } else {
         console.log('User document already exists');
       }
       
       // Fetch user data for onboarding
-      console.log('Fetching user data for onboarding...');
       const data = (await getDoc(userDocRef)).data();
-      console.log('User data:', data);
-      userData = data;
+      
+      // Check onboarding progress
+      if (!data?.datingStartDate) {
+        router.push('/auth/date');
+      } else if (!data?.inviteCode) {
+        router.push('/auth/invite');
+      } else if (data?.coupleId) {
+        router.push(`/${data.coupleId}`);
+      } else {
+        router.push('/default-couple');
+      }
       
     } catch (error) {
-      console.error('❌ Client-side user creation failed:', error);
-      console.error('❌ Error details:', {
-        code: (error as any)?.code,
-        message: (error as any)?.message,
-        stack: (error as any)?.stack,
-        name: (error as any)?.name
-      });
-      
-      // Production-specific error handling
-      if (process.env.NODE_ENV === 'production') {
-        console.error('🚀 PRODUCTION ERROR ANALYSIS:');
-        console.error('Error Code:', (error as any)?.code);
-        console.error('Error Message:', (error as any)?.message);
-        
-        // Check for common production issues
-        if ((error as any)?.code === 'permission-denied') {
-          console.error('🔒 PERMISSION DENIED - Possible causes:');
-          console.error('  1. Firestore rules not deployed');
-          console.error('  2. Wrong Firebase project');
-          console.error('  3. Domain not authorized');
-          console.error('  4. User not authenticated');
-        } else if ((error as any)?.code === 'unavailable') {
-          console.error('🌐 SERVICE UNAVAILABLE - Possible causes:');
-          console.error('  1. Wrong Firebase project ID');
-          console.error('  2. Network connectivity issues');
-          console.error('  3. Firebase service down');
-        } else if ((error as any)?.code === 'unauthenticated') {
-          console.error('🔐 UNAUTHENTICATED - Possible causes:');
-          console.error('  1. Authentication state not ready');
-          console.error('  2. Google OAuth configuration');
-          console.error('  3. Domain not authorized in Firebase Console');
-        } else if ((error as any)?.code === 'invalid-argument') {
-          console.error('📝 INVALID ARGUMENT - Possible causes:');
-          console.error('  1. Missing required fields in user data');
-          console.error('  2. Invalid timestamp format');
-          console.error('  3. Wrong document structure');
-        }
-        
-        // Additional debugging info
-        console.error('🔍 Additional Debug Info:');
-        console.error('  Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
-        console.error('  Auth Domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
-        console.error('  Current URL:', window.location.href);
-        console.error('  User UID:', userInfo.uid);
-        console.error('  Auth State:', auth.currentUser?.uid);
-      }
-      
-      // Try server-side fallback
-      console.log('🔄 Attempting server-side user sync as fallback...');
-      try {
-        const response = await fetch('/api/sync-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            uid: userInfo.uid,
-            email: userInfo.email,
-            displayName: userInfo.name,
-            photoURL: userInfo.photoURL,
-          }),
-        });
-
-        const result = await response.json();
-        
-        if (response.ok) {
-          console.log('✅ Server-side user sync successful:', result);
-          userData = result.userData;
-        } else {
-          console.error('❌ Server-side user sync failed:', result);
-          throw new Error(result.error || 'Server-side sync failed');
-        }
-      } catch (serverError) {
-        console.error('❌ Server-side fallback also failed:', serverError);
-        
-        // Check if it's a Firestore rules error
-        if ((error as any)?.code === 'permission-denied') {
-          console.error('❌ FIRESTORE RULES ERROR: Permission denied');
-          alert('Permission denied by Firestore rules. Check console for details.');
-        } else if ((error as any)?.code === 'unavailable') {
-          console.error('❌ FIRESTORE CONNECTION ERROR: Service unavailable');
-          alert('Firestore service unavailable. Check your internet connection.');
-        }
-        
-        throw error;
-      }
-    }
-    
-    // Check onboarding progress - prioritize missing required fields
-    if (!userData?.datingStartDate) {
-      router.push('/auth/date');
-    } else if (!userData?.inviteCode) {
-      router.push('/auth/invite');
-    } else if (userData?.coupleId) {
-      router.push(`/${userData.coupleId}`);
-    } else {
-      router.push('/default-couple');
+      console.error('Error creating user:', error);
+      alert('Failed to create user account. Please try again.');
     }
   };
 
@@ -281,7 +68,6 @@ export default function SignInPage() {
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          console.log('🔄 Redirect result found:', result.user);
           const userInfo = {
             uid: result.user.uid,
             email: result.user.email,
@@ -299,9 +85,9 @@ export default function SignInPage() {
     handleRedirectResult();
   }, [handleGoogleOnboarding]);
 
-  // Debug the callback function
-  console.log('SignInPage: handleGoogleOnboarding function exists:', !!handleGoogleOnboarding);
-  console.log('SignInPage: handleGoogleOnboarding type:', typeof handleGoogleOnboarding);
+  const handleSuccess = async (userInfo: any) => {
+    await handleGoogleOnboarding(userInfo);
+  };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -312,15 +98,7 @@ export default function SignInPage() {
         <CardContent className="space-y-6">
           <GoogleSignInButton
             className="w-full h-11"
-            onSuccess={async (userInfo) => {
-              console.log('SignInPage: onSuccess callback called with:', userInfo);
-              try {
-                await handleGoogleOnboarding(userInfo);
-              } catch (error) {
-                console.error('Onboarding failed:', error);
-                alert('Failed to create user account. Please try again.');
-              }
-            }}
+            onSuccess={handleSuccess}
             onError={(error) => {
               console.error('Google sign-in error:', error);
             }}
@@ -335,5 +113,5 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

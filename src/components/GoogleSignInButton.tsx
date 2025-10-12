@@ -20,36 +20,14 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
 
-  // Debug props
-  console.log('GoogleSignInButton: Props received:', {
-    onSuccess: !!onSuccess,
-    onError: !!onError,
-    children,
-    className
-  });
-
-  useEffect(() => {
-    console.log('GoogleSignInButton: Component mounted with props:', {
-      onSuccess: !!onSuccess,
-      onError: !!onError,
-      children,
-      className
-    });
-  }, [onSuccess, onError, children, className]);
-
   const handleGoogleSignIn = async () => {
     setLoading(true);
     
     try {
       const user = await simpleGoogleAuth.signInWithGoogle();
       
-      console.log('GoogleSignInButton: Received user:', user);
-      console.log('GoogleSignInButton: User type:', typeof user);
-      console.log('GoogleSignInButton: User is null?', user === null);
-      
       // For redirect flow, user will be null and page will redirect
       if (!user) {
-        console.log('Redirecting to Google sign-in...');
         toast.info('Redirecting to Google sign-in...');
         return;
       }
@@ -63,22 +41,10 @@ export function GoogleSignInButton({
         phone: user.phoneNumber,
       };
       
-      console.log('GoogleSignInButton: Extracted userInfo:', userInfo);
-      
       toast.success('Signed in successfully!');
       
-      console.log('GoogleSignInButton: onSuccess callback exists?', !!onSuccess);
       if (onSuccess) {
-        console.log('GoogleSignInButton: Calling onSuccess callback');
-        try {
-          await onSuccess(userInfo);
-          console.log('GoogleSignInButton: onSuccess callback completed');
-        } catch (callbackError) {
-          console.error('GoogleSignInButton: onSuccess callback error:', callbackError);
-          throw callbackError; // Re-throw to be caught by outer catch
-        }
-      } else {
-        console.log('GoogleSignInButton: No onSuccess callback provided');
+        await onSuccess(userInfo);
       }
       
     } catch (error: any) {
@@ -99,7 +65,6 @@ export function GoogleSignInButton({
       }
       
     } finally {
-      console.log('GoogleSignInButton: Setting loading to false');
       setLoading(false);
     }
   };
