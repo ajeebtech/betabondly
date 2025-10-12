@@ -11,9 +11,10 @@ export default function SignInPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
+    const userDocRef = doc(db, 'users', userInfo.uid);
+    
     try {
       // Ensure user doc exists
-      const userDocRef = doc(db, 'users', userInfo.uid);
       const userDocSnap = await getDoc(userDocRef);
       if (!userDocSnap.exists()) {
         await setDoc(userDocRef, {
@@ -33,6 +34,7 @@ export default function SignInPage() {
       console.error('Error creating user document:', error);
       throw error;
     }
+    
     const data = (await getDoc(userDocRef)).data();
     
     // Check onboarding progress - prioritize missing required fields
