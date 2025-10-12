@@ -47,9 +47,9 @@ export default function SignInPage() {
     } catch (error) {
       console.error('Error creating user document:', error);
       console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        stack: error.stack
+        code: (error as any)?.code,
+        message: (error as any)?.message,
+        stack: (error as any)?.stack
       });
       throw error;
     }
