@@ -36,6 +36,11 @@ service cloud.firestore {
       allow create: if isUserAuthenticated() && 
         isOwner(userId);
       
+      // Additional debugging rule - allow create with minimal fields
+      allow create: if isUserAuthenticated() && 
+        isOwner(userId) &&
+        request.resource.data.keys().hasAll(['uid', 'email']);
+      
       // Allow update for onboarding steps and profile management
       allow update: if isOwner(userId) && (
         // Basic profile updates (name, photo)

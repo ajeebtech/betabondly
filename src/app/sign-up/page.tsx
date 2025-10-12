@@ -3,13 +3,23 @@
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function SignUpPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
+    // Use the userInfo from the callback instead of auth.currentUser
+    // since auth.currentUser might not be updated immediately
+    const currentUser = auth.currentUser || userInfo;
+    
+    // Ensure user is authenticated before proceeding
+    if (!currentUser) {
+      console.error('❌ User not authenticated');
+      return;
+    }
+    
     // Ensure user doc exists
     const userDocRef = doc(db, 'users', userInfo.uid);
     const userDocSnap = await getDoc(userDocRef);
@@ -20,8 +30,8 @@ export default function SignUpPage() {
         email: userInfo.email,
         emailVerified: true,
         photoURL: userInfo.photoURL || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
     }
     const data = (await getDoc(userDocRef)).data();

@@ -26,6 +26,9 @@ export function GoogleSignInButton({
     try {
       const user = await simpleGoogleAuth.signInWithGoogle();
       
+      // Small delay to ensure auth state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Extract user info
       const userInfo = {
         uid: user.uid,

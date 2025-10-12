@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
 import { db, auth } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export default function SignInPage() {
@@ -16,15 +16,44 @@ export default function SignInPage() {
     console.log('Current environment:', process.env.NODE_ENV);
     console.log('Current URL:', window.location.href);
     
+    // Production debugging
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🚀 PRODUCTION DEBUG INFO');
+      console.log('Project ID:', process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+      console.log('Auth Domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
+      console.log('API Key Present:', !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+      console.log('App ID:', process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
+    }
+    
     // Check Firebase auth state
     console.log('Current Firebase auth user:', auth.currentUser);
     console.log('Auth user email:', auth.currentUser?.email);
     console.log('Auth user UID:', auth.currentUser?.uid);
     
+    // Use the userInfo from the callback instead of auth.currentUser
+    // since auth.currentUser might not be updated immediately
+    const currentUser = auth.currentUser || userInfo;
+    
+    // Ensure user is authenticated before proceeding
+    if (!currentUser) {
+      console.error('❌ User not authenticated');
+      return;
+    }
+    
     const userDocRef = doc(db, 'users', userInfo.uid);
     let userData = null;
     
     try {
+      // Test Firestore connection first
+      console.log('Testing Firestore connection...');
+      try {
+        const testDoc = doc(db, 'test', 'connection');
+        await getDoc(testDoc);
+        console.log('✅ Firestore connection test successful');
+      } catch (testError) {
+        console.error('❌ Firestore connection test failed:', testError);
+      }
+      
       // First, try client-side creation
       console.log('Attempting client-side user creation...');
       console.log('Checking if user document exists...');
@@ -35,8 +64,8 @@ export default function SignInPage() {
         const userDataToCreate = {
           uid: userInfo.uid,
           email: userInfo.email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
           displayName: userInfo.name || '',
           emailVerified: true,
           photoURL: userInfo.photoURL || null,
@@ -45,6 +74,8 @@ export default function SignInPage() {
         console.log('Creating new user document with data:', userDataToCreate);
         console.log('Firestore instance:', db);
         console.log('Document reference:', userDocRef);
+        console.log('Auth state:', auth.currentUser?.uid);
+        console.log('UserInfo UID:', userInfo.uid);
         
         await setDoc(userDocRef, userDataToCreate);
         console.log('✅ User document created successfully (client-side)');
@@ -73,6 +104,22 @@ export default function SignInPage() {
         stack: (error as any)?.stack,
         name: (error as any)?.name
       });
+      
+      // Production-specific error handling
+      if (process.env.NODE_ENV === 'production') {
+        console.error('🚀 PRODUCTION ERROR ANALYSIS:');
+        console.error('Error Code:', (error as any)?.code);
+        console.error('Error Message:', (error as any)?.message);
+        
+        // Check for common production issues
+        if ((error as any)?.code === 'permission-denied') {
+          console.error('🔒 PERMISSION DENIED - Check Firestore rules deployment');
+        } else if ((error as any)?.code === 'unavailable') {
+          console.error('🌐 SERVICE UNAVAILABLE - Check Firebase project configuration');
+        } else if ((error as any)?.code === 'unauthenticated') {
+          console.error('🔐 UNAUTHENTICATED - Check authentication state');
+        }
+      }
       
       // Try server-side fallback
       console.log('🔄 Attempting server-side user sync as fallback...');
