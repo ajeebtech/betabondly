@@ -50,9 +50,18 @@ export function GoogleSignInButton({
       
       toast.success('Signed in successfully!');
       
+      console.log('GoogleSignInButton: onSuccess callback exists?', !!onSuccess);
       if (onSuccess) {
         console.log('GoogleSignInButton: Calling onSuccess callback');
-        onSuccess(userInfo);
+        try {
+          await onSuccess(userInfo);
+          console.log('GoogleSignInButton: onSuccess callback completed');
+        } catch (callbackError) {
+          console.error('GoogleSignInButton: onSuccess callback error:', callbackError);
+          throw callbackError; // Re-throw to be caught by outer catch
+        }
+      } else {
+        console.log('GoogleSignInButton: No onSuccess callback provided');
       }
       
     } catch (error: any) {
