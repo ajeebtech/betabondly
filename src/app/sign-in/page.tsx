@@ -11,19 +11,27 @@ export default function SignInPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
-    // Ensure user doc exists
-    const userDocRef = doc(db, 'users', userInfo.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    if (!userDocSnap.exists()) {
-      await setDoc(userDocRef, {
-        uid: userInfo.uid,
-        displayName: userInfo.name || '',
-        email: userInfo.email,
-        emailVerified: true,
-        photoURL: userInfo.photoURL || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+    try {
+      // Ensure user doc exists
+      const userDocRef = doc(db, 'users', userInfo.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+          uid: userInfo.uid,
+          email: userInfo.email,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          displayName: userInfo.name || '',
+          emailVerified: true,
+          photoURL: userInfo.photoURL || null,
+        });
+        console.log('User document created successfully');
+      } else {
+        console.log('User document already exists');
+      }
+    } catch (error) {
+      console.error('Error creating user document:', error);
+      throw error;
     }
     const data = (await getDoc(userDocRef)).data();
     
@@ -49,6 +57,9 @@ export default function SignInPage() {
           <GoogleSignInButton
             className="w-full h-11"
             onSuccess={handleGoogleOnboarding}
+            onError={(error) => {
+              console.error('Google sign-in error:', error);
+            }}
           />
 
           <p className="text-center text-sm text-muted-foreground">
