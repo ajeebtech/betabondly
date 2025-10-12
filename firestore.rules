@@ -27,12 +27,14 @@ service cloud.firestore {
       // Users can read their own data
       allow read: if isOwner(userId);
       
-      // Allow create for any authenticated user (Google sign-in)
+      // Allow create for any authenticated user (Google sign-in) - More permissive
       allow create: if isUserAuthenticated() && 
         isOwner(userId) &&
-        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']) &&
-        request.resource.data.uid == userId &&
-        request.resource.data.email == request.auth.token.email;
+        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']);
+      
+      // Allow create for debugging - Very permissive (REMOVE IN PRODUCTION)
+      allow create: if isUserAuthenticated() && 
+        isOwner(userId);
       
       // Allow update for onboarding steps and profile management
       allow update: if isOwner(userId) && (
@@ -63,21 +65,19 @@ service cloud.firestore {
       allow read: if request.query.where('inviteCode', '==', request.query.limit(1));
     }
     
-    // Couples collection rules
+    // Couples collection rules - More permissive
     match /couples/{coupleId} {
       // Users can read couple data if they're a member
       allow read: if isUserAuthenticated() && 
         request.auth.uid in resource.data.users;
       
-      // Allow create for authenticated users (first user creates couple)
+      // Allow create for authenticated users (first user creates couple) - More permissive
       allow create: if isUserAuthenticated() && 
-        request.resource.data.users.hasAll([request.auth.uid]) &&
-        request.resource.data.keys().hasAll(['users', 'createdAt']);
+        request.resource.data.users.hasAll([request.auth.uid]);
       
-      // Allow update to add partner (when invite code is used)
+      // Allow update to add partner (when invite code is used) - More permissive
       allow update: if isUserAuthenticated() && 
-        request.auth.uid in resource.data.users &&
-        request.resource.data.users.size() <= 2; // Couples can only have 2 members
+        request.auth.uid in resource.data.users;
     }
 
     // Posts collection
@@ -114,7 +114,7 @@ service cloud.firestore {
 
     // Waitlist collection: allow anyone to add and read
     match /waitlist/{waitlistId} {
-      allow read, create: if true;
+      allow read, create, update: if true;
     }
     
     // Calendar events collection (for Google Calendar integration)

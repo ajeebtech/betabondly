@@ -4,14 +4,23 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleSignInButton } from '@/components/GoogleSignInButton'
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function SignInPage() {
   const router = useRouter()
 
   const handleGoogleOnboarding = async (userInfo: any) => {
     console.log('Starting Google onboarding for user:', userInfo);
+    console.log('Current environment:', process.env.NODE_ENV);
+    console.log('Current URL:', window.location.href);
+    
+    // Check Firebase auth state
+    console.log('Current Firebase auth user:', auth.currentUser);
+    console.log('Auth user email:', auth.currentUser?.email);
+    console.log('Auth user UID:', auth.currentUser?.uid);
+    
     const userDocRef = doc(db, 'users', userInfo.uid);
     
     try {
@@ -21,7 +30,7 @@ export default function SignInPage() {
       console.log('User document exists:', userDocSnap.exists());
       
       if (!userDocSnap.exists()) {
-        console.log('Creating new user document with data:', {
+        const userData = {
           uid: userInfo.uid,
           email: userInfo.email,
           createdAt: new Date().toISOString(),
@@ -29,28 +38,42 @@ export default function SignInPage() {
           displayName: userInfo.name || '',
           emailVerified: true,
           photoURL: userInfo.photoURL || null,
-        });
+        };
         
-        await setDoc(userDocRef, {
-          uid: userInfo.uid,
-          email: userInfo.email,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          displayName: userInfo.name || '',
-          emailVerified: true,
-          photoURL: userInfo.photoURL || null,
-        });
-        console.log('User document created successfully');
+        console.log('Creating new user document with data:', userData);
+        console.log('Firestore instance:', db);
+        console.log('Document reference:', userDocRef);
+        
+        await setDoc(userDocRef, userData);
+        console.log('✅ User document created successfully');
+        
+        // Verify the document was created
+        const verifyDoc = await getDoc(userDocRef);
+        console.log('✅ Document verification:', verifyDoc.exists());
+        if (verifyDoc.exists()) {
+          console.log('✅ Document data:', verifyDoc.data());
+        }
       } else {
         console.log('User document already exists');
       }
     } catch (error) {
-      console.error('Error creating user document:', error);
-      console.error('Error details:', {
+      console.error('❌ Error creating user document:', error);
+      console.error('❌ Error details:', {
         code: (error as any)?.code,
         message: (error as any)?.message,
-        stack: (error as any)?.stack
+        stack: (error as any)?.stack,
+        name: (error as any)?.name
       });
+      
+      // Check if it's a Firestore rules error
+      if ((error as any)?.code === 'permission-denied') {
+        console.error('❌ FIRESTORE RULES ERROR: Permission denied');
+        alert('Permission denied by Firestore rules. Check console for details.');
+      } else if ((error as any)?.code === 'unavailable') {
+        console.error('❌ FIRESTORE CONNECTION ERROR: Service unavailable');
+        alert('Firestore service unavailable. Check your internet connection.');
+      }
+      
       throw error;
     }
     

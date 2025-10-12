@@ -1,22 +1,8 @@
-import { initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase/admin';
 
-// Initialize Firebase Admin
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
-
-// Initialize Firebase Admin if not already initialized
-if (!global.firebaseAdminApp) {
-  global.firebaseAdminApp = initializeApp({
-    credential: cert(serviceAccount)
-  });
-}
-
-const db = getFirestore(global.firebaseAdminApp);
-
-declare global {
-  var firebaseAdminApp: any;
-}
+// Use the centralized Firebase Admin instance
+const db = adminDb;
 
 export async function POST(request: Request) {
   const { email } = await request.json();
@@ -26,6 +12,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Please provide a valid email address' },
       { status: 400 }
+    );
+  }
+
+  // Check if Firebase Admin is initialized
+  if (!db) {
+    return NextResponse.json(
+      { error: 'Database not available' },
+      { status: 500 }
     );
   }
 
