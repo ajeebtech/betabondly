@@ -2,14 +2,21 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Camera, CameraOff, Download, RotateCw } from 'lucide-react';
+import { Camera, CameraOff, Download, RotateCw, Save } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useAuth } from '@/contexts/AuthContext';
+import { uploadMediaFile } from '@/lib/services/mediaService';
+import { useParams } from 'next/navigation';
 
 export default function PhotoboothPage() {
+  const params = useParams();
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001";
+  const { user } = useAuth();
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -102,6 +109,33 @@ export default function PhotoboothPage() {
     }
   };
 
+  const savePhotoToMedia = async () => {
+    if (!photo || !user || !coupleId) return;
+    
+    setSaving(true);
+    try {
+      // Convert data URL to blob
+      const response = await fetch(photo);
+      const blob = await response.blob();
+      
+      // Create a file from the blob
+      const file = new File([blob], `photobooth-${new Date().toISOString()}.png`, {
+        type: 'image/png'
+      });
+      
+      // Upload to media collection
+      const { id } = await uploadMediaFile(file, user.uid, coupleId);
+      
+      alert('Photo saved to your media collection!');
+      setPhoto(null);
+    } catch (error) {
+      console.error('Error saving photo:', error);
+      alert('Failed to save photo. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
       <h1 className="text-3xl font-bold mb-8 text-gray-900">Photobooth</h1>
@@ -175,14 +209,29 @@ export default function PhotoboothPage() {
             </Button>
             
             {photo && (
-              <Button
-                onClick={downloadPhoto}
-                variant="outline"
-                className="w-16 h-16 rounded-full"
-                title="Download photo"
-              >
-                <Download className="w-6 h-6" />
-              </Button>
+              <>
+                <Button
+                  onClick={savePhotoToMedia}
+                  disabled={saving}
+                  className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 text-white"
+                  title="Save to media"
+                >
+                  {saving ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-white"></div>
+                  ) : (
+                    <Save className="w-6 h-6" />
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={downloadPhoto}
+                  variant="outline"
+                  className="w-16 h-16 rounded-full"
+                  title="Download photo"
+                >
+                  <Download className="w-6 h-6" />
+                </Button>
+              </>
             )}
             
             <Button

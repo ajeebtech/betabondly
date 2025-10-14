@@ -24,3 +24,29 @@ export interface Couple {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Post {
+  id: string;
+  userId: string;
+  coupleId: string;
+  content: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video';
+  createdAt: string;
+  updatedAt: string;
+  likes: number;
+  comments: number;
+}
+
+export interface Media {
+  id: string;
+  userId: string;
+  coupleId: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: 'image' | 'video';
+  fileSize: number;
+  isFavorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

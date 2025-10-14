@@ -107,18 +107,28 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid;
     }
 
-    // Messages collection (for couple chat)
-    match /couple-messages/{messageId} {
-      // Users can read messages from their couple
+    // Media collection (for photos and videos)
+    match /media/{mediaId} {
+      // Users can read media from their couple
       allow read: if isUserAuthenticated() && 
         exists(/databases/$(database)/documents/couples/$(resource.data.coupleId)) &&
-        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users;
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.members;
       
-      // Users can create messages for their couple
+      // Users can create media for their couple
       allow create: if isUserAuthenticated() && 
         request.auth.uid == request.resource.data.userId &&
         exists(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)) &&
-        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.members;
+      
+      // Users can update media (for favorites) if they're in the same couple
+      allow update: if isUserAuthenticated() && 
+        exists(/databases/$(database)/documents/couples/$(resource.data.coupleId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.members &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isFavorite', 'updatedAt']);
+      
+      // Only the media creator can delete their media
+      allow delete: if isUserAuthenticated() && 
+        resource.data.userId == request.auth.uid;
     }
 
     // Waitlist collection: allow anyone to add and read

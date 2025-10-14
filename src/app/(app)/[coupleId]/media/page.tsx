@@ -3,50 +3,30 @@
 import { useParams } from "next/navigation";
 import EnhancedSidebar from "@/components/EnhancedSidebar";
 import { Button } from "../../../../../components/ui/button";
-import { useState, useRef } from "react";
-import { Upload, Image as ImageIcon, Video, FileText, Calendar } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Upload, Image as ImageIcon, Video, FileText, Calendar, Heart } from "lucide-react";
+import { getMediaByCouple, uploadMediaFile, toggleMediaFavorite } from '@/lib/services/mediaService';
+import { Media } from '@/types/db';
+import { useAuth } from '@/contexts/AuthContext';
 
-const mockMedia = [
-  { 
-    id: 1, 
-    type: "video", 
-    url: "https://www.w3schools.com/html/mov_bbb.mp4", 
-    name: "2025-06-26 16-01-06.mp4",
-    size: "2 MB",
-    uploadDate: "Jul 10, 2025"
-  },
-  { 
-    id: 2, 
-    type: "image", 
-    url: "/bondly.png", 
-    name: "bondly.png",
-    size: "1.2 MB",
-    uploadDate: "Jul 9, 2025"
-  },
-  { 
-    id: 3, 
-    type: "image", 
-    url: "/bondlypink.png", 
-    name: "bondlypink.png",
-    size: "0.8 MB",
-    uploadDate: "Jul 8, 2025"
-  },
-  { 
-    id: 4, 
-    type: "image", 
-    url: "/pinkbonddd.png", 
-    name: "pinkbonddd.png",
-    size: "1.5 MB",
-    uploadDate: "Jul 7, 2025"
-  },
-];
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 export default function CoupleMediaPage() {
   const params = useParams();
-  const coupleId = (params.coupleId as string) || "default-couple";
-  const [media, setMedia] = useState(mockMedia);
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001";
+  const { user } = useAuth();
+  const [media, setMedia] = useState<Media[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [selectedType, setSelectedType] = useState<"all" | "images" | "videos">("all");
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -59,20 +39,65 @@ export default function CoupleMediaPage() {
     setDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    // Handle file drop here
-    console.log("Files dropped:", e.dataTransfer.files);
+    const files = Array.from(e.dataTransfer.files);
+    await handleFileUpload(files);
   };
 
   const handleFileSelect = () => {
     fileInputRef.current?.click();
   };
 
+  const handleFileUpload = async (files: File[]) => {
+    if (!user || !coupleId) return;
+    
+    setUploading(true);
+    try {
+      for (const file of files) {
+        await uploadMediaFile(file, user.uid, coupleId);
+      }
+      // Refresh media list
+      await loadMedia();
+    } catch (error) {
+      console.error('Error uploading files:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const loadMedia = async () => {
+    try {
+      setLoading(true);
+      const coupleMedia = await getMediaByCouple(coupleId);
+      setMedia(coupleMedia);
+    } catch (error) {
+      console.error('Error loading media:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = async (mediaId: string, currentFavorite: boolean) => {
+    try {
+      await toggleMediaFavorite(mediaId, !currentFavorite);
+      // Update local state
+      setMedia(prev => prev.map(item => 
+        item.id === mediaId ? { ...item, isFavorite: !currentFavorite } : item
+      ));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadMedia();
+  }, [coupleId]);
+
   const filteredMedia = media.filter(item => {
-    if (selectedType === "images") return item.type === "image";
-    if (selectedType === "videos") return item.type === "video";
+    if (selectedType === "images") return item.fileType === "image";
+    if (selectedType === "videos") return item.fileType === "video";
     return true;
   });
 
@@ -104,6 +129,8 @@ export default function CoupleMediaPage() {
             className={`w-full border-2 border-dashed rounded-xl p-12 text-center transition-all duration-200 ${
               dragOver 
                 ? "border-orange-400 bg-orange-50" 
+                : uploading
+                ? "border-orange-500 bg-orange-100"
                 : "border-orange-300 bg-white hover:border-orange-400 hover:bg-orange-50"
             }`}
             onDragOver={handleDragOver}
@@ -111,9 +138,17 @@ export default function CoupleMediaPage() {
             onDrop={handleDrop}
             onClick={handleFileSelect}
           >
-            <Upload className="h-16 w-16 text-orange-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Media</h2>
-            <p className="text-gray-600 mb-6">Drag and drop your photos or videos here, or click to browse.</p>
+            {uploading ? (
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            ) : (
+              <Upload className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+            )}
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {uploading ? "Uploading..." : "Upload Media"}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {uploading ? "Please wait while your files are being uploaded..." : "Drag and drop your photos or videos here, or click to browse."}
+            </p>
             
             {/* Type Selection */}
             <div className="flex justify-center space-x-4 mb-6">
@@ -153,8 +188,9 @@ export default function CoupleMediaPage() {
                 e.stopPropagation();
                 handleFileSelect();
               }}
+              disabled={uploading}
             >
-              Choose Files
+              {uploading ? "Uploading..." : "Choose Files"}
             </Button>
             
             <input
@@ -164,32 +200,39 @@ export default function CoupleMediaPage() {
               accept="image/*,video/*"
               className="hidden"
               onChange={(e) => {
-                console.log("Files selected:", e.target.files);
+                if (e.target.files) {
+                  const files = Array.from(e.target.files);
+                  handleFileUpload(files);
+                }
               }}
             />
           </div>
 
           {/* Media Grid */}
-          {filteredMedia.length > 0 && (
+          {loading ? (
+            <div className="mt-8 flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          ) : filteredMedia.length > 0 ? (
             <div className="mt-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Uploaded Media</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredMedia.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                    className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all cursor-pointer group relative"
                   >
                     <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {item.type === "image" ? (
+                      {item.fileType === "image" ? (
                         <img
-                          src={item.url}
-                          alt={item.name}
+                          src={item.fileUrl}
+                          alt={item.fileName}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                       ) : (
                         <div className="relative w-full h-full">
                           <video
-                            src={item.url}
+                            src={item.fileUrl}
                             className="w-full h-full object-cover"
                             controls
                           />
@@ -198,20 +241,39 @@ export default function CoupleMediaPage() {
                           </div>
                         </div>
                       )}
+                      
+                      {/* Favorite Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleFavorite(item.id, item.isFavorite);
+                        }}
+                        className={`absolute top-2 right-2 p-2 rounded-full transition-all ${
+                          item.isFavorite 
+                            ? "bg-red-500 text-white" 
+                            : "bg-white/80 text-gray-600 hover:bg-red-500 hover:text-white"
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${item.isFavorite ? "fill-current" : ""}`} />
+                      </button>
                     </div>
                     <div className="p-4">
-                      <h4 className="font-medium text-gray-900 truncate">{item.name}</h4>
+                      <h4 className="font-medium text-gray-900 truncate">{item.fileName}</h4>
                       <div className="flex items-center justify-between text-sm text-gray-500 mt-2">
-                        <span>{item.size}</span>
+                        <span>{formatFileSize(item.fileSize)}</span>
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
-                          <span>{item.uploadDate}</span>
+                          <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="mt-8 text-center py-12">
+              <p className="text-gray-500 text-lg">No media uploaded yet. Start by uploading some photos or videos!</p>
             </div>
           )}
         </div>

@@ -24,6 +24,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getPostsByCouple, createPost } from '@/lib/services/postsService';
+import { Post } from '@/types/db';
 
 type DatePlan = {
   date: Date
@@ -49,7 +51,7 @@ const CARDS = [
 
 export default function CoupleDashboard() {
   const params = useParams()
-  const coupleId = (params.coupleId as string) || "default-couple"
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001"
   const { user, loading } = useAuth();
   const [checking, setChecking] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -58,6 +60,8 @@ export default function CoupleDashboard() {
   const [budget, setBudget] = useState("")
   const [distance, setDistance] = useState("5")
   const [date, setDate] = useState<Date | null>(null)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loadingPosts, setLoadingPosts] = useState(true)
 
   // Function to add a new card to the cards state
   const addCard = (newCard: { name: string; designation: string; content: React.ReactNode }) => {
@@ -99,6 +103,25 @@ export default function CoupleDashboard() {
       checkMembership();
     }
   }, [user, loading, coupleId]);
+
+  // Load posts from Firestore
+  useEffect(() => {
+    async function loadPosts() {
+      if (!coupleId) return;
+      
+      try {
+        setLoadingPosts(true);
+        const couplePosts = await getPostsByCouple(coupleId);
+        setPosts(couplePosts);
+      } catch (error) {
+        console.error('Error loading posts:', error);
+      } finally {
+        setLoadingPosts(false);
+      }
+    }
+    
+    loadPosts();
+  }, [coupleId]);
 
   if (loading || checking) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -146,185 +169,138 @@ export default function CoupleDashboard() {
             <div className="w-full mb-8">
               <EnhancedPostComposer 
                 placeholder="type whatever"
-                onPost={(postData) => {
-                  console.log('New post:', postData);
-                  // Handle the post data here
-                  // You can add it to your posts state or send to API
+                onPost={async (postData) => {
+                  if (!user || !coupleId) return;
+                  
+                  try {
+                    // Handle media upload if present
+                    let mediaUrl = undefined;
+                    let mediaType = undefined;
+                    
+                    if (postData.media && postData.media.length > 0) {
+                      const firstMedia = postData.media[0];
+                      // Upload the first media file
+                      const { uploadMediaFile } = await import('@/lib/services/mediaService');
+                      const { url } = await uploadMediaFile(firstMedia.file, user.uid, coupleId);
+                      mediaUrl = url;
+                      mediaType = firstMedia.type;
+                    }
+                    
+                    const newPost = await createPost({
+                      userId: user.uid,
+                      coupleId: coupleId,
+                      content: postData.content,
+                      mediaUrl: mediaUrl,
+                      mediaType: mediaType,
+                      likes: 0,
+                      comments: 0
+                    });
+                    
+                    // Refresh posts
+                    const updatedPosts = await getPostsByCouple(coupleId);
+                    setPosts(updatedPosts);
+                  } catch (error) {
+                    console.error('Error creating post:', error);
+                  }
                 }}
               />
             </div>
             
             {/* Scrollable Posts Container */}
             <div className="w-full h-[calc(100vh-250px)] overflow-y-auto pr-2">
-              {/* First Post */}
-              <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300">
-                {/* Post Header */}
-                <div className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-100 to-rose-100 flex items-center justify-center text-pink-600 font-semibold shadow-sm">
-                        aj
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">jatin roy</h3>
-                        <p className="text-xs text-gray-500">@ajeebasfuck · 2h</p>
+              {loadingPosts ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No posts yet. Be the first to share something!</p>
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <div key={post.id} className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300">
+                    {/* Post Header */}
+                    <div className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-100 to-rose-100 flex items-center justify-center text-pink-600 font-semibold shadow-sm">
+                            {user?.displayName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{user?.displayName || 'User'}</h3>
+                            <p className="text-xs text-gray-500">
+                              {new Date(post.createdAt).toLocaleDateString()} · {new Date(post.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </p>
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button 
+                              className="text-gray-400 hover:text-gray-600 p-1 -mr-2 -mt-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="w-48" align="end">
+                            <DropdownMenuItem className="flex items-center space-x-2">
+                              <Bookmark className="h-4 w-4" />
+                              <span>Save post</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex items-center space-x-2">
+                              <Share2 className="h-4 w-4" />
+                              <span>Share</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex items-center space-x-2 text-red-500">
+                              <Flag className="h-4 w-4" />
+                              <span>Report</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button 
-                          className="text-gray-400 hover:text-gray-600 p-1 -mr-2 -mt-2"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-5 w-5" />
+                
+                    {/* Post Content */}
+                    <div className="p-4">
+                      <p className="text-gray-800 text-lg leading-relaxed">
+                        {post.content}
+                      </p>
+                      
+                      {post.mediaUrl && (
+                        <div className="mt-4">
+                          {post.mediaType === 'image' ? (
+                            <img 
+                              src={post.mediaUrl} 
+                              alt="Post media" 
+                              className="w-full rounded-lg max-h-96 object-cover"
+                            />
+                          ) : (
+                            <video 
+                              src={post.mediaUrl} 
+                              controls 
+                              className="w-full rounded-lg max-h-96"
+                            />
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Post Actions */}
+                      <div className="flex items-center space-x-4 pt-4 pb-2 px-1">
+                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-200 hover:scale-110 shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                          <span className="text-sm text-pink-600 ml-2">{post.likes}</span>
                         </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-48" align="end">
-                        <DropdownMenuItem className="flex items-center space-x-2">
-                          <Bookmark className="h-4 w-4" />
-                          <span>Save post</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center space-x-2">
-                          <Share2 className="h-4 w-4" />
-                          <span>Share</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center space-x-2 text-red-500">
-                          <Flag className="h-4 w-4" />
-                          <span>Report</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:scale-110 shadow-sm">
+                          <CameraIcon className="h-6 w-6 text-green-500 group-hover:text-green-600 transition-all" />
+                          <span className="text-sm text-green-600 ml-2">{post.comments}</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-            
-            {/* Post Content */}
-            <div className="p-4">
-              <p className="text-gray-800 text-lg leading-relaxed">
-                i love my bangable bengali huzz 💕
-              </p>
-              
-              {/* Post Actions */}
-              <div className="flex items-center space-x-4 pt-4 pb-2 px-1">
-                <button className="group relative p-3 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button className="group relative p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <CameraIcon className="h-6 w-6 text-green-500 group-hover:text-green-600 transition-all" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Second Post */}
-          <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300">
-            {/* Post Header */}
-            <div className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-100 to-cyan-100 flex items-center justify-center text-blue-600 font-semibold shadow-sm">
-                    hr
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">hiya roy</h3>
-                    <p className="text-xs text-gray-500">@duckdealer · 4h</p>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button 
-                      className="text-gray-400 hover:text-gray-600 p-1 -mr-2 -mt-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-48" align="end">
-                    <DropdownMenuItem className="flex items-center space-x-2">
-                      <Bookmark className="h-4 w-4" />
-                      <span>Save post</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center space-x-2">
-                      <Share2 className="h-4 w-4" />
-                      <span>Share</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center space-x-2 text-red-500">
-                      <Flag className="h-4 w-4" />
-                      <span>Report</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            
-            {/* Post Content */}
-            <div className="p-4">
-              <p className="text-gray-800 text-lg leading-relaxed">
-                Celebrating 6 months together today! 💕 Time really does fly when you're having fun. Can't wait for all the adventures still to come! #anniversary #couplegoals
-              </p>
-              
-              {/* Post Actions */}
-              <div className="flex items-center space-x-4 pt-4 pb-2 px-1">
-                <button className="group relative p-3 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button className="group relative p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <CameraIcon className="h-6 w-6 text-green-500 group-hover:text-green-600 transition-all" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Third Post - Scrollable Content */}
-          <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300">
-            {/* Post Header */}
-            <div className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center text-green-600 font-semibold shadow-sm">
-                  TR
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Travel Memories</h3>
-                  <p className="text-xs text-gray-500">@wanderlust · 1d</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Scrollable Content */}
-            <div className="p-4 max-h-64 overflow-y-auto">
-              <p className="text-gray-800 text-lg leading-relaxed mb-4">
-                Our amazing journey around the world! 🌎
-              </p>
-              
-              <div className="space-y-4">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="p-4 bg-gradient-to-r from-gray-50 to-rose-50 rounded-xl border border-rose-100 shadow-sm hover:shadow-md transition-all duration-200">
-                    <h4 className="font-semibold text-gray-800 mb-2">Day {i + 1}</h4>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {i % 2 === 0 
-                        ? 'Exploring beautiful landscapes and trying local cuisine.' 
-                        : 'Visited historical sites and met amazing people along the way.'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Post Actions */}
-              <div className="flex items-center space-x-4 text-gray-400 border-t border-rose-100 pt-4 mt-4">
-                <button className="p-2 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-pink-500 hover:text-pink-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button className="p-2 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                  <CameraIcon className="h-5 w-5 text-green-500 hover:text-green-600 transition-colors" />
-                </button>
-              </div>
-            </div>
-          </div>
+                ))
+              )}
             </div>
           </div>
         </div>
