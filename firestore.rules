@@ -78,15 +78,15 @@ service cloud.firestore {
     match /couples/{coupleId} {
       // Users can read couple data if they're a member
       allow read: if isUserAuthenticated() && 
-        request.auth.uid in resource.data.users;
+        request.auth.uid in resource.data.members;
       
       // Allow create for authenticated users (first user creates couple) - More permissive
       allow create: if isUserAuthenticated() && 
-        request.resource.data.users.hasAll([request.auth.uid]);
+        request.resource.data.members.hasAll([request.auth.uid]);
       
       // Allow update to add partner (when invite code is used) - More permissive
       allow update: if isUserAuthenticated() && 
-        request.auth.uid in resource.data.users;
+        request.auth.uid in resource.data.members;
     }
 
     // Posts collection
@@ -94,13 +94,13 @@ service cloud.firestore {
       // Users can read posts from their couple
       allow read: if isUserAuthenticated() && 
         exists(/databases/$(database)/documents/couples/$(resource.data.coupleId)) &&
-        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.users;
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(resource.data.coupleId)).data.members;
       
       // Users can create posts for their couple
       allow create: if isUserAuthenticated() && 
         request.auth.uid == request.resource.data.userId &&
         exists(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)) &&
-        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.users;
+        request.auth.uid in get(/databases/$(database)/documents/couples/$(request.resource.data.coupleId)).data.members;
       
       // Only the post creator can update/delete their posts
       allow update, delete: if isUserAuthenticated() && 

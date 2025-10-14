@@ -86,15 +86,22 @@ export default function CoupleDashboard() {
         const coupleSnap = await getDoc(coupleRef);
         
         if (!coupleSnap.exists()) {
+          console.log('Couple document does not exist:', coupleId);
           setAccessDenied(true);
           setChecking(false);
           return;
         }
         
         const coupleData = coupleSnap.data();
+        console.log('Couple data:', coupleData);
+        console.log('User UID:', user.uid);
+        console.log('Members array:', coupleData.members);
+        
         if (!coupleData.members || !coupleData.members.includes(user.uid)) {
+          console.log('User not in members array - Access Denied');
           setAccessDenied(true);
         } else {
+          console.log('User is member - Access Granted');
           setAccessDenied(false);
         }
       } catch (error) {
