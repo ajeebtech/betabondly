@@ -26,20 +26,19 @@ export function Header() {
   };
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center -space-x-1 group">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
+        <div className="flex items-center gap-12">
+          <Link href="/" className="flex items-center group">
             <Image 
-              src="/images/pinkbonddd.png" 
+              src="/images/bondly-logo.png" 
               alt="Bondly Logo" 
-              width={32} 
-              height={32} 
-              className="w-8 h-8 transition-transform group-hover:scale-110"
+              width={180} 
+              height={180} 
+              className="w-44 h-44 transition-transform group-hover:scale-110 mt-4"
               priority
             />
-            <span className="text-xl font-bold tracking-tight -ml-0.5">ondly</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6 -mt-2">
             <NavigationMenu.Root>
               <NavigationMenu.List className="flex space-x-6">
                 <NavigationMenu.Item>

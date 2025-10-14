@@ -181,11 +181,11 @@ export function HeroSection() {
                   <div className="flex-1 flex items-center gap-2 ml-4">
                     <div className="flex-1 bg-background rounded px-3 py-1 text-xs text-muted-foreground flex items-center gap-1">
                       <Image 
-                        src="/images/pinkbonddd.png" 
+                        src="/images/bondly-logo.png" 
                         alt="" 
-                        width={16} 
-                        height={16}
-                        className="w-4 h-4"
+                        width={32} 
+                        height={32}
+                        className="w-8 h-8"
                       />
                       bondly.fun
                     </div>
@@ -194,21 +194,20 @@ export function HeroSection() {
 
                 {/* Content */}
                 <div className="p-8 space-y-6">
-                  <div className="text-center space-y-2">
+                  <div className="text-center space-y-8">
                     <div className="flex items-center justify-center">
                       <Image 
-                        src="/images/pinkbonddd.png" 
-                        alt="" 
-                        width={120} 
-                        height={120}
-                        className="w-32 h-32"
+                        src="/images/bondly-logo.png" 
+                        alt="Bondly Logo" 
+                        width={480} 
+                        height={480}
+                        className="w-[28rem] h-[28rem] mt-12"
                       />
-                      <span className="text-8xl font-playfair font-bold text-primary -ml-3">ondly</span>
                     </div>
                     <div className="text-sm text-muted-foreground">Your private space</div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 -mt-4">
                     <div className="aspect-square bg-accent rounded-lg" />
                     <div className="aspect-square bg-secondary rounded-lg" />
                   </div>

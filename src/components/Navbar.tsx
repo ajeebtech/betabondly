@@ -12,45 +12,27 @@ const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 font-sans flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-white/30 backdrop-blur-md border-b border-white/20">
-      <nav className="font-sans relative max-w-7xl w-full flex flex-wrap lg:grid lg:grid-cols-12 basis-full items-center px-4 md:px-6 lg:px-8 mx-auto">
-        <div className="lg:col-span-3 flex items-center">
+      <nav className="font-sans relative max-w-7xl w-full flex flex-wrap lg:grid lg:grid-cols-12 basis-full items-start px-4 md:px-6 lg:px-8 mx-auto">
+        <div className="lg:col-span-6 flex items-center pt-16">
           <Link 
             href="/" 
             className="flex-none rounded-xl text-xl inline-block font-semibold focus:outline-hidden focus:opacity-80" 
             aria-label="Bondly"
           >
-            <div className="flex items-center">
-              <Image 
-                src="/images/pinkbonddd.png" 
-                alt="Bondly Logo" 
-                width={40} 
-                height={40} 
-                className="mr-1/4"
-                priority
-              />
-              <span 
-                className="font-bold"
-                style={{
-                  color: '#e60076',
-                  fontSize: '2rem',
-                  lineHeight: 1,
-                  letterSpacing: '-0.05em',
-                  textShadow: [
-                    '2px 2px 4px rgba(0, 0, 0, 0.2)',
-                    '0 0 10px rgba(0, 0, 0, 0.15)',
-                    '0 0 20px rgba(0, 0, 0, 0.1)'
-                  ].join(', ')
-                }}
-              >
-                ondly.
-              </span>
-            </div>
+            <Image 
+              src="/images/bondly-logo.png" 
+              alt="Bondly Logo" 
+              width={280} 
+              height={280} 
+              className="transition-transform hover:scale-105"
+              priority
+            />
           </Link>
         </div>
 
         {/* Navigation Links */}
-        <div className="flex items-center justify-center lg:order-2 lg:col-span-6">
-          <div className="flex items-center gap-x-7">
+        <div className="flex items-center justify-center lg:order-2 lg:col-span-2 pt-4">
+          <div className="flex items-center gap-x-12">
             <Link 
               href="#features" 
               onClick={(e) => {

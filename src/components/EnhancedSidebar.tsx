@@ -131,47 +131,31 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
     >
       {/* Header with Logo */}
       <motion.div 
-        className="px-3 py-4 border-b border-rose-100/20"
-        initial={{ opacity: 0, y: -20 }}
+        className="px-8 py-10 border-b border-rose-100/20 flex items-center justify-center"
+        initial={{ opacity: 0, y: -40
+         }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="flex items-center space-x-2">
-          <motion.div
-            className="relative"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            <Image
-              src="/pinkbonddd.png"
-              alt="Bondly Logo"
-              width={32}
-              height={32}
-              className="object-contain"
-              priority
-            />
-          </motion.div>
-          
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, x: -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -15 }}
-                transition={{ duration: 0.15 }}
-              >
-                <h1 className="text-lg font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
-                  bondly
-                </h1>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <motion.div
+          className="relative"
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        >
+          <Image
+            src="/images/bondly-logo.png"
+            alt="Bondly Logo"
+            width={180}
+            height={180}
+            className="object-contain mt-10"
+            priority
+          />
+        </motion.div>
       </motion.div>
 
       {/* Navigation Links */}
       <motion.div 
-        className="flex-1 px-2 py-3 space-y-1 overflow-y-auto"
+        className="flex-1 px-2 py-3 space-y-1 overflow-y-auto -mt-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
