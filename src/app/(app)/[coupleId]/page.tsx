@@ -76,29 +76,35 @@ export default function CoupleDashboard() {
 
   useEffect(() => {
     async function checkMembership() {
-      // DEVELOPMENT: Bypass membership check
-      setAccessDenied(false);
-      setChecking(false);
-      return;
-      /*
       if (!user) {
         setChecking(false);
         return;
       }
-      const coupleRef = doc(db, 'couples', coupleId);
-      const coupleSnap = await getDoc(coupleRef);
-      if (!coupleSnap.exists()) {
+      
+      try {
+        const coupleRef = doc(db, 'couples', coupleId);
+        const coupleSnap = await getDoc(coupleRef);
+        
+        if (!coupleSnap.exists()) {
+          setAccessDenied(true);
+          setChecking(false);
+          return;
+        }
+        
+        const coupleData = coupleSnap.data();
+        if (!coupleData.members || !coupleData.members.includes(user.uid)) {
+          setAccessDenied(true);
+        } else {
+          setAccessDenied(false);
+        }
+      } catch (error) {
+        console.error('Error checking membership:', error);
         setAccessDenied(true);
+      } finally {
         setChecking(false);
-        return;
       }
-      const coupleData = coupleSnap.data();
-      if (!coupleData.users || !coupleData.users.includes(user.uid)) {
-        setAccessDenied(true);
-      }
-      setChecking(false);
-      */
     }
+    
     if (!loading) {
       checkMembership();
     }

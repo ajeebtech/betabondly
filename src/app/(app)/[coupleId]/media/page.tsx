@@ -8,6 +8,8 @@ import { Upload, Image as ImageIcon, Video, FileText, Calendar, Heart } from "lu
 import { getMediaByCouple, uploadMediaFile, toggleMediaFavorite } from '@/lib/services/mediaService';
 import { Media } from '@/types/db';
 import { useAuth } from '@/contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 // Helper function to format file size
 const formatFileSize = (bytes: number): string => {
@@ -21,12 +23,14 @@ const formatFileSize = (bytes: number): string => {
 export default function CoupleMediaPage() {
   const params = useParams();
   const coupleId = (params.coupleId as string) || "TEST_COUPLE_001";
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [media, setMedia] = useState<Media[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [selectedType, setSelectedType] = useState<"all" | "images" | "videos">("all");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -92,14 +96,75 @@ export default function CoupleMediaPage() {
   };
 
   useEffect(() => {
-    loadMedia();
-  }, [coupleId]);
+    async function checkMembership() {
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+      
+      try {
+        const coupleRef = doc(db, 'couples', coupleId);
+        const coupleSnap = await getDoc(coupleRef);
+        
+        if (!coupleSnap.exists()) {
+          setAccessDenied(true);
+          setChecking(false);
+          return;
+        }
+        
+        const coupleData = coupleSnap.data();
+        if (!coupleData.members || !coupleData.members.includes(user.uid)) {
+          setAccessDenied(true);
+        } else {
+          setAccessDenied(false);
+        }
+      } catch (error) {
+        console.error('Error checking membership:', error);
+        setAccessDenied(true);
+      } finally {
+        setChecking(false);
+      }
+    }
+    
+    if (!authLoading) {
+      checkMembership();
+    }
+  }, [user, authLoading, coupleId]);
+
+  useEffect(() => {
+    if (!accessDenied && !checking) {
+      loadMedia();
+    }
+  }, [accessDenied, checking, coupleId]);
 
   const filteredMedia = media.filter(item => {
     if (selectedType === "images") return item.fileType === "image";
     if (selectedType === "videos") return item.fileType === "video";
     return true;
   });
+
+  if (authLoading || checking) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Sign in to access this couple's media</h2>
+        <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
+      </div>
+    );
+  }
+  
+  if (accessDenied) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
+        <p className="mb-4">You do not have permission to view this couple's media.</p>
+        <Button onClick={() => window.location.href = '/'}>Return Home</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
