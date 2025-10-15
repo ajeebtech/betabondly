@@ -40,9 +40,6 @@ function getCoupleIdFromPath(pathname: string): string | null {
 }
 
 export async function middleware(request: NextRequest) {
-  // TEMPORARY: Disable all middleware for debugging
-  return NextResponse.next();
-  
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files, API routes, and known public paths
@@ -56,9 +53,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle couple ID routes and test routes - let them pass through
+  // Handle couple ID routes - let them pass through to (app)/[coupleId]
   const pathSegments = pathname.split('/').filter(Boolean);
   if (pathSegments.length > 0 && coupleIdRoutes.includes(pathSegments[0])) {
+    console.log(`Routing couple ID: ${pathSegments[0]} to app route`);
+    // Let the request pass through to the (app)/[coupleId] route
     return NextResponse.next();
   }
   
