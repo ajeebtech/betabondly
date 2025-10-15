@@ -40,6 +40,9 @@ function getCoupleIdFromPath(pathname: string): string | null {
 }
 
 export async function middleware(request: NextRequest) {
+  // TEMPORARY: Disable all middleware for debugging
+  return NextResponse.next();
+  
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files, API routes, and known public paths
