@@ -143,6 +143,7 @@ export default function CoupleDashboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <h2 className="text-xl font-semibold mb-4">Sign in to access this couple's dashboard</h2>
+        <p className="text-sm text-gray-600 mb-4">Couple ID: {coupleId}</p>
         <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
       </div>
     );
