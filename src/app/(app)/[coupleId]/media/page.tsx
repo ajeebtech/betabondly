@@ -43,7 +43,7 @@ const mockMedia = [
 
 export default function CoupleMediaPage() {
   const params = useParams();
-  const coupleId = (params.coupleId as string) || "default-couple";
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001";
   const [media, setMedia] = useState(mockMedia);
   const [dragOver, setDragOver] = useState(false);
   const [selectedType, setSelectedType] = useState<"all" | "images" | "videos">("all");

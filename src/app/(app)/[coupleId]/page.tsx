@@ -49,7 +49,7 @@ const CARDS = [
 
 export default function CoupleDashboard() {
   const params = useParams()
-  const coupleId = (params.coupleId as string) || "default-couple"
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001"
   const { user, loading } = useAuth();
   const [checking, setChecking] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
