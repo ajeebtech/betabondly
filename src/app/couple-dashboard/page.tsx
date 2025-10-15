@@ -9,8 +9,8 @@ import EnhancedSidebar from "@/components/EnhancedSidebar"
 import NotificationsPopover from "@/components/NotificationsPopover"
 import { PostsLayout } from "@/components/PostsLayout"
 import { EnhancedPostComposer } from "@/components/EnhancedPostComposer"
-import { Button } from "../../../../components/ui/button"
-import { CardStack, Highlight } from "../../../../components/ui/card-stack"
+import { Button } from "@/components/ui/button"
+import { CardStack, Highlight } from "@/components/ui/card-stack"
 import {
   DropdownMenu,
   DropdownMenuContent,

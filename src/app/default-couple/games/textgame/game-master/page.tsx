@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 type Message = {
@@ -10,7 +10,7 @@ type Message = {
   timestamp: number;
 };
 
-export default function GameMasterConsole() {
+function GameMasterConsoleContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [coupleId, setCoupleId] = useState('default-couple');
@@ -272,5 +272,13 @@ export default function GameMasterConsole() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function GameMasterConsole() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <GameMasterConsoleContent />
+    </Suspense>
   );
 }

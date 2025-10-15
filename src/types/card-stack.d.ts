@@ -13,6 +13,7 @@ declare module '@/components/ui/card-stack' {
     offset?: number;
     scaleFactor?: number;
     className?: string;
+    onSwipe?: (id: number) => void;
   }
 
   export const CardStack: React.FC<CardStackProps>;

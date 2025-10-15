@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import AITextLoading from '@/components/kokonutui/ai-text-loading';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -37,7 +37,7 @@ const waitingMessages = [
   'The story is taking shape...'
 ];
 
-export default function TextGame() {
+function TextGameContent() {
   // State hooks
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -685,5 +685,13 @@ export default function TextGame() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function TextGame() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <TextGameContent />
+    </Suspense>
   );
 }
