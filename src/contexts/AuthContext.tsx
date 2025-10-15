@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         clearOnboarding,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
