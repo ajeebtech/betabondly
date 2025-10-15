@@ -10,6 +10,7 @@ import { Media } from '@/types/db';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { AccessDenied } from '@/components/AccessDenied';
 
 // Helper function to format file size
 const formatFileSize = (bytes: number): string => {
@@ -149,20 +150,27 @@ export default function CoupleMediaPage() {
   
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-semibold mb-4">Sign in to access this couple's media</h2>
-        <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
-      </div>
+      <AccessDenied 
+        title="Sign In Required"
+        message="Please sign in to access this couple's media."
+        showBackButton={true}
+        showHomeButton={true}
+        customAction={{
+          label: "Sign In",
+          onClick: () => window.location.href = '/sign-in'
+        }}
+      />
     );
   }
   
   if (accessDenied) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
-        <p className="mb-4">You do not have permission to view this couple's media.</p>
-        <Button onClick={() => window.location.href = '/'}>Return Home</Button>
-      </div>
+      <AccessDenied 
+        title="Access Denied"
+        message="You do not have permission to view this couple's media."
+        showBackButton={true}
+        showHomeButton={true}
+      />
     );
   }
 

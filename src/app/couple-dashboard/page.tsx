@@ -27,6 +27,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { getPostsByCouple, createPost } from '@/lib/services/postsService';
 import { Post } from '@/types/db';
 import { ensureValidToken } from '@/lib/authUtils';
+import { AccessDenied } from '@/components/AccessDenied';
 
 type DatePlan = {
   date: Date
@@ -150,20 +151,26 @@ export default function CoupleDashboard() {
   }
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-semibold mb-4">Sign in to access this couple's dashboard</h2>
-        <p className="text-sm text-gray-600 mb-4">Couple ID: {coupleId}</p>
-        <Button onClick={() => window.location.href = '/sign-in'}>Sign In</Button>
-      </div>
+      <AccessDenied 
+        title="Sign In Required"
+        message="Please sign in to access this couple's dashboard."
+        showBackButton={true}
+        showHomeButton={true}
+        customAction={{
+          label: "Sign In",
+          onClick: () => window.location.href = '/sign-in'
+        }}
+      />
     );
   }
   if (accessDenied) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
-        <p className="mb-4">You do not have permission to view this couple's dashboard.</p>
-        <Button onClick={() => window.location.href = '/'}>Return Home</Button>
-      </div>
+      <AccessDenied 
+        title="Access Denied"
+        message="You do not have permission to view this couple's dashboard."
+        showBackButton={true}
+        showHomeButton={true}
+      />
     );
   }
 
