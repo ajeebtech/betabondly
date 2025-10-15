@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { CalendarIcon, Plus, MoreVertical, Heart, MessageCircle, Share2, Bookmark, Flag } from "lucide-react"
+import { CalendarIcon, Plus, MoreVertical, Heart, MessageCircle, Share2, Bookmark, Flag, Trash2 } from "lucide-react"
 import { CameraIcon } from '@/components/icons/CameraIcon';
 import { CalendarDrawer } from "@/components/CalendarDrawer"
 import { DateDetailsDrawer } from "@/components/DateDetailsDrawer"
@@ -24,10 +24,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { getPostsByCouple, createPost } from '@/lib/services/postsService';
+import { getPostsByCouple, createPost, deletePost } from '@/lib/services/postsService';
 import { Post } from '@/types/db';
 import { ensureValidToken } from '@/lib/authUtils';
 import { AccessDenied } from '@/components/AccessDenied';
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 
 type DatePlan = {
   date: Date
@@ -63,6 +64,8 @@ export default function CoupleDashboard() {
   const [date, setDate] = useState<Date | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingPosts, setLoadingPosts] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<string | null>(null)
 
   // Function to add a new card to the cards state
   const addCard = (newCard: { name: string; designation: string; content: React.ReactNode }) => {
@@ -244,8 +247,12 @@ export default function CoupleDashboard() {
                   <p className="text-gray-500 text-lg">No posts yet. Be the first to share something!</p>
                 </div>
               ) : (
-                posts.map((post) => (
-                  <div key={post.id} className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300">
+                posts.map((post, index) => (
+                  <div 
+                    key={post.id} 
+                    className="w-full bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-6 border border-rose-100 hover:shadow-xl transition-all duration-300 animate-in slide-in-from-bottom-4 fade-in"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
                     {/* Post Header */}
                     <div className="p-4">
                       <div className="flex justify-between items-start">
@@ -270,17 +277,15 @@ export default function CoupleDashboard() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent className="w-48" align="end">
-                            <DropdownMenuItem className="flex items-center space-x-2">
-                              <Bookmark className="h-4 w-4" />
-                              <span>Save post</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center space-x-2">
-                              <Share2 className="h-4 w-4" />
-                              <span>Share</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center space-x-2 text-red-500">
-                              <Flag className="h-4 w-4" />
-                              <span>Report</span>
+                            <DropdownMenuItem 
+                              className="flex items-center space-x-2 text-red-500 hover:bg-red-50"
+                              onClick={() => {
+                                setPostToDelete(post.id)
+                                setDeleteDialogOpen(true)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Delete post</span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -313,15 +318,15 @@ export default function CoupleDashboard() {
                       
                       {/* Post Actions */}
                       <div className="flex items-center space-x-4 pt-4 pb-2 px-1">
-                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-all duration-300 group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                           </svg>
-                          <span className="text-sm text-pink-600 ml-2">{post.likes}</span>
+                          <span className="text-sm text-pink-600 ml-2 transition-colors duration-300 group-hover:text-pink-700">{post.likes}</span>
                         </button>
-                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:scale-110 shadow-sm">
-                          <CameraIcon className="h-6 w-6 text-green-500 group-hover:text-green-600 transition-all" />
-                          <span className="text-sm text-green-600 ml-2">{post.comments}</span>
+                        <button className="group relative p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all duration-300 hover:scale-110 shadow-sm hover:shadow-md">
+                          <CameraIcon className="h-6 w-6 text-green-500 group-hover:text-green-600 transition-all duration-300 group-hover:scale-110" />
+                          <span className="text-sm text-green-600 ml-2 transition-colors duration-300 group-hover:text-green-700">{post.comments}</span>
                         </button>
                       </div>
                     </div>
@@ -372,6 +377,27 @@ export default function CoupleDashboard() {
           onBudgetChange={setBudget}
           distance={distance}
           onDistanceChange={setDistance}
+        />
+        
+        {/* Delete Confirmation Dialog */}
+        <DeleteConfirmDialog
+          isOpen={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false)
+            setPostToDelete(null)
+          }}
+          onConfirm={async () => {
+            if (postToDelete) {
+              try {
+                await deletePost(postToDelete)
+                // Refresh posts after deletion
+                const updatedPosts = await getPostsByCouple(coupleId)
+                setPosts(updatedPosts)
+              } catch (error) {
+                console.error('Error deleting post:', error)
+              }
+            }
+          }}
         />
       </div>
     </div>

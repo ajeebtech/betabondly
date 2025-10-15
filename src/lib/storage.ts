@@ -8,6 +8,7 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
     const fileName = `${path}/${uuidv4()}.${fileExt}`;
     const storageRef = ref(storage, fileName);
     
+    console.log('Uploading file to path:', fileName);
     const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
     

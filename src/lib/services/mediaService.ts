@@ -20,9 +20,13 @@ export const uploadMediaFile = async (
   userId: string, 
   coupleId: string
 ): Promise<{ id: string; url: string }> => {
+  console.log('Uploading media file:', file.name, 'for couple:', coupleId);
+  
   // Upload file to Firebase Storage
-  const filePath = `couples/${coupleId}/media/${file.name}`;
+  const filePath = `couples/${coupleId}/media`;
+  console.log('File path:', filePath);
   const fileUrl = await uploadFile(file, filePath);
+  console.log('File uploaded successfully, URL:', fileUrl);
   
   // Create media document in Firestore
   const mediaRef = collection(db, 'media');
@@ -38,6 +42,7 @@ export const uploadMediaFile = async (
     updatedAt: serverTimestamp()
   });
   
+  console.log('Media document created with ID:', docRef.id);
   return { id: docRef.id, url: fileUrl };
 };
 
@@ -46,7 +51,6 @@ export const getMediaByCouple = async (coupleId: string, limitCount = 50): Promi
   const q = query(
     mediaRef,
     where('coupleId', '==', coupleId),
-    orderBy('createdAt', 'desc'),
     limit(limitCount)
   );
   
@@ -62,6 +66,9 @@ export const getMediaByCouple = async (coupleId: string, limitCount = 50): Promi
       updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
     } as Media);
   });
+  
+  // Sort by createdAt in descending order (newest first)
+  media.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   
   return media;
 };
