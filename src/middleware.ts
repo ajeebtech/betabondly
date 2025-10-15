@@ -16,6 +16,9 @@ const publicRoutes = [
   '/verify-email'
 ];
 
+// Define couple routes that should be handled by the app router
+const coupleIdRoutes = ['TEST_COUPLE_001', 'TEST_COUPLE_002'];
+
 // Define authentication routes
 const authRoutes = ['/auth/name', '/auth/phone', '/auth/verify'];
 
@@ -47,6 +50,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname === '/'
   ) {
+    return NextResponse.next();
+  }
+
+  // Handle couple ID routes - let them pass through to the (app) group
+  const pathSegments = pathname.split('/').filter(Boolean);
+  if (pathSegments.length > 0 && coupleIdRoutes.includes(pathSegments[0])) {
     return NextResponse.next();
   }
 
