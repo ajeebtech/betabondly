@@ -135,7 +135,9 @@ export default function CoupleDashboard() {
       
       try {
         setLoadingPosts(true);
+        console.log('Loading posts for coupleId:', coupleId);
         const couplePosts = await getPostsByCouple(coupleId);
+        console.log('Loaded posts:', couplePosts);
         setPosts(couplePosts);
       } catch (error) {
         console.error('Error loading posts:', error);
@@ -193,9 +195,9 @@ export default function CoupleDashboard() {
         </header>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:flex-row p-4 md:p-8 gap-8">
-          {/* Left Column - Posts */}
-          <div className="w-full lg:flex-1 max-w-[40rem] mx-auto">
+        <div className="flex-1 flex justify-center p-4 md:p-8">
+          {/* Posts Container - Centered */}
+          <div className="w-full max-w-[40rem]">
             {/* Enhanced Post Composer */}
             <div className="w-full mb-8">
               <EnhancedPostComposer 
@@ -205,30 +207,30 @@ export default function CoupleDashboard() {
                   
                   try {
                     // Handle media upload if present
-                    let mediaUrl = undefined;
-                    let mediaType = undefined;
+                    let postDataToSend: any = {
+                      userId: user.uid,
+                      coupleId: coupleId,
+                      content: postData.content,
+                      likes: 0,
+                      comments: 0
+                    };
                     
                     if (postData.media && postData.media.length > 0) {
                       const firstMedia = postData.media[0];
                       // Upload the first media file
                       const { uploadMediaFile } = await import('@/lib/services/mediaService');
                       const { url } = await uploadMediaFile(firstMedia.file, user.uid, coupleId);
-                      mediaUrl = url;
-                      mediaType = firstMedia.type;
+                      postDataToSend.mediaUrl = url;
+                      postDataToSend.mediaType = firstMedia.type;
                     }
                     
-                    const newPost = await createPost({
-                      userId: user.uid,
-                      coupleId: coupleId,
-                      content: postData.content,
-                      mediaUrl: mediaUrl,
-                      mediaType: mediaType,
-                      likes: 0,
-                      comments: 0
-                    });
+                    console.log('Creating post with data:', postDataToSend);
+                    const newPost = await createPost(postDataToSend);
+                    console.log('Post created with ID:', newPost);
                     
                     // Refresh posts
                     const updatedPosts = await getPostsByCouple(coupleId);
+                    console.log('Refreshed posts after creation:', updatedPosts);
                     setPosts(updatedPosts);
                   } catch (error) {
                     console.error('Error creating post:', error);
@@ -337,7 +339,7 @@ export default function CoupleDashboard() {
         </div>
 
         {/* Right Column - Card Stack - Now positioned independently */}
-        <div className="fixed right-8 top-4 w-72 hidden lg:flex flex-col">
+        <div className="fixed right-8 top-20 w-72 hidden lg:flex flex-col z-30">
           <div className="w-full flex justify-end pr-4 mb-2">
             <TamaguiProvider>
               <AddToCalendarDialog onCardAdded={addCard} />

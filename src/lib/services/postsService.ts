@@ -30,7 +30,6 @@ export const getPostsByCouple = async (coupleId: string, limitCount = 20): Promi
   const q = query(
     postsRef,
     where('coupleId', '==', coupleId),
-    orderBy('createdAt', 'desc'),
     limit(limitCount)
   );
   
@@ -46,6 +45,9 @@ export const getPostsByCouple = async (coupleId: string, limitCount = 20): Promi
       updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
     } as Post);
   });
+  
+  // Sort by createdAt in descending order (newest first)
+  posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   
   return posts;
 };
