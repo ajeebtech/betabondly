@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
+import { TokenRefreshButton } from "@/components/TokenRefreshButton";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,15 +61,18 @@ const Navbar = () => {
         {/* Button Group */}
         <div className="flex items-center gap-x-3 lg:gap-x-4 ms-auto py-1 lg:ps-6 lg:order-3 lg:col-span-3">
           {!loading && user ? (
-            <Button
-              onClick={async () => {
-                await signOut(auth);
-                window.location.reload();
-              }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-black/90 transition-colors duration-200 border border-transparent hover:bg-white hover:border-black/10"
-            >
-              Logout
-            </Button>
+            <>
+              <TokenRefreshButton />
+              <Button
+                onClick={async () => {
+                  await signOut(auth);
+                  window.location.reload();
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-black/90 transition-colors duration-200 border border-transparent hover:bg-white hover:border-black/10"
+              >
+                Logout
+              </Button>
+            </>
           ) : (
             <>
               <Link

@@ -27,6 +27,7 @@ type AuthContextType = {
   setDatingStartDate: (date: string) => void;
   setUser: (user: FirebaseUser | null) => void;
   clearOnboarding: () => void;
+  refreshToken: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -45,6 +46,7 @@ const AuthContext = createContext<AuthContextType>({
   setDatingStartDate: () => {},
   setUser: () => {},
   clearOnboarding: () => {},
+  refreshToken: async () => false,
 });
 
 export const useAuthContext = () => useContext(AuthContext);
@@ -58,9 +60,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     datingStartDate: '',
   });
 
-  // Handle auth state changes
+  // Handle auth state changes with automatic token refresh
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Force refresh the token to ensure it's valid
+          await user.getIdToken(true);
+          console.log('✅ Token refreshed successfully');
+        } catch (error) {
+          console.error('❌ Token refresh failed:', error);
+          // If token refresh fails, the user might need to re-authenticate
+        }
+      }
       setUser(user);
       setLoading(false);
     });
@@ -93,6 +105,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setOnboardingData({ name: '', phone: '', datingStartDate: '' });
   };
 
+  // Manual token refresh function
+  const refreshToken = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      await user.getIdToken(true);
+      console.log('✅ Manual token refresh successful');
+      return true;
+    } catch (error) {
+      console.error('❌ Manual token refresh failed:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -106,6 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setDatingStartDate,
         setUser: updateUser,
         clearOnboarding,
+        refreshToken,
       }}
     >
       {children}

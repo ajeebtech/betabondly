@@ -24,11 +24,12 @@ export default function SignInPage() {
       
       console.log('🎉 Google sign-in successful:', user);
       
-      // Create user document in Firestore
+      // Check if user document exists in Firestore
       const userDocRef = doc(db, 'users', user.uid);
       const userDocSnap = await getDoc(userDocRef);
       
       if (!userDocSnap.exists()) {
+        // Only create user document if it doesn't exist
         const userDataToCreate = {
           uid: user.uid,
           email: user.email,
@@ -40,11 +41,19 @@ export default function SignInPage() {
         };
         
         await setDoc(userDocRef, userDataToCreate);
-        console.log('✅ User document created successfully');
-        toast.success('Account created successfully!');
+        console.log('✅ New user document created');
+        toast.success('Welcome to Bondly! 🎉');
       } else {
-        console.log('User document already exists');
-        toast.success('Welcome back!');
+        // Update existing user document with latest info
+        await setDoc(userDocRef, {
+          email: user.email,
+          displayName: user.displayName || '',
+          emailVerified: user.emailVerified,
+          photoURL: user.photoURL || null,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        console.log('✅ Existing user document updated');
+        toast.success('Welcome back! 👋');
       }
       
       // Redirect based on onboarding progress

@@ -26,6 +26,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { getPostsByCouple, createPost } from '@/lib/services/postsService';
 import { Post } from '@/types/db';
+import { ensureValidToken } from '@/lib/authUtils';
 
 type DatePlan = {
   date: Date
@@ -81,6 +82,15 @@ export default function CoupleDashboard() {
       }
       
       try {
+        // First, ensure we have a valid token
+        const hasValidToken = await ensureValidToken();
+        if (!hasValidToken) {
+          console.log('❌ Invalid token - Access Denied');
+          setAccessDenied(true);
+          setChecking(false);
+          return;
+        }
+
         const coupleRef = doc(db, 'couples', coupleId);
         const coupleSnap = await getDoc(coupleRef);
         
