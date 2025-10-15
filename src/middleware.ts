@@ -53,9 +53,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Handle couple ID routes - let them pass through to the (app) group
+  // Handle couple ID routes and test routes - let them pass through
   const pathSegments = pathname.split('/').filter(Boolean);
   if (pathSegments.length > 0 && coupleIdRoutes.includes(pathSegments[0])) {
+    return NextResponse.next();
+  }
+  
+  // Allow test routes like /couple-dashboard
+  if (pathname.startsWith('/couple-dashboard')) {
     return NextResponse.next();
   }
 
