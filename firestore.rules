@@ -76,9 +76,8 @@ service cloud.firestore {
     
     // Couples collection rules - More permissive
     match /couples/{coupleId} {
-      // Users can read couple data if they're a member
-      allow read: if isUserAuthenticated() && 
-        request.auth.uid in resource.data.members;
+      // Allow any authenticated user to read couple data (for membership checking)
+      allow read: if isUserAuthenticated();
       
       // Allow create for authenticated users (first user creates couple) - More permissive
       allow create: if isUserAuthenticated() && 
