@@ -179,13 +179,13 @@ export function HeroSection() {
                     <div className="w-3 h-3 rounded-full bg-green-400" />
                   </div>
                   <div className="flex-1 flex items-center gap-2 ml-4">
-                    <div className="flex-1 bg-background rounded px-3 py-1 text-xs text-muted-foreground flex items-center gap-1">
+                    <div className="flex-1 bg-background rounded px-3 py-1 text-xs text-muted-foreground flex items-center gap-2">
                       <Image 
-                        src="/images/bondly-logo.png" 
+                        src="/images/bondly-logo.svg" 
                         alt="" 
-                        width={32} 
-                        height={32}
-                        className="w-8 h-8"
+                        width={28} 
+                        height={28}
+                        className="w-7 h-auto"
                       />
                       bondly.fun
                     </div>
@@ -194,14 +194,14 @@ export function HeroSection() {
 
                 {/* Content */}
                 <div className="p-8 space-y-6">
-                  <div className="text-center space-y-8">
+                  <div className="text-center space-y-4">
                     <div className="flex items-center justify-center">
                       <Image 
-                        src="/images/bondly-logo.png" 
+                        src="/images/bondly-logo.svg" 
                         alt="Bondly Logo" 
-                        width={480} 
-                        height={480}
-                        className="w-[28rem] h-[28rem] mt-12"
+                        width={320} 
+                        height={320}
+                        className="w-80 h-auto"
                       />
                     </div>
                     <div className="text-sm text-muted-foreground">Your private space</div>

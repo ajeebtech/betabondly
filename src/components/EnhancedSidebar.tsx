@@ -131,9 +131,8 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
     >
       {/* Header with Logo */}
       <motion.div 
-        className="px-8 py-10 border-b border-rose-100/20 flex items-center justify-center"
-        initial={{ opacity: 0, y: -40
-         }}
+        className="px-4 py-6 border-b border-rose-100/20 flex items-center justify-center"
+        initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
@@ -143,11 +142,11 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
           <Image
-            src="/images/bondly-logo.png"
+            src="/images/bondly-logo.svg"
             alt="Bondly Logo"
-            width={180}
-            height={180}
-            className="object-contain mt-10"
+            width={56}
+            height={56}
+            className="w-14 h-auto object-contain"
             priority
           />
         </motion.div>

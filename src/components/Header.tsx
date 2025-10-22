@@ -30,15 +30,15 @@ export function Header() {
         <div className="flex items-center gap-12">
           <Link href="/" className="flex items-center group">
             <Image 
-              src="/images/bondly-logo.png" 
+              src="/images/bondly-logo.svg" 
               alt="Bondly Logo" 
-              width={180} 
-              height={180} 
-              className="w-44 h-44 transition-transform group-hover:scale-110 mt-4"
+              width={140} 
+              height={140} 
+              className="w-36 h-auto transition-transform group-hover:scale-110"
               priority
             />
           </Link>
-          <nav className="hidden md:flex items-center space-x-6 -mt-2">
+          <nav className="hidden md:flex items-center space-x-6">
             <NavigationMenu.Root>
               <NavigationMenu.List className="flex space-x-6">
                 <NavigationMenu.Item>
