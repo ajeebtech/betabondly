@@ -11,7 +11,6 @@ import {
   Youtube, 
   X, 
   Camera, 
-  Smile,
   MapPin,
   Calendar,
   Hash,
@@ -245,19 +244,38 @@ export function EnhancedPostComposer({
               <div className="space-y-3">
                 {/* Uploaded media */}
                 {media.length > 0 && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {media.map((item) => (
-                      <div key={item.id} className="relative group">
+                  <div className={cn(
+                    "grid gap-3",
+                    media.length === 1 ? "grid-cols-1" :
+                    media.length === 2 ? "grid-cols-2" :
+                    media.length === 3 ? "grid-cols-2" :
+                    "grid-cols-2"
+                  )}>
+                    {media.map((item, index) => (
+                      <div key={item.id} className={cn(
+                        "relative group",
+                        media.length === 3 && index === 0 ? "col-span-2" : ""
+                      )}>
                         {item.type === 'image' ? (
                           <img
                             src={item.preview}
                             alt="Preview"
-                            className="w-full h-32 object-cover rounded-xl border border-rose-100"
+                            className={cn(
+                              "w-full object-cover rounded-xl border border-rose-100",
+                              media.length === 1 ? "h-64" :
+                              media.length === 2 ? "h-32" :
+                              media.length === 3 && index === 0 ? "h-32" : "h-32"
+                            )}
                           />
                         ) : (
                           <video
                             src={item.preview}
-                            className="w-full h-32 object-cover rounded-xl border border-rose-100"
+                            className={cn(
+                              "w-full object-cover rounded-xl border border-rose-100",
+                              media.length === 1 ? "h-64" :
+                              media.length === 2 ? "h-32" :
+                              media.length === 3 && index === 0 ? "h-32" : "h-32"
+                            )}
                             controls
                           />
                         )}
@@ -329,23 +347,6 @@ export function EnhancedPostComposer({
                 <Image className="h-5 w-5" />
               </button>
 
-              {/* Camera */}
-              <button
-                type="button"
-                className="p-3 rounded-full bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-green-600 hover:text-green-700 transition-all duration-200 hover:scale-110"
-                title="Take photo"
-              >
-                <Camera className="h-5 w-5" />
-              </button>
-
-              {/* Emoji */}
-              <button
-                type="button"
-                className="p-3 rounded-full bg-gradient-to-r from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100 text-yellow-600 hover:text-yellow-700 transition-all duration-200 hover:scale-110"
-                title="Add emoji"
-              >
-                <Smile className="h-5 w-5" />
-              </button>
             </div>
 
             {/* Post button */}

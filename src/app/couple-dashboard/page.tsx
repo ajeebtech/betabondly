@@ -53,7 +53,8 @@ const CARDS = [
 ];
 
 export default function CoupleDashboard() {
-  const coupleId = "TEST_COUPLE_001"
+  const params = useParams()
+  const coupleId = (params.coupleId as string) || "TEST_COUPLE_001"
   const { user, loading } = useAuth();
   const [checking, setChecking] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -181,7 +182,7 @@ export default function CoupleDashboard() {
     <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
       {/* Enhanced Sidebar */}
       <aside className="shrink-0 relative z-40">
-        <EnhancedSidebar />
+        <EnhancedSidebar coupleId={coupleId} />
       </aside>
 
       <div className="flex-1 flex flex-col relative ml-[64px]">

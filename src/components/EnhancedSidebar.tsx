@@ -32,30 +32,31 @@ interface SidebarLink {
 
 interface EnhancedSidebarProps {
   className?: string;
+  coupleId?: string;
 }
 
-export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
+export default function EnhancedSidebar({ className, coupleId = "default-couple" }: EnhancedSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeLink, setActiveLink] = useState("your bond");
 
   const links: SidebarLink[] = [
     {
       label: "your bond",
-      href: "/default-couple",
+      href: `/${coupleId}`,
       icon: Heart,
       isActive: activeLink === "your bond",
       onClick: () => setActiveLink("your bond")
     },
     {
       label: "photobooth",
-      href: "/default-couple/photobooth",
+      href: `/${coupleId}/photobooth`,
       icon: Camera,
       isActive: activeLink === "photobooth",
       onClick: () => setActiveLink("photobooth")
     },
     {
       label: "media",
-      href: "/default-couple/media", // This will be dynamic in a real app
+      href: `/${coupleId}/media`,
       icon: ImageIcon,
       badge: "3",
       isActive: activeLink === "media",
@@ -63,11 +64,18 @@ export default function EnhancedSidebar({ className }: EnhancedSidebarProps) {
     },
     {
       label: "games",
-      href: "/default-couple/games/textgame",
+      href: `/${coupleId}/games/textgame`,
       icon: Gamepad2,
       badge: "new",
       isActive: activeLink === "games",
       onClick: () => setActiveLink("games")
+    },
+    {
+      label: "wrapped",
+      href: `/${coupleId}/wrapped`,
+      icon: Star,
+      isActive: activeLink === "wrapped",
+      onClick: () => setActiveLink("wrapped")
     },
     {
       label: "messages",

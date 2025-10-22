@@ -184,7 +184,7 @@ export default function CoupleDashboard() {
     <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
       {/* Enhanced Sidebar */}
       <aside className="shrink-0 relative z-40">
-        <EnhancedSidebar />
+        <EnhancedSidebar coupleId={coupleId} />
       </aside>
 
       <div className="flex-1 flex flex-col relative ml-[64px]">
@@ -200,7 +200,7 @@ export default function CoupleDashboard() {
         {/* Main Content */}
         <div className="flex-1 flex justify-center p-4 md:p-8">
           {/* Posts Container - Centered */}
-          <div className="w-full max-w-[40rem]">
+          <div className="w-full max-w-[60rem]">
             {/* Enhanced Post Composer */}
             <div className="w-full mb-8">
               <EnhancedPostComposer 

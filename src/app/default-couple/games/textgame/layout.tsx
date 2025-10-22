@@ -26,7 +26,7 @@ export default function TextGameLayout({
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
       {/* Enhanced Sidebar */}
-      <EnhancedSidebar />
+      <EnhancedSidebar coupleId="default-couple" />
       
       {/* Main content container */}
       <div className="flex-1 ml-[64px]">
