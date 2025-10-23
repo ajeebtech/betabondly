@@ -21,6 +21,12 @@ const indieFlower = Indie_Flower({
 export const metadata = {
   title: 'bondly.',
   description: 'Your application description',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+  },
 };
 
 import { Header } from '@/components/Header';
