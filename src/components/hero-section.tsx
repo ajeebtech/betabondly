@@ -17,17 +17,22 @@ export function HeroSection() {
   const [waitlistCount, setWaitlistCount] = useState<number | null>(null)
 
   useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const waitlistRef = collection(db, "waitlist")
-        const q = query(waitlistRef)
-        const snapshot = await getCountFromServer(q)
-        setWaitlistCount(snapshot.data().count)
-      } catch (err) {
-        console.error("Failed to fetch waitlist count", err)
+    // Defer Firebase query to reduce initial load time
+    const timer = setTimeout(() => {
+      const fetchCount = async () => {
+        try {
+          const waitlistRef = collection(db, "waitlist")
+          const q = query(waitlistRef)
+          const snapshot = await getCountFromServer(q)
+          setWaitlistCount(snapshot.data().count)
+        } catch (err) {
+          console.error("Failed to fetch waitlist count", err)
+        }
       }
-    }
-    fetchCount()
+      fetchCount()
+    }, 500) // Delay by 500ms to prioritize initial render
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,10 +94,10 @@ export function HeroSection() {
 
   return (
     <section className="relative pt-6 pb-6 md:pt-10 md:pb-10 overflow-hidden" style={{ scrollMarginTop: '4rem' }}>
-      {/* Subtle background decoration */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/30 rounded-full blur-3xl" />
+      {/* Subtle background decoration - Reduced blur for better mobile performance */}
+      <div className="absolute inset-0 -z-10 hidden md:block">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-2xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/30 rounded-full blur-2xl" />
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,13 +127,13 @@ export function HeroSection() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting || isSuccess}
-                  className="flex-1 h-12 bg-white/90 border-2 border-pink-300 text-pink-900 placeholder-pink-400 shadow-md focus:border-pink-500 focus:ring-pink-200"
+                  className="flex-1 h-16 sm:h-12 px-6 sm:px-4 text-lg sm:text-sm bg-white/90 border-2 border-pink-300 text-pink-900 placeholder-pink-400 shadow-md focus:border-pink-500 focus:ring-pink-200"
                   required
                 />
                 <Button 
                   type="submit"
                   size="lg" 
-                  className="h-12 px-8 whitespace-nowrap"
+                  className="h-16 sm:h-12 px-8 text-lg sm:text-sm font-semibold whitespace-nowrap"
                   disabled={isSubmitting || isSuccess}
                 >
                   {isSubmitting ? (
@@ -166,8 +171,8 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Right visual */}
-          <div className="relative">
+          {/* Right visual - Hidden on mobile for better performance */}
+          <div className="relative hidden lg:block">
             <div className="relative aspect-square max-w-lg mx-auto">
               {/* Browser mockup */}
               <div className="absolute inset-0 bg-card rounded-2xl shadow-2xl border border-border overflow-hidden">
@@ -186,6 +191,7 @@ export function HeroSection() {
                         width={28} 
                         height={28}
                         className="w-7 h-auto"
+                        loading="lazy"
                       />
                       bondly.fun
                     </div>
@@ -202,6 +208,7 @@ export function HeroSection() {
                         width={320} 
                         height={320}
                         className="w-80 h-auto"
+                        loading="lazy"
                       />
                     </div>
                     <div className="text-sm text-muted-foreground">Your private space</div>

@@ -11,7 +11,7 @@ const Navbar = () => {
   const { user, loading } = useAuth();
 
   return (
-    <header className="fixed top-0 left-0 right-0 font-sans flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-white/30 backdrop-blur-md border-b border-white/20">
+    <header className="fixed top-0 left-0 right-0 font-sans flex flex-wrap lg:justify-start lg:flex-nowrap z-50 w-full py-4 bg-white/30 backdrop-blur-sm lg:backdrop-blur-md border-b border-white/20">
       <nav className="font-sans relative max-w-7xl w-full flex flex-wrap lg:grid lg:grid-cols-12 basis-full items-center px-4 md:px-6 lg:px-8 mx-auto">
         <div className="lg:col-span-6 flex items-center">
           <Link 
@@ -24,14 +24,14 @@ const Navbar = () => {
               alt="Bondly Logo" 
               width={320} 
               height={320} 
-              className="w-80 h-auto transition-transform hover:scale-105"
+              className="w-48 lg:w-80 h-auto transition-transform hover:scale-105"
               priority
             />
           </Link>
         </div>
 
         {/* Navigation Links */}
-        <div className="flex items-center justify-center lg:order-2 lg:col-span-2">
+        <div className="hidden lg:flex items-center justify-center lg:order-2 lg:col-span-2">
           <div className="flex items-center gap-x-12">
             <Link 
               href="#features" 

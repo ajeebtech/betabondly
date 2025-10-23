@@ -81,10 +81,10 @@ export default function RootLayout({
             ]}
             colorBack="#fff0f6"
             softness={0.7}
-            intensity={0.6}
-            noise={0.18}
+            intensity={0.4}
+            noise={0.12}
             shape="corners"
-            speed={2.5}
+            speed={0.8}
           />
         </div>
         <Providers>
