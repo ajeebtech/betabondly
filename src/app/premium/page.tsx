@@ -36,12 +36,10 @@ const pricingTiers = [
     period: 'per month',
     description: 'for those who want more',
     features: [
-      'Everything in free',
-      'Unlimited photo uploads',
-      'Advanced analytics',
-      'Priority support',
-      'Advanced features',
-      'Custom themes'
+      'everything in free',
+      'more media slots',
+      'more mini games',
+      ' more access to AI features',
     ],
     buttonText: 'Get Started',
     buttonVariant: 'primary',
@@ -57,8 +55,7 @@ const pricingTiers = [
       'text chat',
       'monthly wrapped',
       'more agents',
-      'Premium support',
-      'Custom domain'
+      'messaging'
     ],
     buttonText: 'Get Started',
     buttonVariant: 'primary',
@@ -70,12 +67,8 @@ const pricingTiers = [
     period: 'per year',
     description: 'Best for long-term users',
     features: [
-      'Everything in 6 months',
-      'Highest priority support',
-      'Custom development',
-      'API access',
-      'White-label options',
-      'Team management'
+      'Everything in the 6 months plan',
+      'messaging'
     ],
     buttonText: 'Get Started',
     buttonVariant: 'primary',
