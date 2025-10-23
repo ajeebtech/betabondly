@@ -1,12 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowRight, Check, Sparkles, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { db } from "@/lib/firebase"
-import { collection, getCountFromServer, query } from "firebase/firestore"
 import { toast } from "sonner"
 import { GoogleSignInButton } from "@/components/GoogleSignInButton"
 
@@ -14,26 +12,6 @@ export function HeroSection() {
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [waitlistCount, setWaitlistCount] = useState<number | null>(null)
-
-  useEffect(() => {
-    // Defer Firebase query to reduce initial load time
-    const timer = setTimeout(() => {
-      const fetchCount = async () => {
-        try {
-          const waitlistRef = collection(db, "waitlist")
-          const q = query(waitlistRef)
-          const snapshot = await getCountFromServer(q)
-          setWaitlistCount(snapshot.data().count)
-        } catch (err) {
-          console.error("Failed to fetch waitlist count", err)
-        }
-      }
-      fetchCount()
-    }, 500) // Delay by 500ms to prioritize initial render
-    
-    return () => clearTimeout(timer)
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,12 +39,6 @@ export function HeroSection() {
         setEmail("")
         setIsSuccess(true)
         toast.success(result.message)
-        
-        // Refresh the count
-        const waitlistRef = collection(db, "waitlist")
-        const q = query(waitlistRef)
-        const snapshot = await getCountFromServer(q)
-        setWaitlistCount(snapshot.data().count)
         
         // Reset success state after 5 seconds
         setTimeout(() => {
@@ -162,7 +134,7 @@ export function HeroSection() {
             </form>
 
             <p className="text-sm text-muted-foreground">
-              Join <span className="font-semibold text-foreground">{waitlistCount ?? 'many'}</span> to-be users already on the waitlist
+               Get early access when we launch
             </p>
 
             {/* Quick start actions */}
